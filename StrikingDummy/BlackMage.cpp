@@ -90,6 +90,8 @@ namespace StrikingDummy
 
 	void BlackMage::train()
 	{
+		const int time_limit_in_seconds = 60000;
+
 		training = true;
 	}
 
@@ -118,12 +120,12 @@ namespace StrikingDummy
 		dot.update(elapsed);
 
 		// cooldowns
-		eno_cd.update(elapsed);
 		swift_cd.update(elapsed);
 		triple_cd.update(elapsed);
 		sharp_cd.update(elapsed);
 		leylines_cd.update(elapsed);
 		convert_cd.update(elapsed);
+		eno_cd.update(elapsed);
 
 		// actions
 		gcd_timer.update(elapsed);
@@ -138,6 +140,7 @@ namespace StrikingDummy
 		if (element != Element::NE && gauge.count == 0)
 		{
 			element = Element::NE;
+			umbral_hearts = 0;
 			enochian = false;
 			foul_timer.time = 0;
 		}
@@ -174,12 +177,12 @@ namespace StrikingDummy
 		dot.step();
 
 		// cooldown timers
-		eno_cd.step();
 		swift_cd.step();
 		triple_cd.step();
 		sharp_cd.step();
 		leylines_cd.step();
 		convert_cd.step();
+		eno_cd.step();
 
 		// action timers
 		gcd_timer.step();
@@ -252,12 +255,12 @@ namespace StrikingDummy
 	bool BlackMage::is_instant_cast(Action action) const
 	{
 		// for gcds
-		return swift.count  == 1|| triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0);
+		return swift.count == 1|| triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0);
 	}
 
 	int BlackMage::get_ll_cast_time(int ll_cast_time, int cast_time) const
 	{
-		return (leylines.count && ll_cast_time < leylines.time) ? ll_cast_time : cast_time;
+		return (leylines.count == 1 && ll_cast_time < leylines.time) ? ll_cast_time : cast_time;
 	}
 
 	int BlackMage::get_cast_time(Action action) const
@@ -406,6 +409,11 @@ namespace StrikingDummy
 			push_event(CONVERT_CD);
 			break;
 		case ENOCHIAN:
+			if (!enochian)
+			{
+				foul_timer.time = FOUL_TIMER;
+				push_event(FOUL_TIMER);
+			}
 			enochian = true;
 			eno_cd.reset(ENO_CD, false);
 			push_event(ENO_CD);
@@ -428,12 +436,14 @@ namespace StrikingDummy
 		damage_reward += get_damage(casting);
 
 		if (casting == F3 && fs_proc.count > 0);
-			// firestarter doesn't deplete swift or triple
+		// firestarter doesn't deplete swift or triple
 		else if (casting == T3 && tc_proc.count > 0);
-			// thundercloud doesn't deplete swift or triple
+		// thundercloud doesn't deplete swift or triple
 		else if (swift.count > 0)
 			swift.reset(0, 0);
-		else if (triple.count > 0)
+		else if (triple.count > 1)
+			triple.count--;
+		else if (triple.count == 1)
 			triple.reset(0, 0);
 
 		switch (casting)
@@ -445,6 +455,7 @@ namespace StrikingDummy
 				umbral_hearts = 0;
 				enochian = false;
 				gauge.reset(0, 0);
+				foul_timer.time = 0;
 			}
 			else
 			{
@@ -468,6 +479,7 @@ namespace StrikingDummy
 				umbral_hearts = 0;
 				enochian = false;
 				gauge.reset(0, 0);
+				foul_timer.time = 0;
 			}
 			else
 			{
@@ -512,7 +524,6 @@ namespace StrikingDummy
 		case FOUL:
 			foul_timer.ready = false;
 		}
-
 		casting = NONE;
 		cast_timer.ready = false;
 	}
@@ -648,6 +659,7 @@ namespace StrikingDummy
 			break;
 		}
 		// floor(ptc * wd * ap * det * traits) * chr | * dhr | * rand(.95, 1.05) | ...
+		// can optimize and use expected
 		int damage = potency / 100.0 * stats.wep_multiplier * stats.attk_multiplier * stats.det_multiplier * (enochian ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
 		if (prob(rng) < stats.crit_rate) // is_crit
 			damage *= stats.crit_multiplier;
@@ -660,6 +672,7 @@ namespace StrikingDummy
 	int BlackMage::get_dot_damage() const
 	{
 		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
+		// can optimize and use expected
 		int damage = T3_DOT_POTENCY / 100.0 * stats.wep_multiplier * stats.attk_multiplier * stats.det_multiplier * (dot.count == 1 ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
 		damage *= stats.dot_multiplier;
 		damage *= damage_range(rng);

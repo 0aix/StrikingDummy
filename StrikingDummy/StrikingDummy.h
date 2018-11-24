@@ -237,13 +237,13 @@ namespace StrikingDummy
 		Buff dot;	// NOT ACTUALLY A BUFF BUT YOU KNOW
 					// (value == 1) <=> enochian
 
-		// cooldowns
-		Timer eno_cd;
+		// cooldowns		
 		Timer swift_cd;
 		Timer triple_cd;
 		Timer sharp_cd;
 		Timer leylines_cd;
 		Timer convert_cd;
+		Timer eno_cd;
 
 		// actions
 		Timer gcd_timer;
