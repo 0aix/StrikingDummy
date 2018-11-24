@@ -108,6 +108,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -117,11 +118,13 @@
   <ItemGroup>
     <ClCompile Include="BlackMage.cpp" />
     <ClCompile Include="BalanceRotation.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Timeline.cpp" />
+    <ClCompile Include="StrikingDummy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="StrikingDummy.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
