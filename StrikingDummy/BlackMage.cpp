@@ -6,6 +6,9 @@
 #include <chrono>
 #include <random>
 #include <iostream>
+#include <Eigen/Core>
+
+using namespace Eigen;
 
 namespace StrikingDummy
 {
@@ -91,8 +94,115 @@ namespace StrikingDummy
 	void BlackMage::train()
 	{
 		const int time_limit_in_seconds = 60000;
+		const int M = 1000000;
+		const int CAPACITY = 1200000;
+		const int BATCH_SIZE = 60000;
+		const int NUM_STEPS = 60000;
+		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
+		std::vector<int> indices(BATCH_SIZE);
+		auto indices_gen = [rng, range]() { return range(rng); };
 
 		training = true;
+
+		// initialize replay memory
+		Transition* memory = new Transition[CAPACITY];
+		
+		int index = 0;
+		bool max_capacity = false;
+
+		// initialize Q model
+
+		for (int z = 0; z < M; z++)
+		{
+			// initialize sequence, i.e. new state
+			timeline.events = std::priority_queue<int, std::vector<int>, std::greater<int>>();
+			timeline.time = 0;
+			reset();
+
+			// timesteps
+			for (int t = 0; t < NUM_STEPS; t++)
+			{
+				// get state t
+				get_state(memory[index].t0);
+
+				// get actions
+				std::remove_copy_if(int_range.cbegin(), int_range.cend(), std::back_inserter(actions), [this](int i) { return !this->can_use_action((Action)i); });
+
+				// use model to choose action
+				int action;
+
+				// use action
+				use_action((Action)action);
+				actions.clear();
+
+				// step
+				step();
+
+				// get state t + 1
+				get_state(memory[index].t1);
+
+				// store state t, action, reward*, and state t + 1
+				memory[index].action = action;
+				memory[index].reward = damage_reward;
+				memory[index].terminal = t == NUM_STEPS - 1;
+				if (index == CAPACITY - 1)
+					max_capacity = true;
+				if (++index == CAPACITY)
+					index == 0;
+
+				// batch training
+				if (max_capacity)
+				{
+					std::generate(indices.begin(), indices.end(), indices_gen);
+
+				}
+			}
+		}
+	}
+
+	void BlackMage::reset()
+	{
+		mp = MAX_MP;
+
+		element = Element::NE;
+		umbral_hearts = 0;
+		enochian = false;
+
+		// server ticks
+		mp_timer.reset(0, false);
+		dot_timer.reset(0, false);
+
+		// elemental gauge
+		gauge.reset(0, 0);
+		foul_timer.reset(0, false);
+
+		// buffs
+		swift.reset(0, 0);
+		sharp.reset(0, 0);
+		triple.reset(0, 0);
+		leylines.reset(0, 0);
+		fs_proc.reset(0, 0);
+		tc_proc.reset(0, 0);
+		dot.reset(0, 0);
+
+		// cooldowns		
+		swift_cd.reset(0, true);
+		triple_cd.reset(0, true);
+		sharp_cd.reset(0, true);
+		leylines_cd.reset(0, true);
+		convert_cd.reset(0, true);
+		eno_cd.reset(0, true);
+
+		// actions
+		gcd_timer.reset(0, true);
+		cast_timer.reset(0, false);
+		lock_timer.reset(0, true);
+		casting = Action::NONE;
+
+		// metrics
+		damage_reward = 0;
+		total_damage = 0;
 	}
 
 	void BlackMage::update(int elapsed)
@@ -659,27 +769,95 @@ namespace StrikingDummy
 			break;
 		}
 		// floor(ptc * wd * ap * det * traits) * chr | * dhr | * rand(.95, 1.05) | ...
-		// can optimize and use expected
-		int damage = potency / 100.0 * stats.wep_multiplier * stats.attk_multiplier * stats.det_multiplier * (enochian ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
-		if (prob(rng) < stats.crit_rate) // is_crit
-			damage *= stats.crit_multiplier;
-		if (prob(rng) < stats.dhit_rate) // is_dhit
-			damage *= 1.25;
-		damage *= damage_range(rng);
+		int damage = potency * stats.potency_multiplier * (enochian ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
+		if (!training)
+		{
+			if (prob(rng) < stats.crit_rate) // is_crit
+				damage *= stats.crit_multiplier;
+			if (prob(rng) < stats.dhit_rate) // is_dhit
+				damage *= 1.25;
+			damage *= damage_range(rng);
+		}
+		else
+			damage *= stats.expected_multiplier;
 		return damage;
 	}
 	
 	int BlackMage::get_dot_damage() const
 	{
 		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
-		// can optimize and use expected
-		int damage = T3_DOT_POTENCY / 100.0 * stats.wep_multiplier * stats.attk_multiplier * stats.det_multiplier * (dot.count == 1 ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
+		int damage = T3_DOT_POTENCY * stats.potency_multiplier * (dot.count == 1 ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
 		damage *= stats.dot_multiplier;
-		damage *= damage_range(rng);
-		if (prob(rng) < stats.crit_rate) // is_crit
-			damage *= stats.crit_multiplier;
-		if (prob(rng) < stats.dhit_rate) // is_dhit
-			damage *= 1.25;
+		if (!training)
+		{
+			damage *= damage_range(rng);
+			if (prob(rng) < stats.crit_rate) // is_crit
+				damage *= stats.crit_multiplier;
+			if (prob(rng) < stats.dhit_rate) // is_dhit
+				damage *= 1.25;
+		}
+		else
+			damage *= stats.expected_multiplier;
 		return damage;
+	}
+
+	void BlackMage::get_state(State& state)
+	{
+		const double FACTOR = 60000.0;
+
+		// work on "precast" later
+		state.time = (FACTOR - timeline.time) / FACTOR;
+		state.mp = mp / (double)MAX_MP;
+		state.ui = element == UI;
+		state.af = element == AF;
+		state.umbral_hearts = umbral_hearts / 3.0;
+		state.enochian = enochian;
+		state.mp_tick = (TICK_TIMER - mp_timer.time) / FACTOR;
+		state.dot_tick = (TICK_TIMER - dot_timer.time) / FACTOR;
+		state.gauge = gauge.count > 0;
+		state.gauge_time = gauge.time / FACTOR;
+		state.foul_proc = foul_timer.ready;
+		state.foul_time = (FOUL_TIMER - foul_timer.time) / FACTOR;
+		state.swift = swift.count > 0;
+		state.swift_time = swift.time / FACTOR;
+		state.sharp = sharp.count > 0;
+		state.sharp_time = sharp.time / FACTOR;
+		state.triple_procs = triple.count / 3.0;
+		state.triple_time = triple.time / FACTOR;
+		state.leylines = leylines.count > 0;
+		state.ll_time = leylines.time / FACTOR;
+		state.fs_proc = fs_proc.count > 0;
+		state.fs_time = fs_proc.time / FACTOR;
+		state.tc_proc = tc_proc.count > 0;
+		state.tc_time = tc_proc.time / FACTOR;
+		state.dot_ticking = dot.count > 0;
+		state.dot_time = dot.time / FACTOR;
+		state.dot_enochian = dot.count == 1;
+		state.swift_ready = swift_cd.ready;
+		state.swift_cd = swift_cd.time / FACTOR;
+		state.triple_ready = triple_cd.ready;
+		state.triple_cd = triple_cd.time / FACTOR;
+		state.sharp_ready = sharp_cd.ready;
+		state.sharp_cd = sharp_cd.time / FACTOR;
+		state.leylines_ready = leylines_cd.ready;
+		state.leylines_cd = leylines_cd.time / FACTOR;
+		state.convert_ready = convert_cd.ready;
+		state.convert_cd = convert_cd.time / FACTOR;
+		state.eno_ready = eno_cd.ready;
+		state.eno_cd = eno_cd.time / FACTOR;
+		state.gcd_ready = gcd_timer.ready;
+		state.gcd_time = gcd_timer.time / FACTOR;
+		state.casting = casting != NONE;
+		state.cast_time = cast_timer.time / FACTOR;
+		state.lock_ready = lock_timer.ready;
+		state.lock_time = lock_timer.time / FACTOR;
+		state.b1_casting = casting == B1;
+		state.b3_casting = casting == B3;
+		state.b4_casting = casting == B4;
+		state.f1_casting = casting == F1;
+		state.f3_casting = casting == F3;
+		state.f4_casting = casting == F4;
+		state.t3_casting = casting == T3;
+		state.foul_casting = casting == FOUL;
 	}
 }

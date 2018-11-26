@@ -76,5 +76,9 @@ namespace StrikingDummy
 		det_multiplier = floor(130.0 * (determination - LV_MAIN) / LV_DIV + 1000.0) / 1000.0;
 		ss_multiplier = 1000.0 - floor(130.0 * (skill_speed - LV_SUB) / LV_DIV);
 		dot_multiplier = floor(130.0 * (skill_speed - LV_SUB) / LV_DIV + 1000.0) / 1000.0;
+
+		potency_multiplier = wep_multiplier * attk_multiplier * det_multiplier / 100.0;
+		double dcrit_rate = crit_rate * dhit_rate;
+		expected_multiplier = (1 - crit_rate + dcrit_rate - dhit_rate) + crit_multiplier * (crit_rate - dcrit_rate) + crit_multiplier * 1.25 * dcrit_rate + 1.25 * (dhit_rate - dcrit_rate);
 	}
 }

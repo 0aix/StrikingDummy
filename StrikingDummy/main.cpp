@@ -17,25 +17,24 @@ Notes:
 
 int main()
 {
+	std::cout << sizeof(StrikingDummy::State) << std::endl;
+	std::cout << sizeof(StrikingDummy::Transition) << std::endl;
+
 	Logger::open();
 
 	std::cout.precision(std::numeric_limits<double>::max_digits10);
 
 	StrikingDummy::Stats stats;
-	//stats.weapon_damage = 147;
-	//stats.main_stat = 3237;
-	//stats.critical_hit = 2681;
-	//stats.direct_hit = 1375;
-	//stats.determination = 994;
-	//stats.skill_speed = 1450;
 	stats.weapon_damage = 147;
-	stats.main_stat = 3224;
-	stats.critical_hit = 2461;
-	stats.direct_hit = 1200;
-	stats.determination = 1138;
-	stats.skill_speed = 1504;
+	stats.main_stat = 3237;
+	stats.critical_hit = 2681;
+	stats.direct_hit = 1375;
+	stats.determination = 994;
+	stats.skill_speed = 1450;
 
 	StrikingDummy::BlackMage blm(stats);
+
+	blm.train();
 
 	blm.start(new StrikingDummy::BalanceRotation(), 600);
 

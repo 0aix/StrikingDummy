@@ -15,13 +15,11 @@ namespace StrikingDummy
 
 	struct Timeline
 	{
+		std::priority_queue<int, std::vector<int>, std::greater<int>> events;
 		int time = 0;
 
 		int next_event();
 		void push_event(int offset);
-
-	private:
-		std::priority_queue<int, std::vector<int>, std::greater<int>> events;
 	};
 
 	struct Rotation
@@ -72,7 +70,76 @@ namespace StrikingDummy
 		double ss_multiplier;
 		double dot_multiplier;
 
+		double potency_multiplier;
+		double expected_multiplier;
+
 		void calculate_stats();
+	};
+
+	struct State
+	{
+		double time;
+		double mp;
+		bool ui;
+		bool af;
+		int umbral_hearts;
+		bool enochian;
+		double mp_tick;
+		double dot_tick;
+		bool gauge;
+		double gauge_time;
+		bool foul_proc;
+		double foul_time;
+		bool swift;
+		double swift_time;
+		bool sharp;
+		double sharp_time;
+		int triple_procs;
+		double triple_time;
+		bool leylines;
+		double ll_time;
+		bool fs_proc;
+		double fs_time;
+		bool tc_proc;
+		double tc_time;
+		bool dot_ticking;
+		double dot_time;
+		bool dot_enochian;
+		bool swift_ready;
+		double swift_cd;
+		bool triple_ready;
+		double triple_cd;
+		bool sharp_ready;
+		double sharp_cd;
+		bool leylines_ready;
+		double leylines_cd;
+		bool convert_ready;
+		double convert_cd;
+		bool eno_ready;
+		double eno_cd;
+		bool gcd_ready;
+		double gcd_time;
+		bool casting;
+		double cast_time;
+		bool lock_ready; // can use ogcds
+		double lock_time;
+		bool b1_casting;
+		bool b3_casting;
+		bool b4_casting;
+		bool f1_casting;
+		bool f3_casting;
+		bool f4_casting;
+		bool t3_casting;
+		bool foul_casting;
+	};
+
+	struct Transition
+	{
+		State t0;
+		State t1;
+		int action;
+		int reward;
+		bool terminal;
 	};
 
 	struct Job
@@ -84,6 +151,8 @@ namespace StrikingDummy
 
 		virtual void start(Rotation* rotation, int time_limit_in_seconds) = 0;
 		virtual void train() = 0;
+		virtual void get_state(State& state) = 0;
+		virtual void reset() = 0;
 		
 	protected:
 		virtual void update(int elapsed) = 0;
@@ -259,6 +328,7 @@ namespace StrikingDummy
 
 		void start(Rotation* rotation, int time_limit_in_seconds);
 		void train();
+		void reset();
 
 		void update(int elapsed);
 		void step();
@@ -280,5 +350,7 @@ namespace StrikingDummy
 		int get_mp_cost(Action action) const;
 		int get_damage(Action action) const;
 		int get_dot_damage() const;
+
+		void get_state(State& state);
 	};
 }
