@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "StrikingDummy.h"
 #include <assert.h>
 #include <chrono>
 #include <vector>
 #include <random>
-#include <execution>
 #include <algorithm>
 #include <numeric>
 #include <iostream>

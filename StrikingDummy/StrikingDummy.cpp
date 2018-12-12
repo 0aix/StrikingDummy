@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "StrikingDummy.h"
 #include <assert.h>
 

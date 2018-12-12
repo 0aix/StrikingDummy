@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "StrikingDummy.h"
 #include "Logger.h"
 #include <assert.h>
@@ -7,6 +9,7 @@
 #include <random>
 #include <iostream>
 #include <Eigen/Core>
+#include <fstream>
 
 using namespace Eigen;
 
@@ -15,6 +18,7 @@ namespace StrikingDummy
 	std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 	std::uniform_real_distribution<double> prob(0.0, 1.0);
 	std::uniform_real_distribution<double> damage_range(0.95, 1.05);
+	std::uniform_int_distribution<int> tick_rng(1, 300);
 	std::vector<int> int_range(BlackMage::NUM_ACTIONS);
 
 	std::string action_names[] =
@@ -60,9 +64,6 @@ namespace StrikingDummy
 		int precast_time = get_cast_time(BlackMage::B3);
 
 		// Set up mp and dot timers
-		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-		std::uniform_int_distribution<int> tick_rng(1, 300);
-
 		mp_timer.time = tick_rng(rng);
 		dot_timer.time = tick_rng(rng);
 
@@ -94,71 +95,277 @@ namespace StrikingDummy
 	void BlackMage::train()
 	{
 		const int time_limit_in_seconds = 60000;
-		const int M = 1000000;
-		const int CAPACITY = 1200000;
-		const int BATCH_SIZE = 60000;
+		const int M = 20;
 		const int NUM_STEPS = 60000;
-		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+		const int CAPACITY = M * NUM_STEPS;
+		const int BATCH_SIZE = NUM_STEPS;
+		std::mt19937 rngx(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
 		std::vector<int> indices(BATCH_SIZE);
-		auto indices_gen = [rng, range]() { return range(rng); };
+		auto indices_gen = [&]() { return range(rngx); };
+
+		long long start_time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
 		training = true;
 
 		// initialize replay memory
 		Transition* memory = new Transition[CAPACITY];
-		
+
 		int index = 0;
-		bool max_capacity = false;
+		bool load_model = true;
+
+		// 56 inputs -> 128 -> 15
 
 		// initialize Q model
 
-		for (int z = 0; z < M; z++)
+		// W1 is a 128 x 56 matrix
+		// b1 is a 128 x 1 matrix
+		// W2 is a 15 x 128 matrix
+		// b2 is a 15 x 1 matrix
+
+		const int INNER = 30;
+
+		Matrix<double, INNER, 56> W1 = MatrixXd::Random(INNER, 56) * (sqrt(6.0 / (INNER + 56.0)));
+		Matrix<double, INNER, 1> b1 = MatrixXd::Zero(INNER, 1);
+		Matrix<double, 15, INNER> W2 = MatrixXd::Random(15, INNER) * (sqrt(6.0 / (15.0 + INNER)));
+		Matrix<double, 15, 1> b2 = MatrixXd::Zero(15, 1);
+		Matrix<double, 56, 1> x0;
+		Matrix<double, INNER, 1> x1;
+		Matrix<double, 15, 1> x2;
+		Matrix<double, INNER, 56> dLdW1;
+		Matrix<double, INNER, 1> dLdb1;
+		Matrix<double, 15, INNER> dLdW2;
+		Matrix<double, 15, 1> dLdb2;
+
+		// initialize intermediate matrices -> noalias()
+		MatrixXd X0 = MatrixXd::Zero(56, BATCH_SIZE);
+		MatrixXd X1 = MatrixXd::Zero(INNER, BATCH_SIZE);
+		MatrixXd X2 = MatrixXd::Zero(15, BATCH_SIZE);
+		MatrixXd QR = MatrixXd::Zero(1, BATCH_SIZE);
+		MatrixXd R = MatrixXd::Zero(1, BATCH_SIZE);
+		MatrixXd Q = MatrixXd::Zero(1, BATCH_SIZE);
+		MatrixXd dQdX2 = MatrixXd::Zero(15, BATCH_SIZE);
+		MatrixXd dLdX2 = MatrixXd::Zero(15, BATCH_SIZE);
+		MatrixXd d1 = MatrixXd::Zero(INNER, BATCH_SIZE);
+		MatrixXd d2 = MatrixXd::Zero(15, BATCH_SIZE);
+		MatrixXd dX1 = MatrixXd::Zero(INNER, BATCH_SIZE);
+		MatrixXd dX2 = MatrixXd::Zero(15, BATCH_SIZE);
+		MatrixXd ones_row = MatrixXd::Ones(1, BATCH_SIZE);
+		MatrixXd ones_col = MatrixXd::Ones(BATCH_SIZE, 1);
+		MatrixXd ones_X2 = MatrixXd::Ones(15, 1);
+
+		bool terminal[BATCH_SIZE];
+		int action_indices[BATCH_SIZE];
+
+		double eps = 1.0;
+		double eps_decay = 0.998;
+		double nu = 0.000001;
+
+		std::fstream fs;
+
+		fs.open("Weights\\weights", std::fstream::in | std::fstream::binary);
+		if (fs.is_open())
 		{
-			// initialize sequence, i.e. new state
-			timeline.events = std::priority_queue<int, std::vector<int>, std::greater<int>>();
-			timeline.time = 0;
-			reset();
-
-			// timesteps
-			for (int t = 0; t < NUM_STEPS; t++)
-			{
-				// get state t
-				get_state(memory[index].t0);
-
-				// get actions
-				std::remove_copy_if(int_range.cbegin(), int_range.cend(), std::back_inserter(actions), [this](int i) { return !this->can_use_action((Action)i); });
-
-				// use model to choose action
-				int action;
-
-				// use action
-				use_action((Action)action);
-				actions.clear();
-
-				// step
-				step();
-
-				// get state t + 1
-				get_state(memory[index].t1);
-
-				// store state t, action, reward*, and state t + 1
-				memory[index].action = action;
-				memory[index].reward = damage_reward;
-				memory[index].terminal = t == NUM_STEPS - 1;
-				if (index == CAPACITY - 1)
-					max_capacity = true;
-				if (++index == CAPACITY)
-					index == 0;
-
-				// batch training
-				if (max_capacity)
-				{
-					std::generate(indices.begin(), indices.end(), indices_gen);
-
-				}
-			}
+			fs.read((char*)W1.data(), INNER * 56 * 8);
+			fs.read((char*)b1.data(), INNER * 1 * 8);
+			fs.read((char*)W2.data(), 15 * INNER * 8);
+			fs.read((char*)b2.data(), 15 * 1 * 8);
+			fs.close();
 		}
+		
+		while (true)
+		{
+			std::cout << "eps: " << eps << std::endl;
+			long long total = 0;
+			index = 0;
+
+			for (int z = 0; z < 20; z++)
+			{
+				// initialize sequence, i.e. new state
+				timeline.events = std::priority_queue<int, std::vector<int>, std::greater<int>>();
+				timeline.time = 0;
+				reset();
+				mp_timer.time = tick_rng(rng);
+				dot_timer.time = tick_rng(rng);
+
+				// timesteps
+				for (int t = 0; t < NUM_STEPS; t++)
+				{
+					// get state t
+					get_state(memory[index].t0);
+
+					// get actions
+					std::remove_copy_if(int_range.cbegin(), int_range.cend(), std::back_inserter(actions), [this](int i) { return !this->can_use_action((Action)i); });
+
+					// use model to choose action w/ probability 1 - eps
+					int action;
+
+					// w/ prob eps, choose a random action
+					if (actions.size() == 1)
+						action = 0;
+					else if (prob(rng) < eps)
+					{
+						std::sample(actions.begin(), actions.end(), actions.begin(), 1, rng);
+						action = actions[0];
+					}
+					else
+					{
+						memcpy(x0.data(), &memory[index].t0, sizeof(State));
+						x1 = (W1 * x0 + b1).cwiseMax(0.0);
+						x2 = (W2 * x1 + b2);
+						int max_weight = x2(0);
+						int max_index = 0;
+						int num_actions = actions.size();
+						for (auto iter = actions.cbegin() + 1; iter != actions.cend(); ++iter)
+						{
+							int i = *iter;
+							if (x2(i) > max_weight)
+							{
+								max_weight = x2(i);
+								max_index = i;
+							}
+						}
+						action = max_index;
+					}
+
+					// use action
+					use_action((Action)action);
+					actions.clear();
+
+					// step
+					step();
+
+					// get state t + 1
+					get_state(memory[index].t1);
+
+					// store state t, action, reward*, and state t + 1
+					memory[index].action = action;
+					memory[index].reward = damage_reward / 6000000.0;
+					memory[index].terminal = t == NUM_STEPS - 1;
+					index++;
+				}
+				total += total_damage;
+			}
+
+			std::cout << "average total damage: " << total / 20 << std::endl;
+			std::cout << "average total dps: " << total / (20.0 * 600.0) << std::endl;
+
+			// batch training
+			for (int z = 0; z < M * 2; z++)
+			{
+				std::generate(indices.begin(), indices.end(), indices_gen);
+
+				// S1 = W1*X0 (+ b1 * 1xN)
+				// X1 = f[W1*X0 (+ b1 * 1xN)]
+
+				// S2 = W2*X1 (+ b2 * 1xN)
+				// X2 = f[W2*X1 (+ b2 * 1xN)]
+
+				// Q = max(X2)
+
+				// Find reward for each t1
+				for (int i = 0; i < BATCH_SIZE; i++)
+				{
+					Transition& t = memory[indices[i]];
+					if (t.terminal)
+						terminal[i] = true;
+					else
+					{
+						terminal[i] = false;
+						memcpy(X0.col(i).data(), &t.t1, sizeof(State));
+					}
+					action_indices[i] = t.action;
+					R(i) = t.reward;
+				}
+
+				//X1.noalias() = (W1 * X0).cwiseMax(0.0);
+				X1 = (W1 * X0 + b1 * ones_row).cwiseMax(0.0);
+
+				//X2.noalias() = (W2 * X1).cwiseMax(0.0);
+				X2 = (W2 * X1 + b2 * ones_row);
+
+				//QR = 0.99992325 * X2.colwise().maxCoeff(); // 1 x N
+				QR = X2.colwise().maxCoeff(); // 1 x N
+				for (int i = 0; i < BATCH_SIZE; i++)
+					if (terminal[i])
+						QR(i) = 0.0;
+				QR += R;
+
+				// Calculate Q for each t0
+				for (int i = 0; i < BATCH_SIZE; i++)
+					memcpy(X0.col(i).data(), &memory[indices[i]].t0, sizeof(State));
+
+				X1 = (W1 * X0 + b1 * ones_row).cwiseMax(0.0);
+
+				X2 = (W2 * X1 + b2 * ones_row);
+
+				for (int i = 0; i < BATCH_SIZE; i++)
+					Q(i) = X2.col(i)(action_indices[i]);
+
+				// Calculate gradient stuff
+
+				// dL/dQ -> 1 x N
+				// Q - QR;
+
+				// dQ/dX2 -> 15 x N
+				dQdX2.setZero();
+				for (int i = 0; i < BATCH_SIZE; i++)
+					dQdX2.col(i)(action_indices[i]) = 1.0;
+
+				// dL/dX2 -> 15 x N
+				//dLdX2 = (ones_X2 * (Q - QR)).cwiseProduct(dQdX2);
+				dLdX2 = (ones_X2 * (Q - QR)).cwiseProduct(dQdX2);
+
+				// d2 = dL/dX2 . f'(S2)
+				d2 = dLdX2;
+
+				// dL/dW2 = d2 * X1^T
+				dLdW2 = d2 * X1.transpose();
+
+				// dL/db2 = d2 * (N x 1)
+				dLdb2 = d2 * ones_col;
+
+				// d1 = (W2^T * d2) . f'(S1)
+				d1 = (W2.transpose() * d2).cwiseProduct(X1.cwiseSign());
+
+				// dL/dW1 = d1 * X0^T
+				dLdW1 = d1 * X0.transpose();
+
+				// dL/db1 = d1 * (N x 1)
+				dLdb1 = d1 * ones_col;
+
+				// W2 -= nu * dL/dW2
+				W2 = W2 - (nu * dLdW2);
+
+				// b2 -= nu * dL/db2
+				b2 = b2 - (nu * dLdb2);
+
+				// W1 -= nu * dL/dW1
+				W1 = W1 - (nu * dLdW1);
+
+				// b1 -= nu * dL/db1
+				b1 = b1 - (nu * dLdb1);
+
+				std::cout << W1(0) << " " << b1(0) << " " << W2(0) << " " << b2(0) << std::endl;
+			}
+			eps *= eps_decay;
+		}
+
+		std::stringstream ss;
+		ss << "Weights\\weights-" << start_time;
+		fs.open(ss.str().c_str(), std::fstream::out | std::fstream::binary);
+		fs.write((const char*)W1.data(), INNER * 56 * 8);
+		fs.write((const char*)b1.data(), INNER * 1 * 8);
+		fs.write((const char*)W2.data(), 15 * INNER * 8);
+		fs.write((const char*)b2.data(), 15 * 1 * 8);
+		fs.flush();
+		fs.close();
+
+		long long end_time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+		std::cout << "running time: " << (end_time - start_time) / 1000000000.0 << " seconds" << std::endl;
+
+		delete[] memory;
 	}
 
 	void BlackMage::reset()
@@ -199,16 +406,22 @@ namespace StrikingDummy
 		cast_timer.reset(0, false);
 		lock_timer.reset(0, true);
 		casting = Action::NONE;
+		casting_mp_cost = 0;
 
 		// metrics
-		damage_reward = 0;
 		total_damage = 0;
+		history.clear();
+		last_action_state = -1;
+		last_dot_state = -1;
+
+		std::remove_copy_if(int_range.cbegin(), int_range.cend(), std::back_inserter(useable_actions), [this](int i) { return !this->can_use_action((Action)i); });
+		//useable;
+		//get_state
+		//add to history
 	}
 
 	void BlackMage::update(int elapsed)
 	{
-		damage_reward = 0;
-
 		if (elapsed == 0)
 			return;
 
@@ -261,14 +474,15 @@ namespace StrikingDummy
 		}
 		if (cast_timer.ready)
 			end_action();
-
-		total_damage += damage_reward;
+		
+		std::remove_copy_if(int_range.cbegin(), int_range.cend(), std::back_inserter(useable_actions), [this](int i) { return !this->can_use_action((Action)i); });
+		useable;
+		//add to history
+		//get_state it
 	}
 
 	void BlackMage::step()
 	{
-		damage_reward = 0;
-
 		// server ticks
 		mp_timer.step();
 		dot_timer.step();
@@ -319,7 +533,7 @@ namespace StrikingDummy
 		if (cast_timer.ready)
 			end_action();
 
-		total_damage += damage_reward;
+		timeline.time++;
 	}
 
 	void BlackMage::update_mp()
@@ -351,7 +565,7 @@ namespace StrikingDummy
 	{
 		if (dot.count > 0)
 		{
-			damage_reward += get_dot_damage();
+			total_damage += get_dot_damage();
 			if (prob(rng) < 0.10)
 			{
 				tc_proc.reset(TC_DURATION, 1);
@@ -365,7 +579,7 @@ namespace StrikingDummy
 	bool BlackMage::is_instant_cast(Action action) const
 	{
 		// for gcds
-		return swift.count == 1|| triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0);
+		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0);
 	}
 
 	int BlackMage::get_ll_cast_time(int ll_cast_time, int cast_time) const
@@ -464,8 +678,7 @@ namespace StrikingDummy
 
 	void BlackMage::use_action(Action action)
 	{
-		if (action != NONE)
-			DBG(std::cout << timeline.time / 100.0 << ": " << action_names[action].c_str() << std::endl);
+		assert(useable[action]);
 
 		switch (action)
 		{
@@ -483,6 +696,8 @@ namespace StrikingDummy
 			cast_timer.reset(get_cast_time(action), false);
 			lock_timer.reset(get_lock_time(action), false);
 			casting = action;
+			casting_mp_cost = get_mp_cost(action);
+			assert(casting_mp_cost <= mp);
 			if (cast_timer.time == 0)
 				end_action();
 			push_event(gcd_timer.time);
@@ -539,11 +754,11 @@ namespace StrikingDummy
 		assert(cast_timer.time == 0);
 		assert(cast_timer.ready || is_instant_cast(casting));
 
-		mp -= get_mp_cost(casting);
+		mp -= casting_mp_cost;
 
 		assert(mp >= 0);
 
-		damage_reward += get_damage(casting);
+		total_damage += get_damage(casting);
 
 		if (casting == F3 && fs_proc.count > 0);
 		// firestarter doesn't deplete swift or triple
@@ -815,6 +1030,9 @@ namespace StrikingDummy
 		state.mp_tick = (TICK_TIMER - mp_timer.time) / FACTOR;
 		state.dot_tick = (TICK_TIMER - dot_timer.time) / FACTOR;
 		state.gauge = gauge.count > 0;
+		state.g1 = gauge.count == 1;
+		state.g2 = gauge.count == 2;
+		state.g3 = gauge.count == 3;
 		state.gauge_time = gauge.time / FACTOR;
 		state.foul_proc = foul_timer.ready;
 		state.foul_time = (FOUL_TIMER - foul_timer.time) / FACTOR;

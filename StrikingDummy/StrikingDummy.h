@@ -78,59 +78,79 @@ namespace StrikingDummy
 
 	struct State
 	{
-		double time;
-		double mp;
-		bool ui;
-		bool af;
-		int umbral_hearts;
-		bool enochian;
-		double mp_tick;
-		double dot_tick;
-		bool gauge;
-		double gauge_time;
-		bool foul_proc;
-		double foul_time;
-		bool swift;
-		double swift_time;
-		bool sharp;
-		double sharp_time;
-		int triple_procs;
-		double triple_time;
-		bool leylines;
-		double ll_time;
-		bool fs_proc;
-		double fs_time;
-		bool tc_proc;
-		double tc_time;
-		bool dot_ticking;
-		double dot_time;
-		bool dot_enochian;
-		bool swift_ready;
-		double swift_cd;
-		bool triple_ready;
-		double triple_cd;
-		bool sharp_ready;
-		double sharp_cd;
-		bool leylines_ready;
-		double leylines_cd;
-		bool convert_ready;
-		double convert_cd;
-		bool eno_ready;
-		double eno_cd;
-		bool gcd_ready;
-		double gcd_time;
-		bool casting;
-		double cast_time;
-		bool lock_ready; // can use ogcds
-		double lock_time;
-		bool b1_casting;
-		bool b3_casting;
-		bool b4_casting;
-		bool f1_casting;
-		bool f3_casting;
-		bool f4_casting;
-		bool t3_casting;
-		bool foul_casting;
+		float mp;
+		float ui;
+		float af;
+		float umbral_hearts;
+		float enochian;
+		float mp_tick;
+		float dot_tick;
+		float gauge;
+		float g1;
+		float g2;
+		float g3;
+		float gauge_time;
+		float foul_proc;
+		float foul_time;
+		float swift;
+		float swift_time;
+		float sharp;
+		float sharp_time;
+		float triple_procs;
+		float triple_time;
+		float leylines;
+		float ll_time;
+		float fs_proc;
+		float fs_time;
+		float tc_proc;
+		float tc_time;
+		float dot_ticking;
+		float dot_time;
+		float dot_enochian;
+		float swift_ready;
+		float swift_cd;
+		float triple_ready;
+		float triple_cd;
+		float sharp_ready;
+		float sharp_cd;
+		float leylines_ready;
+		float leylines_cd;
+		float convert_ready;
+		float convert_cd;
+		float eno_ready;
+		float eno_cd;
+		float gcd_ready;
+		float gcd_time;
+		float casting;
+		float cast_time;
+		float lock_ready; // can use ogcds
+		float lock_time;
+		float b1_casting;
+		float b3_casting;
+		float b4_casting;
+		float f1_casting;
+		float f3_casting;
+		float f4_casting;
+		float t3_casting;
+		float foul_casting;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast_b1;
+		float can_cast[15];
 	};
 
 	struct Transition
@@ -138,7 +158,7 @@ namespace StrikingDummy
 		State t0;
 		State t1;
 		int action;
-		int reward;
+		double reward;
 		bool terminal;
 	};
 
@@ -166,7 +186,6 @@ namespace StrikingDummy
 
 		Stats stats;
 		Timeline timeline;
-		std::vector<int> actions;
 		bool training = false;
 	};
 
@@ -176,7 +195,6 @@ namespace StrikingDummy
 		bool ready = false;
 
 		void update(int elapsed);
-		void step();
 		void reset(int duration, bool ready);
 	};
 
@@ -186,7 +204,6 @@ namespace StrikingDummy
 		int count = 0;
 
 		void update(int elapsed);
-		void step();
 		void reset(int duration, int count);
 	};
 
@@ -217,11 +234,11 @@ namespace StrikingDummy
 		static constexpr int MP_PER_TICK_UI3 = 9597;	// 62% per tick in UI3
 		static constexpr int CONVERT_MP = 4644;
 		
-		static constexpr double BASE_GCD = 2.50;
-		static constexpr double III_GCD = 3.50;
-		static constexpr double IV_GCD = 2.80;
-		static constexpr double FAST_BASE_GCD = 1.25;
-		static constexpr double FAST_III_GCD = 1.75;
+		static constexpr float BASE_GCD = 2.50;
+		static constexpr float III_GCD = 3.50;
+		static constexpr float IV_GCD = 2.80;
+		static constexpr float FAST_BASE_GCD = 1.25;
+		static constexpr float FAST_III_GCD = 1.75;
 
 		static constexpr int TICK_TIMER = 300;
 		static constexpr int FOUL_TIMER = 3000;
@@ -242,25 +259,25 @@ namespace StrikingDummy
 		static constexpr int ENO_CD = 3000;
 
 		// Assume not using B1 or Flare
-		static constexpr double F1_POTENCY = 180.0;
-		static constexpr double F3_POTENCY = 240.0;
-		static constexpr double F4_POTENCY = 300.0;
-		static constexpr double B1_POTENCY = 180.0;
-		static constexpr double B3_POTENCY = 240.0;
-		static constexpr double B4_POTENCY = 260.0;
-		static constexpr double T3_POTENCY = 70.0;
-		static constexpr double T3_DOT_POTENCY = 40.0;
-		static constexpr double TC_POTENCY = 390.0;
-		static constexpr double FOUL_POTENCY = 650.0;
+		static constexpr float F1_POTENCY = 180.0;
+		static constexpr float F3_POTENCY = 240.0;
+		static constexpr float F4_POTENCY = 300.0;
+		static constexpr float B1_POTENCY = 180.0;
+		static constexpr float B3_POTENCY = 240.0;
+		static constexpr float B4_POTENCY = 260.0;
+		static constexpr float T3_POTENCY = 70.0;
+		static constexpr float T3_DOT_POTENCY = 40.0;
+		static constexpr float TC_POTENCY = 390.0;
+		static constexpr float FOUL_POTENCY = 650.0;
 
-		static constexpr double ENO_MULTIPLIER = 1.10;
-		static constexpr double MAGICK_AND_MEND_MULTIPLIER = 1.30;
-		static constexpr double AF1_MULTIPLIER = 1.40;
-		static constexpr double AF2_MULTIPLIER = 1.60;
-		static constexpr double AF3_MULTIPLIER = 1.80;
-		static constexpr double AF1UI1_MULTIPLIER = 0.90;
-		static constexpr double AF2UI2_MULTIPLIER = 0.80;
-		static constexpr double AF3UI3_MULTIPLIER = 0.70;
+		static constexpr float ENO_MULTIPLIER = 1.10;
+		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30;
+		static constexpr float AF1_MULTIPLIER = 1.40;
+		static constexpr float AF2_MULTIPLIER = 1.60;
+		static constexpr float AF3_MULTIPLIER = 1.80;
+		static constexpr float AF1UI1_MULTIPLIER = 0.90;
+		static constexpr float AF2UI2_MULTIPLIER = 0.80;
+		static constexpr float AF3UI3_MULTIPLIER = 0.70;
 
 		// MP costs and multipliers
 		static constexpr int F1_MP_COST = 1200;
@@ -319,11 +336,18 @@ namespace StrikingDummy
 		Timer cast_timer;
 		Timer lock_timer;
 		Action casting = Action::NONE;
+		int casting_mp_cost = 0;
 
-		// metrics
-		long long damage_reward = 0;
+		bool useable[NUM_ACTIONS];
+		std::vector<int> useable_actions;
+
+		// misc
 		long long total_damage = 0;
-		
+
+		std::vector<State> history;
+		int last_action_state = -1;
+		int last_dot_state = -1;
+
 		BlackMage(Stats stats);
 
 		void start(Rotation* rotation, int time_limit_in_seconds);
@@ -331,7 +355,6 @@ namespace StrikingDummy
 		void reset();
 
 		void update(int elapsed);
-		void step();
 		
 		void update_mp();
 		void update_dot();

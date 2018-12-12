@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "StrikingDummy.h"
 #include "Logger.h"
 #include <iostream>
@@ -17,8 +19,8 @@ Notes:
 
 int main()
 {
-	std::cout << sizeof(StrikingDummy::State) << std::endl;
-	std::cout << sizeof(StrikingDummy::Transition) << std::endl;
+	std::cout << "state size: " << sizeof(StrikingDummy::State) << std::endl;
+	std::cout << "transition size: " << sizeof(StrikingDummy::Transition) << std::endl;
 
 	Logger::open();
 
@@ -36,7 +38,7 @@ int main()
 
 	blm.train();
 
-	blm.start(new StrikingDummy::BalanceRotation(), 600);
+	//blm.start(new StrikingDummy::BalanceRotation(), 600);
 
 	Logger::close();
 
