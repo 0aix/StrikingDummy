@@ -1,6 +1,5 @@
-#include "stdafx.h"
-
-#include "StrikingDummy.h"
+#include "TrainingDummy.h"
+#include "BlackMage.h"
 #include "Logger.h"
 #include <iostream>
 
@@ -15,14 +14,14 @@ Notes:
 
 - T3 dot and buffs apply immediately.
 
+- Can't wait for an arbitrary period of time.
+
 */
 
 int main()
 {
-	std::cout << "state size: " << sizeof(StrikingDummy::State) << std::endl;
-	std::cout << "transition size: " << sizeof(StrikingDummy::Transition) << std::endl;
-
-	Logger::open();
+	//std::cout << "state size: " << sizeof(StrikingDummy::State) << std::endl;
+	//std::cout << "transition size: " << sizeof(StrikingDummy::Transition) << std::endl;
 
 	std::cout.precision(std::numeric_limits<double>::max_digits10);
 
@@ -35,12 +34,9 @@ int main()
 	stats.skill_speed = 1450;
 
 	StrikingDummy::BlackMage blm(stats);
+	StrikingDummy::TrainingDummy dummy(blm);
 
-	blm.train();
-
-	//blm.start(new StrikingDummy::BalanceRotation(), 600);
-
-	Logger::close();
+	dummy.train();
 
 	std::cin.get();
 	return 0;

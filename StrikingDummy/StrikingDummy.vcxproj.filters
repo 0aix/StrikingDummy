@@ -15,36 +15,45 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="BlackMage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BalanceRotation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="StrikingDummy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="Job.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TrainingDummy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelRotation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="StrikingDummy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stdafx.h">
+    <ClInclude Include="BlackMage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Job.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrainingDummy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rotation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
