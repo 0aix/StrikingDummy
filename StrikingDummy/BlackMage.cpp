@@ -321,9 +321,9 @@ namespace StrikingDummy
 			if (!gcd_timer.ready)
 				return true;
 			//return true;
-			return get_mp_cost(B1) <= mp || get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || get_mp_cost(F1) <= mp || get_mp_cost(F3) <= mp || foul_timer.ready ||
+			return !(get_mp_cost(B1) <= mp || get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || get_mp_cost(F1) <= mp || get_mp_cost(F3) <= mp || foul_timer.ready ||
 				(element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp) ||
-				(element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp);
+				(element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp));
 		case B1:
 			return gcd_timer.ready && get_mp_cost(B1) <= mp;
 		case B3:

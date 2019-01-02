@@ -27,11 +27,11 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPISODE = 1000;
-		const int NUM_EPISODES_PER_EPOCH = 10;
-		const int NUM_BATCHES_PER_EPOCH = 1;
-		const int CAPACITY = 1000000;
-		const int BATCH_SIZE = 50000;
-		const double EPS_DECAY = 0.99;
+		const int NUM_EPISODES_PER_EPOCH = 100;
+		const int NUM_BATCHES_PER_EPOCH = 20;
+		const int CAPACITY = 100000;
+		const int BATCH_SIZE = 10000;
+		const double EPS_DECAY = 0.9998;
 		const double EPS_MIN = 0.01;
 		const float WINDOW = 4000.0f;
 
@@ -57,9 +57,11 @@ namespace StrikingDummy
 		// Initialize model
 		model.init(BATCH_SIZE);
 
-		rotation.eps = 1.0;
+		double _eps = 0.25;
+		rotation.eps = _eps;
 
-		float nu = 0.0001f;
+		float nu = 0.0001f; // sigmoid can use a larger learning rate
+		//float nu = 0.000001f;
 
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
 		{
@@ -88,7 +90,12 @@ namespace StrikingDummy
 				fouls += blm.foul_count;
 				f4s += blm.f4_count;
 			}
-			std::cout << "eps: " << rotation.eps << ", avg dps: " << (1.0f / NUM_EPISODES_PER_EPOCH) * dps << ", avg fouls: " << (1.0f / NUM_EPISODES_PER_EPOCH) * fouls << ", avg F4s: " << (1.0f / NUM_EPISODES_PER_EPOCH) * f4s << std::endl;
+			std::stringstream ss;
+			float avg_dps = (1.0f / NUM_EPISODES_PER_EPOCH) * dps;
+			ss << "eps: " << rotation.eps << ", avg dps: " << avg_dps << ", avg fouls: " << (1.0f / NUM_EPISODES_PER_EPOCH) * fouls << ", avg F4s: " << (1.0f / NUM_EPISODES_PER_EPOCH) * f4s << std::endl;
+			Logger::log(ss.str().c_str());
+			std::cout << ss.str();
+			//std::cout << "eps: " << rotation.eps << ", avg dps: " << (1.0f / NUM_EPISODES_PER_EPOCH) * dps << ", avg fouls: " << (1.0f / NUM_EPISODES_PER_EPOCH) * fouls << ", avg F4s: " << (1.0f / NUM_EPISODES_PER_EPOCH) * f4s << std::endl;
 			if (m_size == CAPACITY)
 			{
 				// batch train a bunch
@@ -137,9 +144,16 @@ namespace StrikingDummy
 				}
 				//if (m_size == CAPACITY)
 					//rotation.eps = std::max(rotation.eps * EPS_DECAY, EPS_MIN);
-				rotation.eps -= 0.01f;
-				if (rotation.eps < 0.0f)
-					rotation.eps = 1.0f;
+				//rotation.eps -= 0.01f;
+				//if (rotation.eps < 0.0f)
+				//	rotation.eps = 1.0f;
+				//rotation.eps *= EPS_DECAY;
+				if (rotation.eps > 0.0)
+					rotation.eps = 0.0;
+				else
+					rotation.eps = _eps;
+				//if (_eps > 0.0)
+				//	_eps -= 0.0001;
 			}
 		}
 
