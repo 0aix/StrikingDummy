@@ -26,14 +26,14 @@ namespace StrikingDummy
 		long long start_time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
 		const int NUM_EPOCHS = 1000000;
-		const int NUM_STEPS_PER_EPISODE = 1000;
-		const int NUM_EPISODES_PER_EPOCH = 100;
+		const int NUM_STEPS_PER_EPISODE = 1300;
+		const int NUM_EPISODES_PER_EPOCH = 10;
 		const int NUM_BATCHES_PER_EPOCH = 20;
-		const int CAPACITY = 100000;
-		const int BATCH_SIZE = 10000;
+		const int CAPACITY = 10000;
+		const int BATCH_SIZE = 1000;
 		const double EPS_DECAY = 0.9998;
 		const double EPS_MIN = 0.01;
-		const float WINDOW = 4000.0f;
+		const float WINDOW = 18000.0f;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -60,7 +60,7 @@ namespace StrikingDummy
 		double _eps = 0.25;
 		rotation.eps = _eps;
 
-		float nu = 0.0001f; // sigmoid can use a larger learning rate
+		float nu = 0.001f; // sigmoid can use a larger learning rate
 		//float nu = 0.000001f;
 
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
