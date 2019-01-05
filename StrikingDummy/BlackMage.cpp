@@ -121,6 +121,7 @@ namespace StrikingDummy
 		total_damage = 0;
 		foul_count = 0;
 		f4_count = 0;
+		b4_count = 0;
 		
 		history.clear();
 
@@ -358,11 +359,6 @@ namespace StrikingDummy
 
 	void BlackMage::use_action(int action)
 	{
-		//if (!can_use_action(action))
-		//{
-		//	std::cout << action;
-		//	throw 0;
-		//}
 		history.back().action = action;
 		switch (action)
 		{
@@ -380,6 +376,8 @@ namespace StrikingDummy
 				foul_count++;
 			else if (action == F4)
 				f4_count++;
+			else if (action == B4)
+				b4_count++;
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
 			lock_timer.reset(get_lock_time(action), false);
@@ -763,10 +761,13 @@ namespace StrikingDummy
 		state.data[0] = mp / (float)MAX_MP;
 		state.data[1] = element == UI;
 		state.data[2] = element == AF;
-		state.data[3] = umbral_hearts / 3.0f;
+		//state.data[3] = umbral_hearts / 3.0f;
+		state.data[3] = umbral_hearts >= 1;
 		state.data[4] = enochian;
-		state.data[5] = (TICK_TIMER - mp_timer.time) / (float)TICK_TIMER;
-		state.data[6] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
+		//state.data[5] = (TICK_TIMER - mp_timer.time) / (float)TICK_TIMER;
+		//state.data[6] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
+		state.data[5] = umbral_hearts >= 2;
+		state.data[6] = umbral_hearts >= 3;
 		state.data[7] = gauge.count > 0;
 		state.data[8] = gauge.count == 1;
 		state.data[9] = gauge.count == 2;

@@ -153,6 +153,7 @@ namespace StrikingDummy
 		// metrics
 		int foul_count = 0;
 		int f4_count = 0;
+		int b4_count = 0;
 
 		std::vector<Transition> history;
 		int dot_index = -1;

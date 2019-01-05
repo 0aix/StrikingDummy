@@ -26,4 +26,11 @@ namespace StrikingDummy
 
 		void step();
 	};
+
+	struct MyRotation : Rotation
+	{
+		MyRotation(Job& job);
+
+		void step();
+	};
 }

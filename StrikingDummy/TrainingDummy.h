@@ -16,5 +16,6 @@ namespace StrikingDummy
 		~TrainingDummy();
 
 		void train();
+		void test();
 	};
 }

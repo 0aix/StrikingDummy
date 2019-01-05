@@ -18,5 +18,7 @@ namespace StrikingDummy
 		MatrixXf& batch_compute();
 
 		void train(float nu);
+
+		void save();
 	};
 }
