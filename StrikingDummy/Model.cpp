@@ -53,6 +53,8 @@ namespace StrikingDummy
 	MatrixXf d3;
 	MatrixXf ones_row;
 	MatrixXf ones_col;
+	MatrixXf ones_X2;
+	MatrixXf ones_X3;
 
 	float sigmoid(float x)
 	{
@@ -88,29 +90,25 @@ namespace StrikingDummy
 	{
 		// sigmoid - rt96
 		// relu - rt12
-		W1 = MatrixXf::Random(INNER_1, NUM_IN) * (sqrtf(96.0f / (INNER_1 + NUM_IN)));
+		W1 = MatrixXf::Random(INNER_1, NUM_IN) * (sqrtf(12.0f / (INNER_1 + NUM_IN)));
 		b1 = MatrixXf::Zero(INNER_1, 1);
-		//W2 = MatrixXf::Random(INNER_2, INNER_1) * (sqrtf(96.0f / (INNER_2 + INNER_1)));
-		//b2 = MatrixXf::Zero(INNER_2, 1);
-		//W3 = MatrixXf::Random(NUM_OUT, INNER_2) * (sqrtf(96.0f / (NUM_OUT + INNER_2)));
-		//b3 = MatrixXf::Zero(NUM_OUT, 1);
-		W3 = MatrixXf::Random(NUM_OUT, INNER_1) * (sqrtf(96.0f / (NUM_OUT + INNER_1)));
+		W2 = MatrixXf::Random(INNER_2, INNER_1) * (sqrtf(12.0f / (INNER_2 + INNER_1)));
+		b2 = MatrixXf::Zero(INNER_2, 1);
+		W3 = MatrixXf::Random(NUM_OUT, INNER_2) * (sqrtf(96.0f / (NUM_OUT + INNER_2)));
 		b3 = MatrixXf::Zero(NUM_OUT, 1);
 		x0 = MatrixXf::Zero(NUM_IN, 1);
 		x1 = MatrixXf::Zero(INNER_1, 1);
-		//x2 = MatrixXf::Zero(INNER_2, 1);
+		x2 = MatrixXf::Zero(INNER_2, 1);
 		xk = MatrixXf::Zero(NUM_OUT, 1);
 		dLdW1 = MatrixXf::Zero(INNER_1, NUM_IN);
 		dLdb1 = MatrixXf::Zero(INNER_1, 1);
-		//dLdW2 = MatrixXf::Zero(INNER_2, INNER_1);
-		//dLdb2 = MatrixXf::Zero(INNER_2, 1);
-		//dLdW3 = MatrixXf::Zero(NUM_OUT, INNER_2);
-		//dLdb3 = MatrixXf::Zero(NUM_OUT, 1);
-		dLdW3 = MatrixXf::Zero(NUM_OUT, INNER_1);
+		dLdW2 = MatrixXf::Zero(INNER_2, INNER_1);
+		dLdb2 = MatrixXf::Zero(INNER_2, 1);
+		dLdW3 = MatrixXf::Zero(NUM_OUT, INNER_2);
 		dLdb3 = MatrixXf::Zero(NUM_OUT, 1);
 		X0 = MatrixXf::Zero(NUM_IN, batch_size);
 		X1 = MatrixXf::Zero(INNER_1, batch_size);
-		//X2 = MatrixXf::Zero(INNER_2, batch_size);
+		X2 = MatrixXf::Zero(INNER_2, batch_size);
 		Xk = MatrixXf::Zero(NUM_OUT, batch_size);
 		//QR = MatrixXf::Zero(1, batch_size);
 		//R = MatrixXf::Zero(1, batch_size);
@@ -118,12 +116,14 @@ namespace StrikingDummy
 		//dQdX2 = MatrixXf::Zero(NUM_OUT, batch_size);
 		//dLdX2 = MatrixXf::Zero(NUM_OUT, batch_size);
 		d1 = MatrixXf::Zero(INNER_1, batch_size);
-		//d2 = MatrixXf::Zero(INNER_2, batch_size);
+		d2 = MatrixXf::Zero(INNER_2, batch_size);
 		d3 = MatrixXf::Zero(NUM_OUT, batch_size);
 		//dX1 = MatrixXf::Zero(INNER_1, batch_size);
 		//dX2 = MatrixXf::Zero(NUM_OUT, batch_size);
 		ones_row = MatrixXf::Ones(1, batch_size);
 		ones_col = MatrixXf::Ones(batch_size, 1);
+		ones_X2 = MatrixXf::Ones(INNER_2, 1);
+		ones_X3 = MatrixXf::Ones(NUM_OUT, 1);
 
 		target = MatrixXf::Zero(NUM_OUT, batch_size);
 
@@ -189,12 +189,11 @@ namespace StrikingDummy
 		//x1 = (W1 * x0 + b1).unaryExpr(&leaky);
 		//x1 = (W1 * x0 + b1).unaryExpr(&sigmoid);
 		
-		//x1 = (W1 * x0 + b1).cwiseMax(0.0f);
-		//x2 = (W2 * x1 + b2).cwiseMax(0.0f);
-		x1 = (W1 * x0 + b1).unaryExpr(&sigmoid);
+		x1 = (W1 * x0 + b1).cwiseMax(0.0f);
+		x2 = (W2 * x1 + b2).cwiseMax(0.0f);
+		//x1 = (W1 * x0 + b1).unaryExpr(&sigmoid);
 		//x2 = (W2 * x1 + b2).unaryExpr(&sigmoid);
-		//xk = (W3 * x2 + b3);// .unaryExpr(&sigmoid);
-		xk = (W3 * x1 + b3);
+		xk = (W3 * x2 + b3);// .unaryExpr(&sigmoid);
 		return xk;
 	}
 
@@ -204,12 +203,11 @@ namespace StrikingDummy
 		//X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&leaky);
 		//X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&sigmoid);
 		
-		//X1 = (W1 * X0 + b1 * ones_row).cwiseMax(0.0f);
-		//X2 = (W2 * X1 + b2 * ones_row).cwiseMax(0.0f);
-		X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&sigmoid);
+		X1 = (W1 * X0 + b1 * ones_row).cwiseMax(0.0f);
+		X2 = (W2 * X1 + b2 * ones_row).cwiseMax(0.0f);
+		//X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&sigmoid);
 		//X2 = (W2 * X1 + b2 * ones_row).unaryExpr(&sigmoid);
-		//Xk = (W3 * X2 + b3 * ones_row).unaryExpr(&sigmoid);
-		Xk = (W3 * X1 + b3 * ones_row).unaryExpr(&sigmoid);
+		Xk = (W3 * X2 + b3 * ones_row).unaryExpr(&sigmoid);
 		return Xk;
 	}
 
@@ -233,8 +231,7 @@ namespace StrikingDummy
 		d3 = (Xk - target).cwiseProduct(Xk.unaryExpr(&dsigmoid));
 
 		// dL/dW2 = d2 * X1^T
-		//dLdW3 = d3 * X2.transpose();
-		dLdW3 = d3 * X1.transpose();
+		dLdW3 = d3 * X2.transpose();
 
 		// dL/db2 = d2 * (N x 1)
 		dLdb3 = d3 * ones_col;
@@ -245,20 +242,19 @@ namespace StrikingDummy
 		//d1 = (W2.transpose() * d2).cwiseProduct(X1.unaryExpr(&dleaky));
 		//d1 = (W2.transpose() * d2).cwiseProduct(X1.unaryExpr(&dsigmoid));
 
-		//d2 = (W3.transpose() * d3).cwiseProduct(X2.cwiseSign());
+		d2 = (W3.transpose() * d3).cwiseProduct(X2.cwiseSign());
 		//d2 = (W3.transpose() * d3).cwiseProduct(X2.unaryExpr(&dsigmoid));
 
 		// dL/dW1 = d1 * X0^T
-		//dLdW2 = d2 * X1.transpose();
+		dLdW2 = d2 * X1.transpose();
 
 		// dL/db1 = d1 * (N x 1)
-		//dLdb2 = d2 * ones_col;
+		dLdb2 = d2 * ones_col;
 
 		//////////
 
-		//d1 = (W2.transpose() * d2).cwiseProduct(X1.cwiseSign());
+		d1 = (W2.transpose() * d2).cwiseProduct(X1.cwiseSign());
 		//d1 = (W2.transpose() * d2).cwiseProduct(X1.unaryExpr(&dsigmoid));
-		d1 = (W3.transpose() * d3).cwiseProduct(X1.unaryExpr(&dsigmoid));
 
 		// dL/dW1 = d1 * X0^T
 		dLdW1 = d1 * X0.transpose();
@@ -273,10 +269,10 @@ namespace StrikingDummy
 		b3 = b3 - (nu * dLdb3);
 
 		// W2 -= nu * dL/dW2
-		//W2 = W2 - (nu * dLdW2);
+		W2 = W2 - (nu * dLdW2);
 
 		// b2 -= nu * dL/db2
-		//b2 = b2 - (nu * dLdb2);
+		b2 = b2 - (nu * dLdb2);
 
 		// W1 -= nu * dL/dW1
 		W1 = W1 - (nu * dLdW1);
@@ -285,7 +281,7 @@ namespace StrikingDummy
 		b1 = b1 - (nu * dLdb1);
 
 		//std::cout << W2.col(0)(0) << std::endl;
-		if (std::isnan(W1.col(0)(0)))
+		if (std::isnan(W2.col(0)(0)))
 			throw 0;
 	}
 }
