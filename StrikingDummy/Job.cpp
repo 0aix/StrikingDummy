@@ -8,10 +8,10 @@
 #define DBG(x)
 #endif
 
-#define LV_SUB 364.0
-#define LV_DIV 2170.0
-#define LV_MAIN 292.0
-#define JOB_ATT 115.0
+#define LV_SUB 364.0f
+#define LV_DIV 2170.0f
+#define LV_MAIN 292.0f
+#define JOB_ATT 115.0f
 
 namespace StrikingDummy
 {
@@ -22,6 +22,7 @@ namespace StrikingDummy
 		this->stats.calculate_stats();
 	}
 
+	// guarantees at least 1 useable action that is not NONE (0) after returning
 	void Job::step()
 	{
 		int elapsed;
@@ -30,9 +31,16 @@ namespace StrikingDummy
 			if ((elapsed = timeline.next_event()) > 0)
 			{
 				update(elapsed);
+				if (actions.empty() || (actions.size() == 1 && actions[0] == 0))
+					continue;
 				break;
 			}
 		}
+	}
+
+	void Job::seed(unsigned long long seed)
+	{
+		rng = std::mt19937(seed);
 	}
 
 	void Job::push_event(int offset)
@@ -45,18 +53,18 @@ namespace StrikingDummy
 
 	void Stats::calculate_stats()
 	{
-		wep_multiplier = floor(LV_MAIN * JOB_ATT / 1000.0 + weapon_damage);
-		attk_multiplier = floor(125.0 * (main_stat - LV_MAIN) / LV_MAIN + 100.0) / 100.0;
-		crit_multiplier = floor(200.0 * (critical_hit - LV_SUB) / LV_DIV + 1400.0) / 1000.0;
-		crit_rate = floor(200.0 * (critical_hit - LV_SUB) / LV_DIV + 50.0) / 1000.0;
-		dhit_rate = floor(550.0 * (direct_hit - LV_SUB) / LV_DIV) / 1000.0;
-		det_multiplier = floor(130.0 * (determination - LV_MAIN) / LV_DIV + 1000.0) / 1000.0;
-		ss_multiplier = 1000.0 - floor(130.0 * (skill_speed - LV_SUB) / LV_DIV);
-		dot_multiplier = floor(130.0 * (skill_speed - LV_SUB) / LV_DIV + 1000.0) / 1000.0;
+		wep_multiplier = floor(LV_MAIN * JOB_ATT / 1000.0f + weapon_damage);
+		attk_multiplier = floor(125.0f * (main_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f;
+		crit_multiplier = floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 1400.0f) / 1000.0f;
+		crit_rate = floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 50.0f) / 1000.0f;
+		dhit_rate = floor(550.0f * (direct_hit - LV_SUB) / LV_DIV) / 1000.0f;
+		det_multiplier = floor(130.0f * (determination - LV_MAIN) / LV_DIV + 1000.0f) / 1000.0f;
+		ss_multiplier = 1000.0f - floor(130.0f * (skill_speed - LV_SUB) / LV_DIV);
+		dot_multiplier = floor(130.0f * (skill_speed - LV_SUB) / LV_DIV + 1000.0f) / 1000.0f;
 
-		potency_multiplier = wep_multiplier * attk_multiplier * det_multiplier / 100.0;
-		double dcrit_rate = crit_rate * dhit_rate;
-		expected_multiplier = (1 - crit_rate + dcrit_rate - dhit_rate) + crit_multiplier * (crit_rate - dcrit_rate) + crit_multiplier * 1.25 * dcrit_rate + 1.25 * (dhit_rate - dcrit_rate);
+		potency_multiplier = wep_multiplier * attk_multiplier * det_multiplier / 100.0f;
+		float dcrit_rate = crit_rate * dhit_rate;
+		expected_multiplier = (1.0f - crit_rate + dcrit_rate - dhit_rate) + crit_multiplier * (crit_rate - dcrit_rate) + crit_multiplier * 1.25f * dcrit_rate + 1.25f * (dhit_rate - dcrit_rate);
 	}
 
 	// ============================================ Timeline ============================================

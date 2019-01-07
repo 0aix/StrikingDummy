@@ -18,7 +18,6 @@ using namespace Eigen;
 
 namespace StrikingDummy
 {
-	std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 	std::uniform_real_distribution<double> prob(0.0, 1.0);
 	std::uniform_real_distribution<double> damage_range(0.95, 1.05);
 	std::uniform_int_distribution<int> tick_rng(1, 300);
@@ -48,31 +47,7 @@ namespace StrikingDummy
 		actions.reserve(NUM_ACTIONS);
 		reset();
 	}
-	/*
-	void BlackMage::train()
-		std::fstream fs;
 
-		fs.open("Weights\\weights", std::fstream::in | std::fstream::binary);
-		if (fs.is_open())
-		{
-			fs.read((char*)W1.data(), INNER * 56 * 8);
-			fs.read((char*)b1.data(), INNER * 1 * 8);
-			fs.read((char*)W2.data(), 15 * INNER * 8);
-			fs.read((char*)b2.data(), 15 * 1 * 8);
-			fs.close();
-		}
-
-		std::stringstream ss;
-		ss << "Weights\\weights-" << start_time;
-		fs.open(ss.str().c_str(), std::fstream::out | std::fstream::binary);
-		fs.write((const char*)W1.data(), INNER * 56 * 8);
-		fs.write((const char*)b1.data(), INNER * 1 * 8);
-		fs.write((const char*)W2.data(), 15 * INNER * 8);
-		fs.write((const char*)b2.data(), 15 * 1 * 8);
-		fs.flush();
-		fs.close();
-	}
-	*/
 	void BlackMage::reset()
 	{
 		timeline = {};

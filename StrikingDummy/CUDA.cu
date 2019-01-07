@@ -1,0 +1,382 @@
+#include "CUDA.cuh"
+#include <iostream>
+#include <chrono>
+#include <math.h>
+#include <curand.h>
+
+int blockSize = 0;
+bool cuda_init = false;
+
+void cudaSafeDeviceSynchronize()
+{
+	cudaError_t cudaStatus = cudaDeviceSynchronize();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "cudaDeviceSynchronize failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+}
+
+void cudaInitialize()
+{
+	if (!cuda_init)
+	{
+		cudaError_t cudaStatus = cudaSetDevice(0);
+		if (cudaStatus != cudaSuccess)
+		{
+			std::cerr << "cudaSetDevice failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+			throw 0;
+		}
+
+		cudaDeviceProp prop;
+		cudaStatus = cudaGetDeviceProperties(&prop, 0);
+		if (cudaStatus != cudaSuccess)
+		{
+			std::cerr << "cudaGetDeviceProperties failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+			throw 0;
+		}
+		blockSize = prop.maxThreadsPerBlock;
+		if (blockSize != 1024)
+			throw 0;
+
+		cuda_init = true;
+	}
+}
+
+__global__ void _matrixInitialize(float* A, int n, float r)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		A[i] = 2.0f * (A[i] - 0.5f) * r;
+}
+
+// dumb
+__global__ void _matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
+{
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n0 && j < m1)
+	{
+		float sum = 0.0f;
+		for (int k = 0; k < m0; k++)
+			sum += A[k * n0 + i] * B[j * n1 + k];
+		C[j * n0 + i] = sum;
+	}
+}
+
+__global__ void _matrixTranspose(float* B, float* A, int n, int m)
+{
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n && j < m)
+		B[i * m + j] = A[j * n + i];
+}
+
+void matrixInitialize(float** A, int n, int m)
+{
+	cudaError_t cudaStatus = cudaMalloc(A, sizeof(float) * n * m);
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "cudaMalloc failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+}
+
+void matrixInitialize(float** A, int n, int m, float r)
+{
+	matrixInitialize(A, n, m);
+
+	curandGenerator_t gen;
+	
+	curandStatus_t status = curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_MT19937);
+	if (status != CURAND_STATUS_SUCCESS)
+	{
+		std::cerr << "curandCreateGenerator failed" << std::endl;
+		throw 0;
+	}
+
+	status = curandSetPseudoRandomGeneratorSeed(gen, std::chrono::high_resolution_clock::now().time_since_epoch().count());
+	if (status != CURAND_STATUS_SUCCESS)
+	{
+		std::cerr << "curandSetPseudoRandomGeneratorSeed failed" << std::endl;
+		throw 0;
+	}
+
+	status = curandGenerateUniform(gen, *A, (size_t)n * (size_t)m);
+	if (status != CURAND_STATUS_SUCCESS)
+	{
+		std::cerr << "curandGenerateUniform failed" << std::endl;
+		throw 0;
+	}
+
+	status = curandDestroyGenerator(gen);
+	if (status != CURAND_STATUS_SUCCESS)
+	{
+		std::cerr << "curandDestroyGenerator failed" << std::endl;
+		throw 0;
+	}
+
+	int numBlocks = (n * m + blockSize - 1) / blockSize;
+	_matrixInitialize<<<numBlocks, blockSize>>>(*A, n * m, r);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_matrixInitialize failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void matrixFree(float** A)
+{
+	if (A)
+	{
+		cudaFree(*A);
+		*A = NULL;
+	}
+}
+
+void matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
+{
+	if (m0 != n1)
+		throw 0;
+
+	dim3 numThreads(32, 32);
+	dim3 numBlocks((m1 + 31) / 32, (n0 + 31) / 32);
+
+	_matrixMultiply<<<numBlocks, numThreads>>>(C, A, n0, m0, B, n1, m1);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_matrixMultiply failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void matrixTranspose(float* B, float* A, int n, int m)
+{
+	dim3 numThreads(32, 32);
+	dim3 numBlocks((m + 31) / 32, (n + 31) / 32);
+
+	_matrixTranspose<<<numBlocks, numThreads>>>(B, A, n, m);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_matrixTranspose failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+__global__ void _arrayAdd(float* C, float* A, float* B, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		C[i] = A[i] + B[i];
+}
+
+__global__ void _arrayAddRep(float* C, float* A, float* B, int n, int width)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		C[i] = A[i] + B[i % width];
+}
+
+__global__ void _arraySubtract(float* C, float* A, float* B, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		C[i] = A[i] - B[i];
+}
+
+__global__ void _arrayMultiply(float* C, float* A, float* B, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		C[i] = A[i] * B[i];
+}
+
+__global__ void _arrayMultiplyScalar(float* B, float* A, float b, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		B[i] = A[i] * b;
+}
+
+__global__ void _arraySigmoid(float* B, float* A, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		B[i] = 1.0f / (1.0f + expf(-A[i]));
+}
+
+__global__ void _arrayDerivSigmoid(float* B, float* A, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		B[i] = A[i] * (1.0f - A[i]);
+}
+
+__global__ void _arrayReLU(float* B, float* A, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		B[i] = fmaxf(0.0f, A[i]);
+}
+
+__global__ void _arrayDerivReLU(float* B, float* A, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		B[i] = A[i] > 0.0f ? 1.0f : 0.0f;
+}
+
+void arrayCopyToDevice(float* _A, float* A, int n)
+{
+	cudaError_t cudaStatus = cudaMemcpy(_A, A, sizeof(float) * n, cudaMemcpyHostToDevice);
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+}
+
+void arrayCopyToHost(float* A, float* _A, int n)
+{
+	cudaError_t cudaStatus = cudaMemcpy(A, _A, sizeof(float) * n, cudaMemcpyDeviceToHost);
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+}
+
+void arrayAdd(float* C, float* A, float* B, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayAdd<<<numBlocks, blockSize>>>(C, A, B, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayAdd failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arrayAddRep(float* C, float* A, float* B, int n, int m)
+{
+	int numBlocks = (n * m + blockSize - 1) / blockSize;
+	_arrayAddRep<<<numBlocks, blockSize>>>(C, A, B, n * m, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayAddRep failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arraySubtract(float* C, float* A, float* B, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arraySubtract<<<numBlocks, blockSize>>>(C, A, B, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arraySubtract failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arrayMultiply(float* C, float* A, float* B, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayMultiply<<<numBlocks, blockSize>>>(C, A, B, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayMultiply failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arrayMultiply(float* C, float* A, float b, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayMultiplyScalar<<<numBlocks, blockSize>>>(C, A, b, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayMultiplyScalar failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arraySigmoid(float* B, float* A, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arraySigmoid<<<numBlocks, blockSize>>>(B, A, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arraySigmoid failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arrayDerivSigmoid(float* B, float* A, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayDerivSigmoid<<<numBlocks, blockSize>>>(B, A, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayDerivSigmoid failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arrayReLU(float* B, float* A, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayReLU<<<numBlocks, blockSize>>>(B, A, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayReLU failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arrayDerivReLU(float* B, float* A, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayDerivReLU<<<numBlocks, blockSize>>>(B, A, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayDerivReLU failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}

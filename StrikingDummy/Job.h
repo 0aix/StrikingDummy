@@ -1,6 +1,7 @@
 #pragma once
 
 #include <queue>
+#include <random>
 
 namespace StrikingDummy
 {
@@ -60,11 +61,12 @@ namespace StrikingDummy
 		Stats stats;
 		Timeline timeline;
 		std::vector<int> actions;
-		long long total_damage = 0;
+		std::mt19937 rng;
 
 		Job(Stats& stats);
 
 		void step();
+		void seed(unsigned long long seed);
 
 		virtual void reset() = 0;
 		virtual void use_action(int action) = 0;

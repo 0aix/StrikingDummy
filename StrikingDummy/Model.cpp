@@ -1,6 +1,5 @@
 #include "Model.h"
-#include <iostream>
-#include <fstream>
+#include "CUDA.cuh"
 
 namespace StrikingDummy
 {
@@ -8,6 +7,244 @@ namespace StrikingDummy
 	const int NUM_OUT = 15;
 	const int INNER_1 = 32;
 	const int INNER_2 = 32;
+
+	float sigmoid(float x)
+	{
+		return 1.0f / (1.0f + exp(-x));
+	}
+
+	//Model::Model(ModelParams& params)
+	void Model::init(int batch_size)
+	{
+		cudaInitialize();
+
+		this->batch_size = batch_size;
+
+		x0 = new float[NUM_IN];
+		x3 = new float[NUM_OUT];
+		X0 = new float[NUM_IN * batch_size];
+		X3 = new float[NUM_OUT * batch_size];
+		target = new float[NUM_OUT * batch_size];
+
+		matrixInitialize(&_x0, NUM_IN, 1);
+		matrixInitialize(&_x1, INNER_1, 1);
+		matrixInitialize(&_x2, INNER_2, 1);
+		matrixInitialize(&_x3, NUM_OUT, 1);
+		matrixInitialize(&_X0, NUM_IN, batch_size);
+		matrixInitialize(&_X1, INNER_1, batch_size);
+		matrixInitialize(&_X2, INNER_2, batch_size);
+		matrixInitialize(&_X3, NUM_OUT, batch_size);
+		matrixInitialize(&_target, NUM_OUT, batch_size);
+		matrixInitialize(&_W1, INNER_1, NUM_IN, sqrtf(96.0f / (INNER_1 + NUM_IN)));
+		matrixInitialize(&_W2, INNER_2, INNER_1, sqrtf(96.0f / (INNER_2 + INNER_1)));
+		matrixInitialize(&_W3, NUM_OUT, INNER_2, sqrtf(96.0f / (NUM_OUT + INNER_2)));
+		matrixInitialize(&_b1, INNER_1, 1, 0.0f);
+		matrixInitialize(&_b2, INNER_2, 1, 0.0f);
+		matrixInitialize(&_b3, NUM_OUT, 1, 0.0f);
+		matrixInitialize(&_d1, INNER_1, batch_size);
+		matrixInitialize(&_d2, INNER_2, batch_size);
+		matrixInitialize(&_d3, NUM_OUT, batch_size);
+		matrixInitialize(&_dLdW1, INNER_1, NUM_IN);
+		matrixInitialize(&_dLdW2, INNER_2, INNER_1);
+		matrixInitialize(&_dLdW3, NUM_OUT, INNER_2);
+		matrixInitialize(&_dLdb1, INNER_1, 1);
+		matrixInitialize(&_dLdb2, INNER_2, 1);
+		matrixInitialize(&_dLdb3, NUM_OUT, 1);
+		matrixInitialize(&_ones, batch_size, 1);
+
+		matrixInitialize(&__X0, batch_size, NUM_IN);
+		matrixInitialize(&__X1, batch_size, INNER_1);
+		matrixInitialize(&__X2, batch_size, INNER_2);
+		matrixInitialize(&__W2, INNER_1, INNER_2);
+		matrixInitialize(&__W3, INNER_2, NUM_OUT);
+
+		m_x0 = MatrixXf(NUM_IN, 1);
+		m_x1 = MatrixXf(INNER_1, 1);
+		m_x2 = MatrixXf(INNER_2, 1);
+		m_x3 = MatrixXf(NUM_OUT, 1);
+		m_W1 = MatrixXf(INNER_1, NUM_IN);
+		m_W2 = MatrixXf(INNER_2, INNER_1);
+		m_W3 = MatrixXf(NUM_OUT, INNER_2);
+		m_b1 = MatrixXf::Zero(INNER_1, 1);
+		m_b2 = MatrixXf::Zero(INNER_2, 1);
+		m_b3 = MatrixXf::Zero(NUM_OUT, 1);
+
+		arrayCopyToHost(m_W1.data(), _W1, INNER_1 * NUM_IN);
+		arrayCopyToHost(m_W2.data(), _W2, INNER_2 * INNER_1);
+		arrayCopyToHost(m_W3.data(), _W3, NUM_OUT * INNER_2);
+	}
+
+	Model::~Model()
+	{
+		delete[] x0;
+		delete[] x3;
+		delete[] X0;
+		delete[] X3;
+		delete[] target;
+
+		matrixFree(&_x0);
+		matrixFree(&_x1);
+		matrixFree(&_x2);
+		matrixFree(&_x3);
+		matrixFree(&_X0);
+		matrixFree(&_X1);
+		matrixFree(&_X2);
+		matrixFree(&_X3);
+		matrixFree(&_target);
+		matrixFree(&_W1);
+		matrixFree(&_W2);
+		matrixFree(&_W3);
+		matrixFree(&_b1);
+		matrixFree(&_b2);
+		matrixFree(&_b3);
+		matrixFree(&_d1);
+		matrixFree(&_d2);
+		matrixFree(&_d3);
+		matrixFree(&_dLdW1);
+		matrixFree(&_dLdW2);
+		matrixFree(&_dLdW3);
+		matrixFree(&_dLdb1);
+		matrixFree(&_dLdb2);
+		matrixFree(&_dLdb3);
+		matrixFree(&_ones);
+
+		matrixFree(&__X0);
+		matrixFree(&__X1);
+		matrixFree(&__X2);
+		matrixFree(&__W2);
+		matrixFree(&__W3);
+	}
+
+	float* Model::compute()
+	{
+		/*
+		arrayCopyToDevice(_x0, x0, NUM_IN);
+
+		matrixMultiply(_x1, _W1, INNER_1, NUM_IN, _x0, NUM_IN, 1);
+		arrayAdd(_x1, _x1, _b1, INNER_1);
+		arraySigmoid(_x1, _x1, INNER_1);
+
+		matrixMultiply(_x2, _W2, INNER_2, INNER_1, _x1, INNER_1, 1);
+		arrayAdd(_x2, _x2, _b2, INNER_2);
+		arraySigmoid(_x2, _x2, INNER_2);
+
+		matrixMultiply(_x3, _W3, NUM_OUT, INNER_2, _x2, INNER_2, 1);
+		arrayAdd(_x3, _x3, _b3, NUM_OUT);
+		//arraySigmoid(_x3, NUM_OUT);
+
+		arrayCopyToHost(x3, _x3, NUM_OUT);
+		return x3;
+		*/
+		//x1 = (W1 * x0 + b1).cwiseMax(0.0f);
+		//x2 = (W2 * x1 + b2).cwiseMax(0.0f);
+		m_x1 = (m_W1 * m_x0 + m_b1).unaryExpr(&sigmoid);
+		m_x2 = (m_W2 * m_x1 + m_b2).unaryExpr(&sigmoid);
+		m_x3 = (m_W3 * m_x2 + m_b3);
+		return m_x3.data();
+	}
+
+	float* Model::batch_compute()
+	{
+		arrayCopyToDevice(_X0, X0, NUM_IN * batch_size);
+
+		matrixMultiply(_X1, _W1, INNER_1, NUM_IN, _X0, NUM_IN, batch_size);
+		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
+		arraySigmoid(_X1, _X1, INNER_1 * batch_size);
+
+		matrixMultiply(_X2, _W2, INNER_2, INNER_1, _X1, INNER_1, batch_size);
+		arrayAddRep(_X2, _X2, _b2, INNER_2, batch_size);
+		arraySigmoid(_X2, _X2, INNER_2 * batch_size);
+
+		matrixMultiply(_X3, _W3, NUM_OUT, INNER_2, _X2, INNER_2, batch_size);
+		arrayAddRep(_X3, _X3, _b3, NUM_OUT, batch_size);
+		arraySigmoid(_X3, _X3, NUM_OUT * batch_size);
+
+		arrayCopyToHost(X3, _X3, NUM_OUT * batch_size);
+		return X3;
+	}
+
+	void Model::train(float nu)
+	{
+		arrayCopyToDevice(_target, target, NUM_OUT * batch_size);
+
+		// d3 = (Xk - target).cwiseProduct(Xk.unaryExpr(&dsigmoid));
+		arraySubtract(_target, _X3, _target, NUM_OUT * batch_size);
+
+		arrayDerivSigmoid(_X3, _X3, NUM_OUT * batch_size);
+
+		arrayMultiply(_d3, _target, _X3, NUM_OUT * batch_size);
+
+		// 
+		matrixTranspose(__X2, _X2, INNER_2, batch_size);
+
+		matrixMultiply(_dLdW3, _d3, NUM_OUT, batch_size, __X2, batch_size, INNER_2);
+
+		matrixMultiply(_dLdb3, _d3, NUM_OUT, batch_size, _ones, batch_size, 1);
+
+		//
+		matrixTranspose(__W3, _W3, NUM_OUT, INNER_2);
+
+		matrixMultiply(_d2, __W3, INNER_2, NUM_OUT, _d3, NUM_OUT, batch_size);
+
+		arrayDerivSigmoid(_X2, _X2, INNER_2 * batch_size);
+
+		arrayMultiply(_d2, _d2, _X2, INNER_2 * batch_size);
+
+		//
+		matrixTranspose(__X1, _X1, INNER_1, batch_size);
+
+		matrixMultiply(_dLdW2, _d2, INNER_2, batch_size, __X1, batch_size, INNER_1);
+
+		matrixMultiply(_dLdb2, _d2, INNER_2, batch_size, _ones, batch_size, 1);
+
+		//
+		matrixTranspose(__W2, _W2, INNER_2, INNER_1);
+
+		matrixMultiply(_d1, __W2, INNER_1, INNER_2, _d2, INNER_2, batch_size);
+
+		arrayDerivSigmoid(_X1, _X1, INNER_1 * batch_size);
+
+		arrayMultiply(_d1, _d1, _X1, INNER_1 * batch_size);
+
+		//
+		matrixTranspose(__X0, _X0, NUM_IN, batch_size);
+
+		matrixMultiply(_dLdW1, _d1, INNER_1, batch_size, __X0, batch_size, NUM_IN);
+
+		matrixMultiply(_dLdb1, _d1, INNER_1, batch_size, _ones, batch_size, 1);
+
+		//
+		arrayMultiply(_dLdW3, _dLdW3, nu, NUM_OUT * INNER_2);
+		
+		arrayMultiply(_dLdb3, _dLdb3, nu, NUM_OUT);
+		
+		arrayMultiply(_dLdW2, _dLdW2, nu, INNER_2 * INNER_1);
+		
+		arrayMultiply(_dLdb2, _dLdb2, nu, INNER_2);
+		
+		arrayMultiply(_dLdW1, _dLdW1, nu, INNER_1 * INNER_2);
+		
+		arrayMultiply(_dLdb1, _dLdb1, nu, INNER_1);
+
+		arraySubtract(_W3, _W3, _dLdW3, NUM_OUT * INNER_2);
+
+		arraySubtract(_b3, _b3, _dLdb3, NUM_OUT);
+
+		arraySubtract(_W2, _W2, _dLdW2, INNER_2 * INNER_1);
+
+		arraySubtract(_b2, _b2, _dLdb2, INNER_2);
+
+		arraySubtract(_W1, _W1, _dLdW1, INNER_1 * INNER_2);
+
+		arraySubtract(_b1, _b1, _dLdb1, INNER_1);
+
+		arrayCopyToHost(m_W1.data(), _W1, INNER_1 * NUM_IN);
+		arrayCopyToHost(m_W2.data(), _W2, INNER_2 * INNER_1);
+		arrayCopyToHost(m_W3.data(), _W3, NUM_OUT * INNER_2);
+		arrayCopyToHost(m_b1.data(), _b1, INNER_1);
+		arrayCopyToHost(m_b2.data(), _b2, INNER_2);
+		arrayCopyToHost(m_b3.data(), _b3, NUM_OUT);
+	}
 
 	// set input layer
 	// add hidden layer
@@ -24,7 +261,7 @@ namespace StrikingDummy
 	// b1 is a 128 x 1 matrix
 	// W2 is a 15 x 128 matrix
 	// b2 is a 15 x 1 matrix
-
+	/*
 	MatrixXf W1;
 	MatrixXf b1;
 	MatrixXf W2;
@@ -58,8 +295,6 @@ namespace StrikingDummy
 
 	float sigmoid(float x)
 	{
-		//return 1.0f / (1.0f + abs(x));
-		//return x / (1.0f + abs(x));
 		return 1.0f / (1.0f + exp(-x));
 	}
 
@@ -68,31 +303,13 @@ namespace StrikingDummy
 		return x * (1.0f - x);
 	}
 
-	float leaky(float x)
-	{
-		if (x <= 0.0f)
-			return 0.0f;
-		if (x >= 1.0f)
-			return 1.0f;
-		return x;
-	}
-
-	float dleaky(float x)
-	{
-		if (x <= 0.0f)
-			return 0.0f;
-		if (x >= 1.0f)
-			return 0.0f;
-		return 1.0f;
-	}
-
 	void Model::init(int batch_size)
 	{
 		// sigmoid - rt96
 		// relu - rt12
-		W1 = MatrixXf::Random(INNER_1, NUM_IN) * (sqrtf(12.0f / (INNER_1 + NUM_IN)));
+		W1 = MatrixXf::Random(INNER_1, NUM_IN) * (sqrtf(96.0f / (INNER_1 + NUM_IN)));
 		b1 = MatrixXf::Zero(INNER_1, 1);
-		W2 = MatrixXf::Random(INNER_2, INNER_1) * (sqrtf(12.0f / (INNER_2 + INNER_1)));
+		W2 = MatrixXf::Random(INNER_2, INNER_1) * (sqrtf(96.0f / (INNER_2 + INNER_1)));
 		b2 = MatrixXf::Zero(INNER_2, 1);
 		W3 = MatrixXf::Random(NUM_OUT, INNER_2) * (sqrtf(96.0f / (NUM_OUT + INNER_2)));
 		b3 = MatrixXf::Zero(NUM_OUT, 1);
@@ -189,10 +406,10 @@ namespace StrikingDummy
 		//x1 = (W1 * x0 + b1).unaryExpr(&leaky);
 		//x1 = (W1 * x0 + b1).unaryExpr(&sigmoid);
 		
-		x1 = (W1 * x0 + b1).cwiseMax(0.0f);
-		x2 = (W2 * x1 + b2).cwiseMax(0.0f);
-		//x1 = (W1 * x0 + b1).unaryExpr(&sigmoid);
-		//x2 = (W2 * x1 + b2).unaryExpr(&sigmoid);
+		//x1 = (W1 * x0 + b1).cwiseMax(0.0f);
+		//x2 = (W2 * x1 + b2).cwiseMax(0.0f);
+		x1 = (W1 * x0 + b1).unaryExpr(&sigmoid);
+		x2 = (W2 * x1 + b2).unaryExpr(&sigmoid);
 		xk = (W3 * x2 + b3);// .unaryExpr(&sigmoid);
 		return xk;
 	}
@@ -203,10 +420,10 @@ namespace StrikingDummy
 		//X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&leaky);
 		//X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&sigmoid);
 		
-		X1 = (W1 * X0 + b1 * ones_row).cwiseMax(0.0f);
-		X2 = (W2 * X1 + b2 * ones_row).cwiseMax(0.0f);
-		//X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&sigmoid);
-		//X2 = (W2 * X1 + b2 * ones_row).unaryExpr(&sigmoid);
+		//X1 = (W1 * X0 + b1 * ones_row).cwiseMax(0.0f);
+		//X2 = (W2 * X1 + b2 * ones_row).cwiseMax(0.0f);
+		X1 = (W1 * X0 + b1 * ones_row).unaryExpr(&sigmoid);
+		X2 = (W2 * X1 + b2 * ones_row).unaryExpr(&sigmoid);
 		Xk = (W3 * X2 + b3 * ones_row).unaryExpr(&sigmoid);
 		return Xk;
 	}
@@ -242,8 +459,8 @@ namespace StrikingDummy
 		//d1 = (W2.transpose() * d2).cwiseProduct(X1.unaryExpr(&dleaky));
 		//d1 = (W2.transpose() * d2).cwiseProduct(X1.unaryExpr(&dsigmoid));
 
-		d2 = (W3.transpose() * d3).cwiseProduct(X2.cwiseSign());
-		//d2 = (W3.transpose() * d3).cwiseProduct(X2.unaryExpr(&dsigmoid));
+		//d2 = (W3.transpose() * d3).cwiseProduct(X2.cwiseSign());
+		d2 = (W3.transpose() * d3).cwiseProduct(X2.unaryExpr(&dsigmoid));
 
 		// dL/dW1 = d1 * X0^T
 		dLdW2 = d2 * X1.transpose();
@@ -253,8 +470,8 @@ namespace StrikingDummy
 
 		//////////
 
-		d1 = (W2.transpose() * d2).cwiseProduct(X1.cwiseSign());
-		//d1 = (W2.transpose() * d2).cwiseProduct(X1.unaryExpr(&dsigmoid));
+		//d1 = (W2.transpose() * d2).cwiseProduct(X1.cwiseSign());
+		d1 = (W2.transpose() * d2).cwiseProduct(X1.unaryExpr(&dsigmoid));
 
 		// dL/dW1 = d1 * X0^T
 		dLdW1 = d1 * X0.transpose();
@@ -281,7 +498,8 @@ namespace StrikingDummy
 		b1 = b1 - (nu * dLdb1);
 
 		//std::cout << W2.col(0)(0) << std::endl;
-		if (std::isnan(W2.col(0)(0)))
-			throw 0;
+		//if (std::isnan(W2.col(0)(0)))
+		//	throw 0;
 	}
+	*/
 }

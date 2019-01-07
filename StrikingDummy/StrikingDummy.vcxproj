@@ -23,6 +23,7 @@
     <ProjectGuid>{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}</ProjectGuid>
     <RootNamespace>StrikingDummy</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <CudaToolkitCustomDir>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0</CudaToolkitCustomDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -53,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.0.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -89,6 +91,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile />
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>cudart_static.lib;curand.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -120,14 +128,20 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>cudart_static.lib;curand.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BlackMage.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Model.cpp">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Include="ModelRotation.cpp" />
     <ClCompile Include="MyRotation.cpp" />
     <ClCompile Include="StrikingDummy.cpp" />
@@ -135,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BlackMage.h" />
+    <ClInclude Include="CUDA.cuh" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Model.h" />
@@ -142,7 +157,11 @@
     <ClInclude Include="StrikingDummy.h" />
     <ClInclude Include="TrainingDummy.h" />
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="CUDA.cu" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.0.targets" />
   </ImportGroup>
 </Project>

@@ -14,11 +14,14 @@ namespace StrikingDummy
 	ModelRotation::ModelRotation(Job& job, Model& model) : Rotation(job), model(model)
 	{
 		random_action.push_back(-1);
+		eps = 0.0;
 	}
 
 	void ModelRotation::step()
 	{
-		if (job.actions.size() > 1)
+		if (job.actions.size() == 1)
+			job.use_action(job.actions[0]);
+		else
 		{
 			int action;
 			if (unif(model_rotation_rng) < eps)
@@ -28,9 +31,13 @@ namespace StrikingDummy
 			}
 			else
 			{
-				memcpy(model.x0.data(), job.get_state(), sizeof(State));
+				//memcpy(model.x0.data(), job.get_state(), sizeof(State));
+				//memcpy(model.x0, job.get_state(), sizeof(State));
+				memcpy(model.m_x0.data(), job.get_state(), sizeof(State));
 				model.compute();
-				float* output = model.xk.data();
+				//float* output = model.xk.data();
+				//float* output = model.x3;
+				float* output = model.m_x3.data();
 				int max_action = job.actions[0];
 				float max_weight = output[max_action];
 				auto cend = job.actions.cend();
@@ -47,8 +54,6 @@ namespace StrikingDummy
 			}
 			job.use_action(action);
 		}
-		else if (job.actions.size() == 1 && job.actions[0] != 0)
-			job.use_action(job.actions[0]);
 		job.step();
 	}
 }

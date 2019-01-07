@@ -151,6 +151,7 @@ namespace StrikingDummy
 		int casting_mp_cost = 0;
 
 		// metrics
+		long long total_damage = 0;
 		int foul_count = 0;
 		int f4_count = 0;
 		int b4_count = 0;
