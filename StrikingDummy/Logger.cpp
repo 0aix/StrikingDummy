@@ -16,7 +16,7 @@ namespace Logger
 	{
 		if (!is_open)
 			open();
-		fs << message << std::endl;
+		fs << message;
 	}
 
 	void close()

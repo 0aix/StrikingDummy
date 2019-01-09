@@ -20,6 +20,8 @@ void arrayCopyToHost(float* A, float* _A, int n);
 
 void arrayAdd(float* C, float* A, float* B, int n);
 
+void arrayAdd(float* C, float* A, float b, int n);
+
 void arrayAddRep(float* C, float* A, float* B, int n, int m);
 
 void arraySubtract(float* C, float* A, float* B, int n);

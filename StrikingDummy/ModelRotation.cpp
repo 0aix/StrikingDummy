@@ -9,12 +9,12 @@
 namespace StrikingDummy
 {
 	std::mt19937 model_rotation_rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-	std::uniform_real_distribution<double> unif(0.0, 1.0);
+	std::uniform_real_distribution<float> unif(0.0f, 1.0f);
 	
 	ModelRotation::ModelRotation(Job& job, Model& model) : Rotation(job), model(model)
 	{
 		random_action.push_back(-1);
-		eps = 0.0;
+		eps = 0.0f;
 	}
 
 	void ModelRotation::step()

@@ -4,21 +4,6 @@
 #include "Logger.h"
 #include <iostream>
 
-/*
-Notes:
-
-- Caster tax is appended to a cast like an animation lock rather than prepended as lag. 
-
-- Updates (MP, dots, timers, etc.) happen before actions are used. For example, if the TC duration hits 0 seconds, the TC proc 
-  will be removed before evaluating actions. On the other hand, if the triple cast cooldown hits 0 seconds, the oGCD will be
-  considered off cooldown. (Basically, it's not possible to use a proc at exactly 0 seconds left on its duration.)
-
-- T3 dot and buffs apply immediately.
-
-- Can't wait for an arbitrary period of time.
-
-*/
-
 int main()
 {
 	//std::cout << "state size: " << sizeof(StrikingDummy::State) << std::endl;
@@ -42,7 +27,7 @@ int main()
 
 	StrikingDummy::BlackMage blm(stats);
 	StrikingDummy::TrainingDummy dummy(blm);
-	StrikingDummy::StrikingDummy practice(blm);
+	//StrikingDummy::StrikingDummy practice(blm);
 
 	dummy.train();
 	//practice.start();

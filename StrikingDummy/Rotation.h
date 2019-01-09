@@ -20,7 +20,7 @@ namespace StrikingDummy
 	{
 		Model& model;
 		std::vector<int> random_action;
-		double eps;
+		float eps;
 
 		ModelRotation(Job& job, Model& model);
 

@@ -5,8 +5,8 @@ namespace StrikingDummy
 {
 	const int NUM_IN = 47;
 	const int NUM_OUT = 15;
-	const int INNER_1 = 32;
-	const int INNER_2 = 32;
+	const int INNER_1 = 48;
+	const int INNER_2 = 48;
 
 	float sigmoid(float x)
 	{
@@ -51,6 +51,7 @@ namespace StrikingDummy
 		matrixInitialize(&_dLdb2, INNER_2, 1);
 		matrixInitialize(&_dLdb3, NUM_OUT, 1);
 		matrixInitialize(&_ones, batch_size, 1);
+		arrayAdd(_ones, _ones, 1.0f, batch_size);
 
 		matrixInitialize(&__X0, batch_size, NUM_IN);
 		matrixInitialize(&__X1, batch_size, INNER_1);
@@ -135,10 +136,10 @@ namespace StrikingDummy
 		arrayCopyToHost(x3, _x3, NUM_OUT);
 		return x3;
 		*/
-		//x1 = (W1 * x0 + b1).cwiseMax(0.0f);
-		//x2 = (W2 * x1 + b2).cwiseMax(0.0f);
 		m_x1 = (m_W1 * m_x0 + m_b1).unaryExpr(&sigmoid);
 		m_x2 = (m_W2 * m_x1 + m_b2).unaryExpr(&sigmoid);
+		//m_x1 = (m_W1 * m_x0 + m_b1).cwiseMax(0.0f);
+		//m_x2 = (m_W2 * m_x1 + m_b2).cwiseMax(0.0f);
 		m_x3 = (m_W3 * m_x2 + m_b3);
 		return m_x3.data();
 	}
@@ -150,14 +151,38 @@ namespace StrikingDummy
 		matrixMultiply(_X1, _W1, INNER_1, NUM_IN, _X0, NUM_IN, batch_size);
 		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
 		arraySigmoid(_X1, _X1, INNER_1 * batch_size);
+		//arrayReLU(_X1, _X1, INNER_1 * batch_size);
 
 		matrixMultiply(_X2, _W2, INNER_2, INNER_1, _X1, INNER_1, batch_size);
 		arrayAddRep(_X2, _X2, _b2, INNER_2, batch_size);
 		arraySigmoid(_X2, _X2, INNER_2 * batch_size);
+		//arrayReLU(_X2, _X2, INNER_2 * batch_size);
 
 		matrixMultiply(_X3, _W3, NUM_OUT, INNER_2, _X2, INNER_2, batch_size);
 		arrayAddRep(_X3, _X3, _b3, NUM_OUT, batch_size);
 		arraySigmoid(_X3, _X3, NUM_OUT * batch_size);
+
+		arrayCopyToHost(X3, _X3, NUM_OUT * batch_size);
+		return X3;
+	}
+
+	float* Model::batch_compute(int batch_size)
+	{
+		arrayCopyToDevice(_X0, X0, NUM_IN * batch_size);
+
+		matrixMultiply(_X1, _W1, INNER_1, NUM_IN, _X0, NUM_IN, batch_size);
+		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
+		arraySigmoid(_X1, _X1, INNER_1 * batch_size);
+		//arrayReLU(_X1, _X1, INNER_1 * batch_size);
+
+		matrixMultiply(_X2, _W2, INNER_2, INNER_1, _X1, INNER_1, batch_size);
+		arrayAddRep(_X2, _X2, _b2, INNER_2, batch_size);
+		arraySigmoid(_X2, _X2, INNER_2 * batch_size);
+		//arrayReLU(_X2, _X2, INNER_2 * batch_size);
+
+		matrixMultiply(_X3, _W3, NUM_OUT, INNER_2, _X2, INNER_2, batch_size);
+		arrayAddRep(_X3, _X3, _b3, NUM_OUT, batch_size);
+		//arraySigmoid(_X3, _X3, NUM_OUT * batch_size);
 
 		arrayCopyToHost(X3, _X3, NUM_OUT * batch_size);
 		return X3;
@@ -187,6 +212,7 @@ namespace StrikingDummy
 		matrixMultiply(_d2, __W3, INNER_2, NUM_OUT, _d3, NUM_OUT, batch_size);
 
 		arrayDerivSigmoid(_X2, _X2, INNER_2 * batch_size);
+		//arrayDerivReLU(_X2, _X2, INNER_2 * batch_size);
 
 		arrayMultiply(_d2, _d2, _X2, INNER_2 * batch_size);
 
@@ -203,6 +229,7 @@ namespace StrikingDummy
 		matrixMultiply(_d1, __W2, INNER_1, INNER_2, _d2, INNER_2, batch_size);
 
 		arrayDerivSigmoid(_X1, _X1, INNER_1 * batch_size);
+		//arrayDerivReLU(_X1, _X1, INNER_1 * batch_size);
 
 		arrayMultiply(_d1, _d1, _X1, INNER_1 * batch_size);
 

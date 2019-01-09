@@ -179,6 +179,13 @@ __global__ void _arrayAdd(float* C, float* A, float* B, int n)
 		C[i] = A[i] + B[i];
 }
 
+__global__ void _arrayAddScalar(float* C, float* A, float b, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		C[i] = A[i] + b;
+}
+
 __global__ void _arrayAddRep(float* C, float* A, float* B, int n, int width)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -264,6 +271,20 @@ void arrayAdd(float* C, float* A, float* B, int n)
 	if (cudaStatus != cudaSuccess)
 	{
 		std::cerr << "_arrayAdd failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arrayAdd(float* C, float* A, float b, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayAddScalar<<<numBlocks, blockSize>>>(C, A, b, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayAddScalar failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
 	cudaSafeDeviceSynchronize();

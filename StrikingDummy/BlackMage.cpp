@@ -46,6 +46,7 @@ namespace StrikingDummy
 		std::iota(int_range.begin(), int_range.end(), 0);
 		actions.reserve(NUM_ACTIONS);
 		reset();
+		seed(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 	}
 
 	void BlackMage::reset()
@@ -327,7 +328,7 @@ namespace StrikingDummy
 		case CONVERT:
 			return convert_cd.ready;
 		case ENOCHIAN:
-			return eno_cd.ready && element != Element::NE;
+			return !enochian && eno_cd.ready && element != Element::NE;
 		}
 		return false;
 	}

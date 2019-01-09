@@ -25,19 +25,21 @@ namespace StrikingDummy
 
 		long long start_time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-		const int NUM_ENVIRONMENTS = 1000;
+		const int NUM_ENVIRONMENTS = 100;
 		const int NUM_EPOCHS = 1000000;
-		const int NUM_STEPS_PER_EPISODE = 100;
-		const int NUM_EPISODES_PER_EPOCH = 3;
+		const int NUM_STEPS_PER_EPISODE = 1000;
+		const int NUM_STEPS_PER_EPISODE_START = 20;
+		const int NUM_EPISODES_PER_EPOCH = 10;
 		const int NUM_BATCHES_PER_EPOCH = 100;
-		const int CAPACITY = 100000;
+		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 1000;
-		const double EPS_DECAY = 0.9998;
-		const double EPS_MIN = 0.01;
-		const float WINDOW = 18000.0f;
-
-		float* window = new float;
-		*window = 4000.0f;
+		const float WINDOW = 3000.0f;
+		const float WINDOW_MAX = 18000.0f;
+		const float WINDOW_GROWTH = 1.0002f;
+		const float EPS_DECAY = 0.9995f;
+		const float EPS_MIN = 0.25f;
+		const float STEPS_GROWTH = 1.0004f;
+		const float STEPS_MAX = NUM_STEPS_PER_EPISODE;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -58,8 +60,8 @@ namespace StrikingDummy
 
 		auto indices_gen = [&]() 
 		{
-			if (m_size < CAPACITY)
-				return range(rng) % m_size;
+			//if (m_size < CAPACITY)
+			//	return range(rng) % m_size;
 			return range(rng);
 		};
 
@@ -68,17 +70,22 @@ namespace StrikingDummy
 		// Initialize model
 		model.init(BATCH_SIZE);
 
-		double _eps = 0.25;
-		rotation.eps = _eps;
-
 		float nu = 0.01f; // sigmoid can use a larger learning rate
-		//float nu = 0.00001f;
+		//float nu = 0.001f;
 		float max_dps = 0.0f;
 
-		std::uniform_real_distribution<double> unif(0.0, 1.0);
+		//rotation.eps = 1.0f;
+		float eps = 1.0f;
+		float window = WINDOW;
+		float steps_per_episode = NUM_STEPS_PER_EPISODE_START;
+
+		std::uniform_real_distribution<float> unif(0.0f, 1.0f);
 
 		std::vector<int> random_action;
 		random_action.push_back(0);
+
+		float avg_dps = 0.0f;
+		float beta = 0.9f;
 
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
 		{
@@ -87,22 +94,22 @@ namespace StrikingDummy
 			int f4s = 0;
 			int b4s = 0;
 
-			m_index = 0;
-			m_size = 0;
+			//m_index = 0;
+			//m_size = 0;
 			
 			for (int env = 0; env < NUM_ENVIRONMENTS; env++)
 				blms[env].reset();
-			for (int step = 0; step < NUM_STEPS_PER_EPISODE; step++)
+			for (int step = 0; step < (int)steps_per_episode + 10; step++)
 			{
 				for (int env = 0; env < NUM_ENVIRONMENTS; env++)
 					memcpy(&model.X0[env * 47], blms[env].get_state(), sizeof(State));
-
-				float* Q = model.batch_compute();
-
+			
+				float* Q = model.batch_compute(NUM_ENVIRONMENTS);
+			
 				for (int env = 0; env < NUM_ENVIRONMENTS; env++)
 				{
 					int action;
-					if (unif(rng) < _eps)
+					if (unif(rng) < eps)
 					{
 						std::sample(blms[env].actions.begin(), blms[env].actions.end(), random_action.begin(), 1, rng);
 						action = random_action.front();
@@ -131,65 +138,71 @@ namespace StrikingDummy
 			for (int env = 0; env < NUM_ENVIRONMENTS; env++)
 			{
 				std::vector<Transition>* history = (std::vector<Transition>*)blms[env].get_history();
-				auto last = history->end() - 1;
-				for (auto iter = history->begin(); iter != last; iter++)
+				for (int i = 0; i < (int)steps_per_episode; i++)
 				{
-					memory[m_index] = std::move(*iter);
+					memory[m_index] = std::move((*history)[i]);
 					m_index++;
-					m_size++;
+					if (m_index == CAPACITY)
+						m_index = 0;
+					if (m_size < CAPACITY)
+						m_size++;
 				}
 			}
-
-			//m_size = 0;
-			//m_index = 0;
-
-			// generate a bunch of sequences
 			/*
-			for (int ep = 0; ep < NUM_EPISODES_PER_EPOCH; ep++)
+			for (int episode = 0; episode < NUM_EPISODES_PER_EPOCH; episode++)
 			{
-				job.reset();
-				int precast = blm.get_cast_time(2);
-				if (ep % 3 == 0)
+				blm.reset();
+				for (int step = 0; step < NUM_STEPS_PER_EPISODE + 15; step++)
 				{
-					blm.timeline.time = -precast;
-					blm.mp_timer.time += precast;
-					blm.dot_timer.time += precast;
-					blm.use_action(2);
-					blm.step();
-				}
-				else if (ep % 3 == 1)
-				{
-					blm.timeline.time = -precast;
-					blm.mp_timer.time += precast;
-					blm.dot_timer.time += precast;
-					blm.use_action(5);
-					blm.step();
-				}
-				for (int step = 0; step < NUM_STEPS_PER_EPISODE; step++)
-					rotation.step();
-				std::vector<Transition>* history = (std::vector<Transition>*)job.get_history();
-				auto last = history->end() - 1;
-				for (auto iter = history->begin(); iter != last; iter++)
-				{
-					memory[m_index] = std::move(*iter);
-					if (m_index == CAPACITY - 1)
-						m_index = 0;
+					int action;
+					if (blm.actions.size() == 1)
+						action = blm.actions[0];
+					if (unif(rng) < EPS)
+					{
+						std::sample(blm.actions.begin(), blm.actions.end(), random_action.begin(), 1, rng);
+						action = random_action.front();
+					}
 					else
-						m_index++;
+					{
+						memcpy(model.m_x0.data(), blm.get_state(), sizeof(State));
+						//memcpy(model.X0, blm.get_state(), sizeof(State));
+						model.compute();
+						//model.batch_compute(1);
+						float* output = model.m_x3.data();
+						//float* output = model.X3;
+						int max_action = blm.actions[0];
+						float max_weight = output[max_action];
+						auto cend = blm.actions.cend();
+						for (auto iter = blm.actions.cbegin() + 1; iter != cend; iter++)
+						{
+							int index = *iter;
+							if (output[index] > max_weight)
+							{
+								max_weight = output[index];
+								max_action = index;
+							}
+						}
+						action = max_action;
+					}
+					blm.use_action(action);
+					blm.step();
+				}
+				std::vector<Transition>* history = (std::vector<Transition>*)blm.get_history();
+				auto last = history->end() - 1;
+				for (int i = 0; i < NUM_STEPS_PER_EPISODE; i++)
+				{
+					memory[m_index] = std::move((*history)[i]);
+					m_index++;
+					if (m_index == CAPACITY)
+						m_index = 0;
 					if (m_size < CAPACITY)
 						m_size++;
 				}
 			}
 			*/
-			//std::stringstream ss;
-			//float avg_dps = (1.0f / NUM_EPISODES_PER_EPOCH) * dps;
-			//ss << "eps: " << rotation.eps << ", avg dps: " << avg_dps << ", avg fouls: " << (1.0f / NUM_EPISODES_PER_EPOCH) * fouls << ", avg F4s: " << (1.0f / NUM_EPISODES_PER_EPOCH) * f4s << ", avg B4s: " << (1.0f / NUM_EPISODES_PER_EPOCH) * b4s << std::endl;
-			//Logger::log(ss.str().c_str());
-			//std::cout << ss.str();
-
 			//range = std::uniform_int_distribution<int>(0, m_size - 1);
 
-			//if (m_size == CAPACITY)
+			if (m_size == CAPACITY)
 			{
 				// batch train a bunch
 				for (int batch = 0; batch < NUM_BATCHES_PER_EPOCH; batch++)
@@ -218,7 +231,7 @@ namespace StrikingDummy
 							if (q[i] > max_q)
 								max_q = q[i];
 						}
-						rewards[i] = (1.0f / *window) * (0.01f * t.reward + (*window - t.dt) * max_q);
+						rewards[i] = (1.0f / WINDOW) * (0.01f * t.reward + (WINDOW - t.dt) * max_q);
 						actions[i] = t.action;
 					}
 
@@ -239,35 +252,34 @@ namespace StrikingDummy
 					// train
 					model.train(nu);
 				}
-				//if (m_size == CAPACITY)
-					//rotation.eps = std::max(rotation.eps * EPS_DECAY, EPS_MIN);
-				//rotation.eps -= 0.01f;
-				//if (rotation.eps < 0.0f)
-				//	rotation.eps = 1.0f;
-				//rotation.eps *= EPS_DECAY;
-				//if (rotation.eps > 0.0)
-				//	rotation.eps = 0.0;
-				//else
-				//	rotation.eps = _eps;
-				//if (_eps > 0.0)
-				//	_eps -= 0.0001;
-			}
+				eps *= EPS_DECAY;
+				if (eps < EPS_MIN)
+					eps = EPS_MIN;
+				window *= WINDOW_GROWTH;
+				if (window > WINDOW_MAX)
+					window = WINDOW_MAX;
+				steps_per_episode *= STEPS_GROWTH;
+				if (steps_per_episode > STEPS_MAX)
+					steps_per_episode = STEPS_MAX;
+				//if (epoch % 1 == 0)
+				{
+					test();
 
-			if (epoch % 10 == 0)
-			{
-				rotation.eps = 0.0;
-				test();
-				rotation.eps = _eps;
+					dps = 0.1f * blm.total_damage / blm.timeline.time;
 
-				dps = 0.1f * blm.total_damage / blm.timeline.time;
-				if (dps > max_dps)
-					max_dps = dps;
+					avg_dps = 0.9f * avg_dps + 0.1f * dps;
+					float est_dps = avg_dps / (1.0f - beta);
+					beta *= 0.9f;
 
-				std::stringstream ss;
-				ss << "epoch: " << epoch << ", max dps: " << max_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << std::endl;
+					//if (dps > max_dps)
+					//	max_dps = dps;
 
-				Logger::log(ss.str().c_str());
-				std::cout << ss.str();
+					std::stringstream ss;
+					ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << std::endl;
+
+					Logger::log(ss.str().c_str());
+					std::cout << ss.str();
+				}
 			}
 		}
 
@@ -285,15 +297,20 @@ namespace StrikingDummy
 		BlackMage& blm = (BlackMage&)job;
 		blm.reset();
 
+		//float temp = rotation.eps;
+		//rotation.eps = 0.0f;
+
 		// B3 precast
-		int precast = blm.get_cast_time(2);
-		blm.timeline.time = -precast;
-		blm.mp_timer.time += precast;
-		blm.dot_timer.time += precast;
-		blm.use_action(2);
-		blm.step();
+		//int precast = blm.get_cast_time(2);
+		//blm.timeline.time = -precast;
+		//blm.mp_timer.time += precast;
+		//blm.dot_timer.time += precast;
+		//blm.use_action(2);
+		//blm.step();
 
 		while (blm.timeline.time < 60000)
 			rotation.step();
+
+		//rotation.eps = temp;
 	}
 }

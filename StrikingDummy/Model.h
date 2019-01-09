@@ -74,10 +74,11 @@ namespace StrikingDummy
 		//Model(ModelParams& params);
 		~Model();
 
+		void init(int batch_size);
+
 		float* compute();
 		float* batch_compute();
-
-		void init(int batch_size);
+		float* batch_compute(int batch_size);
 
 		void train(float nu);
 
