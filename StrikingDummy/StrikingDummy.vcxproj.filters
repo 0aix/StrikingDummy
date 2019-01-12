@@ -42,6 +42,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mimu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logger.h">
@@ -66,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CUDA.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mimu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

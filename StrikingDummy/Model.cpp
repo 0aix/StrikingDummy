@@ -1,12 +1,13 @@
 #include "Model.h"
 #include "CUDA.cuh"
+#include <fstream>
 
 namespace StrikingDummy
 {
-	const int NUM_IN = 47;
+	const int NUM_IN = 46;
 	const int NUM_OUT = 15;
-	const int INNER_1 = 48;
-	const int INNER_2 = 48;
+	const int INNER_1 = 64;
+	const int INNER_2 = 64;
 
 	float sigmoid(float x)
 	{
@@ -166,28 +167,6 @@ namespace StrikingDummy
 		return X3;
 	}
 
-	float* Model::batch_compute(int batch_size)
-	{
-		arrayCopyToDevice(_X0, X0, NUM_IN * batch_size);
-
-		matrixMultiply(_X1, _W1, INNER_1, NUM_IN, _X0, NUM_IN, batch_size);
-		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
-		arraySigmoid(_X1, _X1, INNER_1 * batch_size);
-		//arrayReLU(_X1, _X1, INNER_1 * batch_size);
-
-		matrixMultiply(_X2, _W2, INNER_2, INNER_1, _X1, INNER_1, batch_size);
-		arrayAddRep(_X2, _X2, _b2, INNER_2, batch_size);
-		arraySigmoid(_X2, _X2, INNER_2 * batch_size);
-		//arrayReLU(_X2, _X2, INNER_2 * batch_size);
-
-		matrixMultiply(_X3, _W3, NUM_OUT, INNER_2, _X2, INNER_2, batch_size);
-		arrayAddRep(_X3, _X3, _b3, NUM_OUT, batch_size);
-		//arraySigmoid(_X3, _X3, NUM_OUT * batch_size);
-
-		arrayCopyToHost(X3, _X3, NUM_OUT * batch_size);
-		return X3;
-	}
-
 	void Model::train(float nu)
 	{
 		arrayCopyToDevice(_target, target, NUM_OUT * batch_size);
@@ -271,6 +250,20 @@ namespace StrikingDummy
 		arrayCopyToHost(m_b1.data(), _b1, INNER_1);
 		arrayCopyToHost(m_b2.data(), _b2, INNER_2);
 		arrayCopyToHost(m_b3.data(), _b3, NUM_OUT);
+	}
+
+	void Model::save(const char* filename)
+	{
+		std::fstream fs;
+		fs.open(filename, std::fstream::out | std::fstream::binary);
+		fs.write((const char*)m_W1.data(), INNER_1 * NUM_IN * sizeof(float));
+		fs.write((const char*)m_W2.data(), INNER_2 * INNER_1 * sizeof(float));
+		fs.write((const char*)m_W3.data(), NUM_OUT * INNER_2 * sizeof(float));
+		fs.write((const char*)m_b1.data(), INNER_1 * sizeof(float));
+		fs.write((const char*)m_b2.data(), INNER_2 * sizeof(float));
+		fs.write((const char*)m_b3.data(), NUM_OUT * sizeof(float));
+		fs.flush();
+		fs.close();
 	}
 
 	// set input layer

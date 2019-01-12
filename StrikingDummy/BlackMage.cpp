@@ -18,9 +18,6 @@ using namespace Eigen;
 
 namespace StrikingDummy
 {
-	std::uniform_real_distribution<double> prob(0.0, 1.0);
-	std::uniform_real_distribution<double> damage_range(0.95, 1.05);
-	std::uniform_int_distribution<int> tick_rng(1, 300);
 	std::vector<int> int_range(BlackMage::NUM_ACTIONS);
 
 	std::string action_names[] =
@@ -60,8 +57,8 @@ namespace StrikingDummy
 		enochian = false;
 
 		// server ticks
-		mp_timer.reset(tick_rng(rng), false);
-		dot_timer.reset(tick_rng(rng), false);
+		mp_timer.reset(tick(rng), false);
+		dot_timer.reset(tick(rng), false);
 		timeline.push_event(mp_timer.time);
 		timeline.push_event(dot_timer.time);
 
@@ -98,6 +95,7 @@ namespace StrikingDummy
 		foul_count = 0;
 		f4_count = 0;
 		b4_count = 0;
+		t3_count = 0;
 		
 		history.clear();
 
@@ -183,6 +181,7 @@ namespace StrikingDummy
 			history.emplace_back();
 			Transition& t = history.back();
 			get_state(t.t0);
+			t.reward = 0.0f;
 			t.dt = timeline.time;
 		}
 	}
@@ -218,8 +217,8 @@ namespace StrikingDummy
 		{
 			int damage = get_dot_damage();
 			total_damage += damage;
-			history[dot_index].reward += damage;
-			if (prob(rng) < 0.10)
+			history.back().reward += damage;
+			if (prob(rng) < TC_PROC_RATE)
 			{
 				tc_proc.reset(TC_DURATION, 1);
 				push_event(TC_DURATION);
@@ -354,6 +353,8 @@ namespace StrikingDummy
 				f4_count++;
 			else if (action == B4)
 				b4_count++;
+			else if (action == T3)
+				t3_count++;
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
 			lock_timer.reset(get_lock_time(action), false);
@@ -424,7 +425,7 @@ namespace StrikingDummy
 
 		total_damage += damage;
 
-		history.back().reward = damage;
+		history.back().reward += damage;
 
 		if (casting == F3 && fs_proc.count > 0);
 		// firestarter doesn't deplete swift or triple
@@ -479,7 +480,7 @@ namespace StrikingDummy
 				push_event(GAUGE_DURATION);
 				if (umbral_hearts > 0)
 					umbral_hearts--;
-				if (sharp.count > 0 || prob(rng) < 0.40)
+				if (sharp.count > 0 || prob(rng) < FS_PROC_RATE)
 				{
 					fs_proc.reset(FS_DURATION, 1);
 					sharp.reset(0, 0);
@@ -556,7 +557,7 @@ namespace StrikingDummy
 
 	int BlackMage::get_damage(int action) const
 	{
-		double potency = 0.0;
+		float potency = 0.0f;
 		switch (action)
 		{
 		case B1:
@@ -687,63 +688,13 @@ namespace StrikingDummy
 
 	void BlackMage::get_state(State& state)
 	{
-		//state.mp = mp / (double)MAX_MP;
-		//state.ui = element == UI;
-		//state.af = element == AF;
-		//state.umbral_hearts = umbral_hearts / 3.0;
-		//state.enochian = enochian;
-		//state.mp_tick = (TICK_TIMER - mp_timer.time) / TICK_TIMER;
-		//state.dot_tick = (TICK_TIMER - dot_timer.time) / TICK_TIMER;
-		//state.gauge = gauge.count > 0;
-		//state.g1 = gauge.count == 1;
-		//state.g2 = gauge.count == 2;
-		//state.g3 = gauge.count == 3;
-		//state.gauge_time = gauge.time / GAUGE_DURATION;
-		//state.foul_proc = foul_timer.ready;
-		//state.foul_time = (FOUL_TIMER - foul_timer.time) / FOUL_TIMER;
-		//state.swift = swift.count > 0;
-		//state.swift_time = swift.time / SWIFT_DURATION;
-		//state.sharp = sharp.count > 0;
-		//state.sharp_time = sharp.time / SHARP_DURATION;
-		//state.triple_procs = triple.count / 3.0;
-		//state.triple_time = triple.time / TRIPLE_DURATION;
-		//state.leylines = leylines.count > 0;
-		//state.ll_time = leylines.time / LL_DURATION;
-		//state.fs_proc = fs_proc.count > 0;
-		//state.fs_time = fs_proc.time / FS_DURATION;
-		//state.tc_proc = tc_proc.count > 0;
-		//state.tc_time = tc_proc.time / TC_DURATION;
-		//state.dot_ticking = dot.count > 0;
-		//state.dot_time = dot.time / DOT_DURATION;
-		//state.dot_enochian = dot.count == 1;
-		//state.swift_ready = swift_cd.ready;
-		//state.swift_cd = swift_cd.time / SWIFT_CD;
-		//state.triple_ready = triple_cd.ready;
-		//state.triple_cd = triple_cd.time / TRIPLE_CD;
-		//state.sharp_ready = sharp_cd.ready;
-		//state.sharp_cd = sharp_cd.time / SHARP_CD;
-		//state.leylines_ready = leylines_cd.ready;
-		//state.leylines_cd = leylines_cd.time / LL_CD;
-		//state.convert_ready = convert_cd.ready;
-		//state.convert_cd = convert_cd.time / CONVERT_CD;
-		//state.eno_ready = eno_cd.ready;
-		//state.eno_cd = eno_cd.time / ENO_CD;
-		//state.gcd_ready = gcd_timer.ready;
-		//state.gcd_time = gcd_timer.time / BASE_GCD;
-		//state.casting = casting != NONE;
-		//state.cast_time = cast_timer.time / BASE_GCD;
-		//state.lock_ready = lock_timer.ready;
-		//state.lock_time = lock_timer.time / BASE_GCD;
 		state.data[0] = mp / (float)MAX_MP;
 		state.data[1] = element == UI;
 		state.data[2] = element == AF;
-		//state.data[3] = umbral_hearts / 3.0f;
-		state.data[3] = umbral_hearts >= 1;
+		state.data[3] = umbral_hearts > 0;
 		state.data[4] = enochian;
-		//state.data[5] = (TICK_TIMER - mp_timer.time) / (float)TICK_TIMER;
-		//state.data[6] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
-		state.data[5] = umbral_hearts >= 2;
-		state.data[6] = umbral_hearts >= 3;
+		state.data[5] = (TICK_TIMER - mp_timer.time) / (float)TICK_TIMER;
+		state.data[6] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
 		state.data[7] = gauge.count > 0;
 		state.data[8] = gauge.count == 1;
 		state.data[9] = gauge.count == 2;
@@ -780,10 +731,9 @@ namespace StrikingDummy
 		state.data[40] = eno_cd.time / (float)ENO_CD;
 		state.data[41] = gcd_timer.ready;
 		state.data[42] = gcd_timer.time / 250.0f;
-		state.data[43] = casting != NONE;
-		state.data[44] = cast_timer.time / 250.0f;
-		state.data[45] = lock_timer.ready;
-		state.data[46] = lock_timer.time / 250.0f;
+		state.data[43] = umbral_hearts == 1;
+		state.data[44] = umbral_hearts == 2;
+		state.data[45] = umbral_hearts == 3;
 	}
 
 	void* BlackMage::get_history()

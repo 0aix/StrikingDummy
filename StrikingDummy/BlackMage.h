@@ -6,7 +6,7 @@ namespace StrikingDummy
 {
 	struct State
 	{
-		float data[47];
+		float data[46];
 	};
 
 	struct Transition
@@ -52,6 +52,9 @@ namespace StrikingDummy
 		static constexpr float FAST_BASE_GCD = 1.25f;
 		static constexpr float FAST_III_GCD = 1.75f;
 
+		static constexpr float TC_PROC_RATE = 0.10f;
+		static constexpr float FS_PROC_RATE = 0.40f;
+
 		static constexpr int TICK_TIMER = 300;
 		static constexpr int FOUL_TIMER = 3000;
 		static constexpr int GAUGE_DURATION = 1300;
@@ -70,7 +73,7 @@ namespace StrikingDummy
 		static constexpr int CONVERT_CD = 18000;
 		static constexpr int ENO_CD = 3000;
 
-		// Assume not using B1 or Flare
+		// Assume not using Flare
 		static constexpr float F1_POTENCY = 180.0f;
 		static constexpr float F3_POTENCY = 240.0f;
 		static constexpr float F4_POTENCY = 300.0f;
@@ -100,12 +103,6 @@ namespace StrikingDummy
 		static constexpr int B4_MP_COST = 960;
 		static constexpr int T3_MP_COST = 1920;
 
-		int mp = MAX_MP;
-
-		Element element = Element::NE;
-		int umbral_hearts = 0;
-		bool enochian = false;
-
 		const int base_gcd;
 		const int iii_gcd;
 		const int iv_gcd;
@@ -117,7 +114,13 @@ namespace StrikingDummy
 		const int ll_fast_base_gcd;
 		const int ll_fast_iii_gcd;
 
-		// server ticks
+		int mp = MAX_MP;
+
+		Element element = Element::NE;
+		int umbral_hearts = 0;
+		bool enochian = false;
+
+		// ticks
 		Timer mp_timer;
 		Timer dot_timer;
 
@@ -155,6 +158,7 @@ namespace StrikingDummy
 		int foul_count = 0;
 		int f4_count = 0;
 		int b4_count = 0;
+		int t3_count = 0;
 
 		std::vector<Transition> history;
 		int dot_index = -1;

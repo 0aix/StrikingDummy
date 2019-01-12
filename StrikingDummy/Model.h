@@ -78,9 +78,9 @@ namespace StrikingDummy
 
 		float* compute();
 		float* batch_compute();
-		float* batch_compute(int batch_size);
 
 		void train(float nu);
+		void save(const char* filename);
 
 		/*
 		MatrixXf x0; // single input

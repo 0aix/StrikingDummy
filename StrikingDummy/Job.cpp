@@ -20,9 +20,11 @@ namespace StrikingDummy
 	Job::Job(Stats& stats) : stats(stats)
 	{
 		this->stats.calculate_stats();
+		prob = std::uniform_real_distribution<float>(0.0f, 1.0f);
+		damage_range = std::uniform_real_distribution<float>(0.95f, 1.05f);
+		tick = std::uniform_int_distribution<int>(1, 300);
 	}
 
-	// guarantees at least 1 useable action that is not NONE (0) after returning
 	void Job::step()
 	{
 		int elapsed;
@@ -31,6 +33,7 @@ namespace StrikingDummy
 			if ((elapsed = timeline.next_event()) > 0)
 			{
 				update(elapsed);
+				// need at least 1 useable action that is not NONE (0)
 				if (actions.empty() || (actions.size() == 1 && actions[0] == 0))
 					continue;
 				break;

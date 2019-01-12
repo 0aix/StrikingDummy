@@ -61,7 +61,11 @@ namespace StrikingDummy
 		Stats stats;
 		Timeline timeline;
 		std::vector<int> actions;
+
 		std::mt19937 rng;
+		std::uniform_real_distribution<float> prob;
+		std::uniform_real_distribution<float> damage_range;
+		std::uniform_int_distribution<int> tick;
 
 		Job(Stats& stats);
 
