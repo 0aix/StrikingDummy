@@ -59,24 +59,39 @@ namespace StrikingDummy
 		void reset(int duration, int count);
 	};
 
+	struct Transition
+	{
+		float t0[63];
+		float t1[63];
+		int action = 0;
+		float reward = 0.0f;
+		int dt = 0;
+		std::vector<int> actions;
+	};
+
 	struct Job
 	{
 		Stats stats;
 		Timeline timeline;
 		std::vector<int> actions;
+		std::vector<Transition> history;
 
 		std::mt19937 rng;
 		std::uniform_real_distribution<float> prob;
 		std::uniform_real_distribution<float> damage_range;
 		std::uniform_int_distribution<int> tick;
 
+		float total_damage;
+
 		Job(Stats& job_stats, float job_attr);
 		void step();
+		float* get_state() { return history.back().t0; }
 
 		virtual void reset() = 0;
 		virtual void use_action(int action) = 0;
-		virtual void* get_history() = 0;
-		virtual void* get_state() = 0;
+		virtual void get_state(float* state) = 0;
+		virtual int get_state_size() = 0;
+		virtual int get_num_actions() = 0;
 
 	protected:
 		virtual void update(int elapsed) = 0;

@@ -57,12 +57,14 @@ namespace StrikingDummy
 		wep_multiplier = floor(LV_MAIN * job_attr / 1000.0f + weapon_damage);
 		attk_multiplier = floor(125.0f * (main_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f;
 		crit_multiplier = floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 1400.0f) / 1000.0f;
-		crit_rate = floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 50.0f) / 1000.0f;
-		dhit_rate = floor(550.0f * (direct_hit - LV_SUB) / LV_DIV) / 1000.0f;
+		crit_rate = std::min(floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 50.0f) / 1000.0f, 1.0f);
+		dhit_rate = std::min(floor(550.0f * (direct_hit - LV_SUB) / LV_DIV) / 1000.0f, 1.0f);
 		det_multiplier = floor(130.0f * (determination - LV_MAIN) / LV_DIV + 1000.0f) / 1000.0f;
 		ss_multiplier = 1000.0f - floor(130.0f * (skill_speed - LV_SUB) / LV_DIV);
 		dot_multiplier = floor(130.0f * (skill_speed - LV_SUB) / LV_DIV + 1000.0f) / 1000.0f;
+
 		aa_multiplier = floor(floor(LV_MAIN * job_attr / 1000.0f + weapon_damage) * auto_delay / 3.0f);
+		aa_multiplier = 1.10f * aa_multiplier * attk_multiplier * det_multiplier;
 
 		potency_multiplier = wep_multiplier * attk_multiplier * det_multiplier / 100.0f;
 		float dcrit_rate = crit_rate * dhit_rate;

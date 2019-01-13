@@ -4,21 +4,6 @@
 
 namespace StrikingDummy
 {
-	struct State
-	{
-		float data[46];
-	};
-
-	struct Transition
-	{
-		State t0;
-		State t1;
-		int action;
-		float reward;
-		int dt;
-		std::vector<int> actions;
-	};
-
 	struct BlackMage : public Job
 	{
 		enum Action
@@ -154,20 +139,16 @@ namespace StrikingDummy
 		int casting_mp_cost = 0;
 
 		// metrics
-		long long total_damage = 0;
 		int foul_count = 0;
 		int f4_count = 0;
 		int b4_count = 0;
 		int t3_count = 0;
 
-		std::vector<Transition> history;
-		int dot_index = -1;
-
 		BlackMage(Stats& stats);
 
 		void reset();
 		void update(int elapsed);
-		void refresh_state();
+		void update_history();
 
 		void update_mp();
 		void update_dot();
@@ -184,12 +165,11 @@ namespace StrikingDummy
 		void end_action();
 
 		int get_mp_cost(int action) const;
-		int get_damage(int action) const;
-		int get_dot_damage() const;
+		float get_damage(int action) const;
+		float get_dot_damage() const;
 
-		void get_state(State& state);
-
-		void* get_history();
-		void* get_state();
+		void get_state(float* state);
+		int get_state_size() { return 46; }
+		int get_num_actions() { return NUM_ACTIONS; }
 	};
 }

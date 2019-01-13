@@ -68,13 +68,15 @@ namespace StrikingDummy
 		MatrixXf m_b1;
 		MatrixXf m_b2;
 		MatrixXf m_b3;
-
+		
+		int input_size = 0;
+		int output_size = 0;
 		int batch_size = 0;
 
 		//Model(ModelParams& params);
 		~Model();
 
-		void init(int batch_size);
+		void init(int input_size, int output_size, int batch_size);
 
 		float* compute();
 		float* batch_compute();

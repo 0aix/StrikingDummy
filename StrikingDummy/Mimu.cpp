@@ -18,6 +18,12 @@ namespace StrikingDummy
 		gl2_auto_gcd(lround(floor(0.1f * floor(0.90f * floor(1000.0f * this->stats.auto_delay))))),
 		gl3_auto_gcd(lround(floor(0.1f * floor(0.85f * floor(1000.0f * this->stats.auto_delay)))))
 	{
+		float ir_crit_rate = std::min(this->stats.crit_rate + IR_CRIT_RATE, 1.0f);
+		float dcrit_rate = ir_crit_rate * this->stats.dhit_rate;
+
+		ir_expected_multiplier = (1.0f - ir_crit_rate + dcrit_rate - this->stats.dhit_rate) + this->stats.crit_multiplier * (ir_crit_rate - dcrit_rate) + this->stats.crit_multiplier * 1.25f * dcrit_rate + 1.25f * (this->stats.dhit_rate - dcrit_rate);
+		crit_expected_multiplier = this->stats.crit_multiplier * ((1.0f - this->stats.dhit_rate) + 1.25f * this->stats.dhit_rate);
+
 		actions.reserve(NUM_ACTIONS);
 		reset();
 	}
@@ -63,12 +69,12 @@ namespace StrikingDummy
 		action_timer.reset(0, true);
 
 		// metrics
-		total_damage = 0;
+		total_damage = 0.0f;
 		tk_count = 0;
 
 		history.clear();
 
-		refresh_state();
+		update_history();
 	}
 
 	void Mimu::update(int elapsed)
@@ -113,10 +119,10 @@ namespace StrikingDummy
 		if (auto_timer.ready)
 			update_auto();
 
-		refresh_state();
+		update_history();
 	}
 
-	void Mimu::refresh_state()
+	void Mimu::update_history()
 	{
 		actions.clear();
 		if (action_timer.ready)
@@ -138,7 +144,6 @@ namespace StrikingDummy
 			history.emplace_back();
 			Transition& t = history.back();
 			get_state(t.t0);
-			t.reward = 0.0f;
 			t.dt = timeline.time;
 		}
 	}
@@ -173,6 +178,7 @@ namespace StrikingDummy
 			break;
 		case 3:
 			auto_timer.reset(gl3_auto_gcd, false);
+			break;
 		default:
 			throw 0;
 		}
@@ -196,14 +202,6 @@ namespace StrikingDummy
 
 	bool Mimu::can_use_action(int action) const
 	{
-		enum Action
-		{
-			NONE,
-			BOOTSHINE, TRUESTRIKE, SNAPPUNCH, DRAGONKICK, TWINSNAKES, DEMOLISH, 
-			FISTSOFWIND, FISTSOFFIRE,
-			INTERNALRELEASE, PERFECTBALANCE, BROTHERHOOD, STEELPEAK, HOWLINGFIST, FORBIDDENCHAKRA, ELIXIRFIELD, TORNADOKICK,
-			RIDDLEOFWIND, RIDDLEOFFIRE, SHOULDERTACKLE, WINDTACKLE, FIRETACKLE
-		};
 		switch (action)
 		{
 		case NONE:
@@ -280,10 +278,16 @@ namespace StrikingDummy
 			push_event(gcd_timer.time);
 			break;
 		case FISTSOFWIND:
-			fdafdsff
+			fists = Fists::WIND;
+			rof.reset(0, 0);
+			fists_cd.reset(FISTS_CD, false);
+			push_event(FISTS_CD);
 			break;
 		case FISTSOFFIRE:
-			adasdasd
+			fists = Fists::FIRE;
+			row.reset(0, 0);
+			fists_cd.reset(FISTS_CD, false);
+			push_event(FISTS_CD);
 			break;
 		case INTERNALRELEASE:
 			ir.reset(IR_DURATION, 1);
@@ -304,9 +308,8 @@ namespace StrikingDummy
 			push_event(BRO_CD);
 			break;
 		case RIDDLEOFFIRE:
-			gfdgfgsdfg
-				dfgdfgfd
-				fdgdfg
+			fists = Fists::FIRE;
+			row.reset(0, 0);
 			rof.reset(ROF_DURATION, 1);
 			rof_cd.reset(ROF_CD, false);
 			push_event(ROF_DURATION);
@@ -385,8 +388,6 @@ namespace StrikingDummy
 				form.reset(FORM_DURATION, Form::OPOOPO);
 				push_event(FORM_DURATION);
 			}
-			gl.reset(GL_DURATION, std::min(gl.count + 1, 3));
-			push_event(GL_DURATION);
 			dot_gl = gl.count;
 			dot_fof = fists == FISTSOFFIRE;
 			dot_twin = twin.count > 0;
@@ -395,7 +396,9 @@ namespace StrikingDummy
 			dot_rof = rof.count > 0;
 			dot_ir = ir.count > 0;
 			dot.reset(DOT_DURATION, 1);
+			gl.reset(GL_DURATION, std::min(gl.count + 1, 3));
 			push_event(DOT_DURATION);
+			push_event(GL_DURATION);
 			weaponskill = true;
 			break;
 		case STEELPEAK:
@@ -422,6 +425,8 @@ namespace StrikingDummy
 			break;
 		case RIDDLEOFWIND:
 			row.reset(0, 0);
+			gl.reset(GL_DURATION, std::min(gl.count + 1, 3));
+			push_event(GL_DURATION);
 			break;
 		case WINDTACKLE:
 			tackle_cd.reset(TACKLE_CD, false);
@@ -430,6 +435,8 @@ namespace StrikingDummy
 			push_event(ROW_DURATION);
 			break;
 		case FIRETACKLE:
+			tackle_cd.reset(TACKLE_CD, false);
+			push_event(TACKLE_CD);
 			break;
 		}
 		if (weaponskill)
@@ -439,5 +446,159 @@ namespace StrikingDummy
 			if (bro.count > 0 && prob(rng) < BRO_PROC_RATE && chakra < 5)
 				chakra++;
 		}
+	}
+
+	float Mimu::get_damage(int action) const
+	{
+		float potency = 0.0f;
+		bool is_crit = false;
+		switch (action)
+		{
+		case BOOTSHINE:
+			if (form.count == Form::OPOOPO || form.count == Form::PERFECT)
+				is_crit = true;
+			potency = BOOT_POTENCY;
+			break;
+		case TRUESTRIKE:
+			potency = TRUE_POTENCY;
+			break;
+		case SNAPPUNCH:
+			potency = SNAP_POTENCY;
+			break;
+		case DRAGONKICK:
+			potency = DRAGON_POTENCY;
+			break;
+		case TWINSNAKES:
+			potency = TWIN_POTENCY;
+			break;
+		case DEMOLISH:
+			potency = DEMO_POTENCY;
+			break;
+		case STEELPEAK:
+			potency = STEEL_POTENCY;
+			break;
+		case HOWLINGFIST:
+			potency = HOWLING_POTENCY;
+			break;
+		case FORBIDDENCHAKRA:
+			potency = CHAKRA_POTENCY;
+			break;
+		case ELIXIRFIELD:
+			potency = ELIXIR_POTENCY;
+			break;
+		case TORNADOKICK:
+			potency = TK_POTENCY;
+			break;
+		case RIDDLEOFWIND:
+			potency = WINDTACKLE_POTENCY;
+			break;
+		case WINDTACKLE:
+			potency = WINDTACKLE_POTENCY;
+			break;
+		case FIRETACKLE:
+			potency = FIRETACKLE_POTENCY;
+		}
+		// floor(ptc * wd * ap * det * traits) * chr | * dhr | * rand(.95, 1.05) | ...
+		float damage = potency * stats.potency_multiplier * GL_MULTIPLIER[gl.count] *
+			(fists == Fists::FIRE ? FOF_MULTIPLIER : 1.0f) *
+			(twin.count > 0 ? TWIN_MULTIPLIER : 1.0f) *
+			(dk.count > 0 ? DK_MULTIPLIER : 1.0f) *
+			(bro.count > 0 ? BRO_MULTIPLIER : 1.0f) *
+			(rof.count > 0 ? ROF_MULTIPLIER : 1.0f);
+		if (is_crit)
+			return damage * crit_expected_multiplier;
+		else if (ir.count > 0)
+			return damage * ir_expected_multiplier;
+		return damage * stats.expected_multiplier;
+	}
+
+	float Mimu::get_dot_damage() const
+	{
+		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
+		return DEMO_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * GL_MULTIPLIER[dot_gl] *
+			(dot_fof ? FOF_MULTIPLIER : 1.0f) *
+			(dot_twin ? TWIN_MULTIPLIER : 1.0f) *
+			(dot_dk ? DK_MULTIPLIER : 1.0f) *
+			(dot_bro ? BRO_MULTIPLIER : 1.0f) *
+			(dot_rof ? ROF_MULTIPLIER : 1.0f) *
+			(dot_ir ? ir_expected_multiplier : stats.expected_multiplier);
+	}
+
+	float Mimu::get_auto_damage() const
+	{
+		// floor(ptc * aa * ap * det * traits) * ss | * chr | * dhr | * rand(.95, 1.05) | ...
+		return stats.aa_multiplier * stats.dot_multiplier * GL_MULTIPLIER[gl.count] *
+			(fists == Fists::FIRE ? FOF_MULTIPLIER : 1.0f) *
+			(twin.count > 0 ? TWIN_MULTIPLIER : 1.0f) *
+			(dk.count > 0 ? DK_MULTIPLIER : 1.0f) *
+			(bro.count > 0 ? BRO_MULTIPLIER : 1.0f) *
+			(rof.count > 0 ? ROF_MULTIPLIER : 1.0f) *
+			(ir.count > 0 ? ir_expected_multiplier : stats.expected_multiplier);
+	}
+
+	void Mimu::get_state(float* state)
+	{
+		state[0] = fists == Fists::WIND;
+		state[1] = fists == Fists::FIRE;
+		state[2] = 0.2f * chakra;
+		state[3] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
+		state[4] = (auto_gcd - auto_timer.time) / (float)auto_gcd;
+		state[5] = form.count == Form::NORMAL;
+		state[6] = form.count == Form::OPOOPO;
+		state[7] = form.count == Form::RAPTOR;
+		state[8] = form.count == Form::COEURL;
+		state[9] = form.count == Form::PERFECT;
+		state[10] = form.time / (float)FORM_DURATION;
+		state[11] = gl.count == 1;
+		state[12] = gl.count == 2;
+		state[13] = gl.count == 3;
+		state[14] = gl.time / (float)GL_DURATION;
+		state[15] = twin.count > 0;
+		state[16] = twin.time / (float)TWIN_DURATION;
+		state[17] = ir.count > 0;
+		state[18] = ir.time / (float)IR_DURATION;
+		state[19] = dk.count > 0;
+		state[20] = dk.time / (float)DK_DURATION;
+		state[21] = row.count > 0;
+		state[22] = row.time / (float)ROW_DURATION;
+		state[23] = rof.count > 0;
+		state[24] = rof.time / (float)ROF_DURATION;
+		state[25] = bro.count > 0;
+		state[26] = bro.time / (float)DOT_DURATION;
+		state[27] = dot.count > 0;
+		state[28] = dot.time / (float)DOT_DURATION;
+		state[29] = dot.count > 0 && dot_gl == 1;
+		state[30] = dot.count > 0 && dot_gl == 2;
+		state[31] = dot.count > 0 && dot_gl == 3;
+		state[32] = dot.count > 0 && dot_fof;
+		state[33] = dot.count > 0 && dot_twin;
+		state[34] = dot.count > 0 && dot_dk;
+		state[35] = dot.count > 0 && dot_bro;
+		state[36] = dot.count > 0 && dot_rof;
+		state[37] = dot.count > 0 && dot_ir;
+		state[38] = ir_cd.ready;
+		state[39] = ir_cd.time / (float)IR_CD;
+		state[40] = fists_cd.ready;
+		state[41] = fists_cd.time / (float)FISTS_CD;
+		state[42] = tackle_cd.ready;
+		state[43] = tackle_cd.time / (float)TACKLE_CD;
+		state[44] = steel_cd.ready;
+		state[45] = steel_cd.time / (float)STEEL_CD;
+		state[46] = howling_cd.ready;
+		state[47] = howling_cd.time / (float)HOWLING_CD;
+		state[48] = pb_cd.ready;
+		state[49] = pb_cd.time / (float)PB_CD;
+		state[51] = chakra_cd.ready;
+		state[52] = chakra_cd.time / (float)CHAKRA_CD;
+		state[53] = elixir_cd.ready;
+		state[54] = elixir_cd.time / (float)ELIXIR_CD;
+		state[55] = tk_cd.ready;
+		state[56] = tk_cd.time / (float)TK_CD;
+		state[57] = rof_cd.ready;
+		state[58] = rof_cd.time / (float)ROF_CD;
+		state[59] = bro_cd.ready;
+		state[60] = bro_cd.time / (float)BRO_CD;
+		state[61] = gcd_timer.ready;
+		state[62] = gcd_timer.time / 250.0f;
 	}
 }

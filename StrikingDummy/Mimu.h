@@ -26,11 +26,10 @@ namespace StrikingDummy
 		};
 
 		static constexpr float MIMU_ATTR = 110.0f;
-
 		static constexpr int NUM_ACTIONS = 21;
 
 		static constexpr int ACTION_TAX = 10;
-		static constexpr int ANIMATION_LOCK = 60;
+		static constexpr int ANIMATION_LOCK = 50;
 
 		static constexpr float BASE_GCD = 2.50f;
 
@@ -66,8 +65,7 @@ namespace StrikingDummy
 		static constexpr float SNAP_POTENCY = 170.0f;
 		static constexpr float TWIN_POTENCY = 130.0f;
 		static constexpr float DEMO_POTENCY = 70.0f;
-		static constexpr float DOT_POTENCY = 50.0f;
-		static constexpr float TACKLE_POTENCY = 100.0f;
+		static constexpr float DEMO_DOT_POTENCY = 50.0f;
 		static constexpr float STEEL_POTENCY = 150.0f;
 		static constexpr float HOWLING_POTENCY = 210.0f;
 		static constexpr float DRAGON_POTENCY = 140.0f;
@@ -86,8 +84,7 @@ namespace StrikingDummy
 		static constexpr float GL2_MULTIPLIER = 1.20f;
 		static constexpr float GL3_MULTIPLIER = 1.30f;
 		static constexpr float ROF_MULTIPLIER = 1.30f;
-
-		const int ir_expected_multiplier;
+		static constexpr float GL_MULTIPLIER[] = { 1.0f, GL1_MULTIPLIER, GL2_MULTIPLIER, GL3_MULTIPLIER };
 
 		const int base_gcd;
 		const int gl1_base_gcd;
@@ -121,13 +118,13 @@ namespace StrikingDummy
 		Buff dot;
 
 		// dot buffs...
-		int dot_gl;
-		bool dot_fof;
-		bool dot_twin;
-		bool dot_dk;
-		bool dot_bro;
-		bool dot_rof;
-		bool dot_ir;
+		int dot_gl = 0;
+		bool dot_fof = false;
+		bool dot_twin = false;
+		bool dot_dk = false;
+		bool dot_bro = false;
+		bool dot_rof = false;
+		bool dot_ir = false;
 
 		Timer ir_cd;
 		Timer fists_cd;
@@ -146,16 +143,17 @@ namespace StrikingDummy
 		Timer action_timer;
 
 		// metrics
-		float total_damage = 0;
 		int tk_count = 0;
 
-		std::vector<Transition> history;
+		// misc
+		float ir_expected_multiplier;
+		float crit_expected_multiplier;
 
 		Mimu(Stats& stats);
 
 		void reset();
 		void update(int elapsed);
-		void refresh_state();
+		void update_history();
 
 		void update_dot();
 		void update_auto();
@@ -170,10 +168,8 @@ namespace StrikingDummy
 		float get_dot_damage() const;
 		float get_auto_damage() const;
 
-		//void get_state(State& state);
-
-		void* get_history();
-		void* get_state();
-		
+		void get_state(float* state);
+		int get_state_size() { return 63; }
+		int get_num_actions() { return NUM_ACTIONS; }
 	};
 }

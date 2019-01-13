@@ -95,7 +95,7 @@ namespace StrikingDummy
 		
 		history.clear();
 
-		refresh_state();
+		update_history();
 	}
 
 	void BlackMage::update(int elapsed)
@@ -152,10 +152,10 @@ namespace StrikingDummy
 		if (cast_timer.ready)
 			end_action();
 		
-		refresh_state();
+		update_history();
 	}
 
-	void BlackMage::refresh_state()
+	void BlackMage::update_history()
 	{
 		actions.clear();
 		if (action_timer.ready)
@@ -292,17 +292,18 @@ namespace StrikingDummy
 		case NONE:
 			if (!gcd_timer.ready)
 				return true;
-			return !(get_mp_cost(B1) <= mp || get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || get_mp_cost(F1) <= mp || get_mp_cost(F3) <= mp || foul_timer.ready ||
+			return !((get_mp_cost(B1) <= mp && element != AF) || get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || 
+				(get_mp_cost(F1) <= mp && element != UI) || get_mp_cost(F3) <= mp || foul_timer.ready ||
 				(element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp) ||
 				(element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp));
 		case B1:
-			return gcd_timer.ready && get_mp_cost(B1) <= mp;
+			return gcd_timer.ready && get_mp_cost(B1) <= mp && element != AF;
 		case B3:
 			return gcd_timer.ready && get_mp_cost(B3) <= mp;
 		case B4:
 			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;
 		case F1:
-			return gcd_timer.ready && get_mp_cost(F1) <= mp;
+			return gcd_timer.ready && get_mp_cost(F1) <= mp && element != UI;
 		case F3:
 			return gcd_timer.ready && get_mp_cost(F3) <= mp;
 		case F4:
@@ -423,9 +424,9 @@ namespace StrikingDummy
 		history.back().reward += damage;
 
 		if (casting == F3 && fs_proc.count > 0);
-		// firestarter doesn't deplete swift or triple
+		// firestarter doesn't use swift or triple
 		else if (casting == T3 && tc_proc.count > 0);
-		// thundercloud doesn't deplete swift or triple
+		// thundercloud doesn't use swift or triple
 		else if (swift.count > 0)
 			swift.reset(0, 0);
 		else if (triple.count > 1)
@@ -507,7 +508,6 @@ namespace StrikingDummy
 				sharp.reset(0, 0);
 				push_event(TC_DURATION);
 			}
-			dot_index = history.size() - 1;
 			break;
 		case FOUL:
 			foul_timer.ready = false;
@@ -550,7 +550,7 @@ namespace StrikingDummy
 		return 99999;
 	}
 
-	int BlackMage::get_damage(int action) const
+	float BlackMage::get_damage(int action) const
 	{
 		float potency = 0.0f;
 		switch (action)
@@ -647,97 +647,62 @@ namespace StrikingDummy
 			break;
 		}
 		// floor(ptc * wd * ap * det * traits) * chr | * dhr | * rand(.95, 1.05) | ...
-		int damage = potency * stats.potency_multiplier * (enochian ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
-		//if (!training)
-		//{
-		//	if (prob(rng) < stats.crit_rate) // is_crit
-		//		damage *= stats.crit_multiplier;
-		//	if (prob(rng) < stats.dhit_rate) // is_dhit
-		//		damage *= 1.25;
-		//	damage *= damage_range(rng);
-		//}
-		//else
-		//	damage *= stats.expected_multiplier;
-		//return damage;
-		return damage * stats.expected_multiplier;
+		return potency * stats.potency_multiplier * stats.expected_multiplier * (enochian ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
 	}
 	
-	int BlackMage::get_dot_damage() const
+	float BlackMage::get_dot_damage() const
 	{
 		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
-		int damage = T3_DOT_POTENCY * stats.potency_multiplier * (dot.count == 1 ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
-		damage *= stats.dot_multiplier;
-		//if (!training)
-		//{
-		//	damage *= damage_range(rng);
-		//	if (prob(rng) < stats.crit_rate) // is_crit
-		//		damage *= stats.crit_multiplier;
-		//	if (prob(rng) < stats.dhit_rate) // is_dhit
-		//		damage *= 1.25;
-		//}
-		//else
-		//	damage *= stats.expected_multiplier;
-		//return damage;
-		return damage * stats.expected_multiplier;
+		return T3_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * stats.expected_multiplier * (dot.count == 1 ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
 	}
 
-	void BlackMage::get_state(State& state)
+	void BlackMage::get_state(float* state)
 	{
-		state.data[0] = mp / (float)MAX_MP;
-		state.data[1] = element == UI;
-		state.data[2] = element == AF;
-		state.data[3] = umbral_hearts > 0;
-		state.data[4] = enochian;
-		state.data[5] = (TICK_TIMER - mp_timer.time) / (float)TICK_TIMER;
-		state.data[6] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
-		state.data[7] = gauge.count > 0;
-		state.data[8] = gauge.count == 1;
-		state.data[9] = gauge.count == 2;
-		state.data[10] = gauge.count == 3;
-		state.data[11] = gauge.time / (float)GAUGE_DURATION;
-		state.data[12] = foul_timer.ready;
-		state.data[13] = (FOUL_TIMER - foul_timer.time) / (float)FOUL_TIMER;
-		state.data[14] = swift.count > 0;
-		state.data[15] = swift.time / (float)SWIFT_DURATION;
-		state.data[16] = sharp.count > 0;
-		state.data[17] = sharp.time / (float)SHARP_DURATION;
-		state.data[18] = triple.count / 3.0f;
-		state.data[19] = triple.time / (float)TRIPLE_DURATION;
-		state.data[20] = leylines.count > 0;
-		state.data[21] = leylines.time / (float)LL_DURATION;
-		state.data[22] = fs_proc.count > 0;
-		state.data[23] = fs_proc.time / (float)FS_DURATION;
-		state.data[24] = tc_proc.count > 0;
-		state.data[25] = tc_proc.time / (float)TC_DURATION;
-		state.data[26] = dot.count > 0;
-		state.data[27] = dot.time / (float)DOT_DURATION;
-		state.data[28] = dot.count == 1;
-		state.data[29] = swift_cd.ready;
-		state.data[30] = swift_cd.time / (float)SWIFT_CD;
-		state.data[31] = triple_cd.ready;
-		state.data[32] = triple_cd.time / (float)TRIPLE_CD;
-		state.data[33] = sharp_cd.ready;
-		state.data[34] = sharp_cd.time / (float)SHARP_CD;
-		state.data[35] = leylines_cd.ready;
-		state.data[36] = leylines_cd.time / (float)LL_CD;
-		state.data[37] = convert_cd.ready;
-		state.data[38] = convert_cd.time / (float)CONVERT_CD;
-		state.data[39] = eno_cd.ready;
-		state.data[40] = eno_cd.time / (float)ENO_CD;
-		state.data[41] = gcd_timer.ready;
-		state.data[42] = gcd_timer.time / 250.0f;
-		state.data[43] = umbral_hearts == 1;
-		state.data[44] = umbral_hearts == 2;
-		state.data[45] = umbral_hearts == 3;
-	}
-
-	void* BlackMage::get_history()
-	{
-		return &history;
-	}
-
-	void* BlackMage::get_state()
-	{
-		return &history.back().t0;
+		state[0] = mp / (float)MAX_MP;
+		state[1] = element == UI;
+		state[2] = element == AF;
+		state[3] = umbral_hearts > 0;
+		state[4] = enochian;
+		state[5] = (TICK_TIMER - mp_timer.time) / (float)TICK_TIMER;
+		state[6] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
+		state[7] = gauge.count > 0;
+		state[8] = gauge.count == 1;
+		state[9] = gauge.count == 2;
+		state[10] = gauge.count == 3;
+		state[11] = gauge.time / (float)GAUGE_DURATION;
+		state[12] = foul_timer.ready;
+		state[13] = (FOUL_TIMER - foul_timer.time) / (float)FOUL_TIMER;
+		state[14] = swift.count > 0;
+		state[15] = swift.time / (float)SWIFT_DURATION;
+		state[16] = sharp.count > 0;
+		state[17] = sharp.time / (float)SHARP_DURATION;
+		state[18] = triple.count / 3.0f;
+		state[19] = triple.time / (float)TRIPLE_DURATION;
+		state[20] = leylines.count > 0;
+		state[21] = leylines.time / (float)LL_DURATION;
+		state[22] = fs_proc.count > 0;
+		state[23] = fs_proc.time / (float)FS_DURATION;
+		state[24] = tc_proc.count > 0;
+		state[25] = tc_proc.time / (float)TC_DURATION;
+		state[26] = dot.count > 0;
+		state[27] = dot.time / (float)DOT_DURATION;
+		state[28] = dot.count == 1;
+		state[29] = swift_cd.ready;
+		state[30] = swift_cd.time / (float)SWIFT_CD;
+		state[31] = triple_cd.ready;
+		state[32] = triple_cd.time / (float)TRIPLE_CD;
+		state[33] = sharp_cd.ready;
+		state[34] = sharp_cd.time / (float)SHARP_CD;
+		state[35] = leylines_cd.ready;
+		state[36] = leylines_cd.time / (float)LL_CD;
+		state[37] = convert_cd.ready;
+		state[38] = convert_cd.time / (float)CONVERT_CD;
+		state[39] = eno_cd.ready;
+		state[40] = eno_cd.time / (float)ENO_CD;
+		state[41] = gcd_timer.ready;
+		state[42] = gcd_timer.time / 250.0f;
+		state[43] = umbral_hearts == 1;
+		state[44] = umbral_hearts == 2;
+		state[45] = umbral_hearts == 3;
 	}
 }
