@@ -3,44 +3,31 @@
 #include "Job.h"
 
 namespace StrikingDummy
-{/*
-	struct State
-	{
-		float data[50];
-	};
-
-	struct Transition
-	{
-		State t0;
-		State t1;
-		int action;
-		float reward;
-		int dt;
-		std::vector<int> actions;
-	};
-	*/
+{
 	struct Mimu : public Job
 	{
 		enum Action
 		{
 			NONE,
 			BOOTSHINE, TRUESTRIKE, SNAPPUNCH, DRAGONKICK, TWINSNAKES, DEMOLISH, 
-			FISTSOFWIND, FISTSOFIRE,
+			FISTSOFWIND, FISTSOFFIRE,
 			INTERNALRELEASE, PERFECTBALANCE, BROTHERHOOD, STEELPEAK, HOWLINGFIST, FORBIDDENCHAKRA, ELIXIRFIELD, TORNADOKICK,
-			RIDDLEOFWIND, RIDDLEOFIRE, SHOULDERTACKLE, WINDTACKLE, FIRETACKLE
+			RIDDLEOFWIND, RIDDLEOFFIRE, WINDTACKLE, FIRETACKLE
 		};
 
 		enum Form
 		{
-			NORMAL, OPOOPO, RAPTOR, COEURL
+			NORMAL, OPOOPO, RAPTOR, COEURL, PERFECT
 		};
 
 		enum Fists
 		{
-			BARE, WIND, FIRE
+			WIND, FIRE
 		};
 
-		static constexpr int NUM_ACTIONS = 22;
+		static constexpr float MIMU_ATTR = 110.0f;
+
+		static constexpr int NUM_ACTIONS = 21;
 
 		static constexpr int ACTION_TAX = 10;
 		static constexpr int ANIMATION_LOCK = 60;
@@ -87,7 +74,6 @@ namespace StrikingDummy
 		static constexpr float CHAKRA_POTENCY = 250.0f;
 		static constexpr float ELIXIR_POTENCY = 220.0f;
 		static constexpr float TK_POTENCY = 429.0f;
-		static constexpr float HOWLING_POTENCY = 210.0f;
 		static constexpr float WINDTACKLE_POTENCY = 65.0f;
 		static constexpr float FIRETACKLE_POTENCY = 130.0f;
 		static constexpr float RIDDLEOFWIND_POTENCY = 210.0f;
@@ -99,18 +85,25 @@ namespace StrikingDummy
 		static constexpr float GL1_MULTIPLIER = 1.10f;
 		static constexpr float GL2_MULTIPLIER = 1.20f;
 		static constexpr float GL3_MULTIPLIER = 1.30f;
+		static constexpr float ROF_MULTIPLIER = 1.30f;
+
+		const int ir_expected_multiplier;
 
 		const int base_gcd;
-		const int gl1_gcd;
-		const int gl2_gcd;
-		const int gl3_gcd;
-		const int base_fire_gcd;
+		const int gl1_base_gcd;
+		const int gl2_base_gcd;
+		const int gl3_base_gcd;
+		const int fire_gcd;
 		const int gl1_fire_gcd;
 		const int gl2_fire_gcd;
 		const int gl3_fire_gcd;
+		const int auto_gcd;
+		const int gl1_auto_gcd;
+		const int gl2_auto_gcd;
+		const int gl3_auto_gcd;
 
-		Fists fists = Fists::BARE;
-		int chakra = 0;
+		Fists fists = Fists::WIND;
+		int chakra = 5;
 
 		// ticks
 		Timer dot_timer;
@@ -122,56 +115,62 @@ namespace StrikingDummy
 		Buff twin;
 		Buff ir;
 		Buff dk;
-		Buff pb;
 		Buff row;
 		Buff rof;
 		Buff bro;
 		Buff dot;
-	
-		Timer swift_cd;
-		Timer triple_cd;
-		Timer sharp_cd;
-		Timer leylines_cd;
-		Timer convert_cd;
-		Timer eno_cd;
+
+		// dot buffs...
+		int dot_gl;
+		bool dot_fof;
+		bool dot_twin;
+		bool dot_dk;
+		bool dot_bro;
+		bool dot_rof;
+		bool dot_ir;
+
+		Timer ir_cd;
+		Timer fists_cd;
+		Timer tackle_cd;
+		Timer steel_cd;
+		Timer howling_cd;
+		Timer pb_cd;
+		Timer chakra_cd;
+		Timer elixir_cd;
+		Timer tk_cd;
+		Timer rof_cd;
+		Timer bro_cd;
 
 		// actions
 		Timer gcd_timer;
-		Timer lock_timer;
+		Timer action_timer;
 
 		// metrics
-		long long total_damage = 0;
-		int foul_count = 0;
-		int f4_count = 0;
-		int b4_count = 0;
+		float total_damage = 0;
+		int tk_count = 0;
 
 		std::vector<Transition> history;
 
-		Mimu(Stats stats);
+		Mimu(Stats& stats);
 
 		void reset();
 		void update(int elapsed);
 		void refresh_state();
 
-		void update_mp();
 		void update_dot();
-
-		bool is_instant_cast(int action) const;
-		int get_ll_cast_time(int ll_cast_time, int cast_time) const;
-
-		int get_cast_time(int action) const;
-		int get_lock_time(int action) const;
-		int get_gcd_time(int action) const;
+		void update_auto();
+		
+		int get_gcd_time() const;
 
 		bool can_use_action(int action) const;
 		void use_action(int action);
-		void end_action();
+		void use_damage_action(int action);
 
-		int get_mp_cost(int action) const;
-		int get_damage(int action) const;
-		int get_dot_damage() const;
+		float get_damage(int action) const;
+		float get_dot_damage() const;
+		float get_auto_damage() const;
 
-		void get_state(State& state);
+		//void get_state(State& state);
 
 		void* get_history();
 		void* get_state();

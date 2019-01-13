@@ -1,6 +1,7 @@
 #include "Job.h"
 #include "Rotation.h"
 #include <assert.h>
+#include <chrono>
 
 #ifdef _DEBUG 
 #define DBG(x) x
@@ -11,15 +12,17 @@
 #define LV_SUB 364.0f
 #define LV_DIV 2170.0f
 #define LV_MAIN 292.0f
-#define JOB_ATT 115.0f
 
 namespace StrikingDummy
 {
 	// ============================================ Job ============================================
 
-	Job::Job(Stats& stats) : stats(stats)
+	Job::Job(Stats& job_stats, float job_attr)
 	{
-		this->stats.calculate_stats();
+		stats = job_stats;
+		stats.calculate_stats(job_attr);
+
+		rng = std::mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		prob = std::uniform_real_distribution<float>(0.0f, 1.0f);
 		damage_range = std::uniform_real_distribution<float>(0.95f, 1.05f);
 		tick = std::uniform_int_distribution<int>(1, 300);
@@ -41,11 +44,6 @@ namespace StrikingDummy
 		}
 	}
 
-	void Job::seed(unsigned long long seed)
-	{
-		rng = std::mt19937(seed);
-	}
-
 	void Job::push_event(int offset)
 	{
 		if (offset > 0)
@@ -54,9 +52,9 @@ namespace StrikingDummy
 
 	// ============================================ Stats ============================================
 
-	void Stats::calculate_stats()
+	void Stats::calculate_stats(float job_attr)
 	{
-		wep_multiplier = floor(LV_MAIN * JOB_ATT / 1000.0f + weapon_damage);
+		wep_multiplier = floor(LV_MAIN * job_attr / 1000.0f + weapon_damage);
 		attk_multiplier = floor(125.0f * (main_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f;
 		crit_multiplier = floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 1400.0f) / 1000.0f;
 		crit_rate = floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 50.0f) / 1000.0f;
@@ -64,6 +62,7 @@ namespace StrikingDummy
 		det_multiplier = floor(130.0f * (determination - LV_MAIN) / LV_DIV + 1000.0f) / 1000.0f;
 		ss_multiplier = 1000.0f - floor(130.0f * (skill_speed - LV_SUB) / LV_DIV);
 		dot_multiplier = floor(130.0f * (skill_speed - LV_SUB) / LV_DIV + 1000.0f) / 1000.0f;
+		aa_multiplier = floor(floor(LV_MAIN * job_attr / 1000.0f + weapon_damage) * auto_delay / 3.0f);
 
 		potency_multiplier = wep_multiplier * attk_multiplier * det_multiplier / 100.0f;
 		float dcrit_rate = crit_rate * dhit_rate;

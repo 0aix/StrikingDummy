@@ -1,16 +1,15 @@
 #include "StrikingDummy.h"
 #include "TrainingDummy.h"
 #include "BlackMage.h"
+#include "Mimu.h"
 #include "Logger.h"
 #include <iostream>
 
+#define BLACKMAGE
+
 int main()
 {
-	//std::cout << "state size: " << sizeof(StrikingDummy::State) << std::endl;
-	//std::cout << "transition size: " << sizeof(StrikingDummy::Transition) << std::endl;
-
-	std::cout.precision(std::numeric_limits<double>::max_digits10);
-
+#ifdef BLACKMAGE
 	StrikingDummy::Stats stats;
 	stats.weapon_damage = 147;
 	stats.main_stat = 3237;
@@ -18,20 +17,27 @@ int main()
 	stats.direct_hit = 1375;
 	stats.determination = 994;
 	stats.skill_speed = 1450;
-	//stats.weapon_damage = 147;
-	//stats.main_stat = 3237;
-	//stats.critical_hit = 2606;
-	//stats.direct_hit = 2013;
-	//stats.determination = 954;
-	//stats.skill_speed = 860;
 
 	StrikingDummy::BlackMage blm(stats);
 	StrikingDummy::TrainingDummy dummy(blm);
-	//StrikingDummy::StrikingDummy practice(blm);
-
-	dummy.train();
+	StrikingDummy::StrikingDummy practice(blm);
+	//dummy.train();
+	dummy.trace();
 	//practice.start();
+#endif
+#ifdef MONK
+	StrikingDummy::Stats stats;
+	stats.weapon_damage = 109;
+	stats.main_stat = 3177;
+	stats.critical_hit = 2571;
+	stats.direct_hit = 1845;
+	stats.determination = 1545;
+	stats.skill_speed = 758;
+	stats.auto_attack = 93.01f;
+	stats.auto_delay = 2.56f;
 
-	std::cin.get();
-	return 0;
+	StrikingDummy::Mimu mimu(stats);
+	StrikingDummy::TrainingDummy dummy(mimu);
+	dummy.train();
+#endif
 }

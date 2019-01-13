@@ -33,9 +33,11 @@ namespace StrikingDummy
 			NE, UI, AF
 		};
 
+		static constexpr float BLM_ATTR = 115.0f;
+
 		static constexpr int NUM_ACTIONS = 15;
 
-		static constexpr int CASTER_TAX = 10;
+		static constexpr int ACTION_TAX = 10;
 		static constexpr int ANIMATION_LOCK = 60;
 
 		// Assume only in UI3 and AF3
@@ -49,8 +51,6 @@ namespace StrikingDummy
 		static constexpr float BASE_GCD = 2.50f;
 		static constexpr float III_GCD = 3.50f;
 		static constexpr float IV_GCD = 2.80f;
-		static constexpr float FAST_BASE_GCD = 1.25f;
-		static constexpr float FAST_III_GCD = 1.75f;
 
 		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
@@ -149,7 +149,7 @@ namespace StrikingDummy
 		// actions
 		Timer gcd_timer;
 		Timer cast_timer;
-		Timer lock_timer;
+		Timer action_timer;
 		int casting = Action::NONE;
 		int casting_mp_cost = 0;
 
@@ -163,7 +163,7 @@ namespace StrikingDummy
 		std::vector<Transition> history;
 		int dot_index = -1;
 
-		BlackMage(Stats stats);
+		BlackMage(Stats& stats);
 
 		void reset();
 		void update(int elapsed);
@@ -176,7 +176,7 @@ namespace StrikingDummy
 		int get_ll_cast_time(int ll_cast_time, int cast_time) const;
 
 		int get_cast_time(int action) const;
-		int get_lock_time(int action) const;
+		int get_action_time(int action) const;
 		int get_gcd_time(int action) const;
 
 		bool can_use_action(int action) const;

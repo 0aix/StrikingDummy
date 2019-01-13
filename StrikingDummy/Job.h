@@ -13,6 +13,8 @@ namespace StrikingDummy
 		int direct_hit;
 		int determination;
 		int skill_speed;
+		float auto_attack;
+		float auto_delay;
 
 		float wep_multiplier;
 		float attk_multiplier;
@@ -22,11 +24,12 @@ namespace StrikingDummy
 		float det_multiplier;
 		float ss_multiplier;
 		float dot_multiplier;
+		float aa_multiplier;
 		
 		float potency_multiplier;
 		float expected_multiplier;
 
-		void calculate_stats();
+		void calculate_stats(float job_attr);
 	};
 
 	struct Timeline
@@ -67,10 +70,8 @@ namespace StrikingDummy
 		std::uniform_real_distribution<float> damage_range;
 		std::uniform_int_distribution<int> tick;
 
-		Job(Stats& stats);
-
+		Job(Stats& job_stats, float job_attr);
 		void step();
-		void seed(unsigned long long seed);
 
 		virtual void reset() = 0;
 		virtual void use_action(int action) = 0;

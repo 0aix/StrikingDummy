@@ -14,11 +14,18 @@ namespace StrikingDummy
 
 	void StrikingDummy::start()
 	{
-		Logger::open();
-
 		BlackMage& blm = (BlackMage&)job;
 		blm.reset();
-		for (int i = 0; i < 2000; i++)
+
+		// B3 precast
+		int precast = blm.get_cast_time(2);
+		blm.timeline.time = -precast;
+		blm.mp_timer.time += precast;
+		blm.dot_timer.time += precast;
+		blm.use_action(2);
+		blm.step();
+
+		while(true)
 		{
 			// State
 			std::cout << "================================\n";
@@ -37,8 +44,7 @@ namespace StrikingDummy
 
 			// DPS
 			std::cout << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << std::endl;
+			std::cout << "Time (seconds): " << blm.timeline.time / 100.0f << std::endl;
 		}
-
-		Logger::close();
 	}
 }

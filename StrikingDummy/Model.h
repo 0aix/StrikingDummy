@@ -80,6 +80,7 @@ namespace StrikingDummy
 		float* batch_compute();
 
 		void train(float nu);
+		void load(const char* filename);
 		void save(const char* filename);
 
 		/*

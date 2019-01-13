@@ -18,8 +18,6 @@ using namespace Eigen;
 
 namespace StrikingDummy
 {
-	std::vector<int> int_range(BlackMage::NUM_ACTIONS);
-
 	std::string action_names[] =
 	{
 		"NONE",
@@ -27,23 +25,21 @@ namespace StrikingDummy
 		"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "CONVERT", "ENOCHIAN"
 	};
 
-	BlackMage::BlackMage(Stats stats) : 
-		Job(stats),
-		base_gcd(lround(floor(floor(this->stats.ss_multiplier * BASE_GCD) / 10.0))),
-		iii_gcd(lround(floor(floor(this->stats.ss_multiplier * III_GCD) / 10.0))),
-		iv_gcd(lround(floor(floor(this->stats.ss_multiplier * IV_GCD) / 10.0))),
-		fast_base_gcd(lround(floor(floor(this->stats.ss_multiplier * FAST_BASE_GCD) / 10.0))),
-		fast_iii_gcd(lround(floor(floor(this->stats.ss_multiplier * FAST_III_GCD) / 10.0))),
-		ll_base_gcd(lround(floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD) / 10.0))),
-		ll_iii_gcd(lround(floor(0.85 * floor(this->stats.ss_multiplier * III_GCD) / 10.0))),
-		ll_iv_gcd(lround(floor(0.85 * floor(this->stats.ss_multiplier * IV_GCD) / 10.0))),
-		ll_fast_base_gcd(lround(floor(0.85 * floor(this->stats.ss_multiplier * FAST_BASE_GCD) / 10.0))),
-		ll_fast_iii_gcd(lround(floor(0.85 * floor(this->stats.ss_multiplier * FAST_III_GCD) / 10.0)))
+	BlackMage::BlackMage(Stats& stats) : 
+		Job(stats, BLM_ATTR),
+		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD)))),
+		iii_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * III_GCD)))),
+		iv_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * IV_GCD)))),
+		fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * BASE_GCD))))),
+		fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * III_GCD))))),
+		ll_base_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD))))),
+		ll_iii_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD))))),
+		ll_iv_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * IV_GCD))))),
+		ll_fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD)))))),
+		ll_fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD))))))
 	{
-		std::iota(int_range.begin(), int_range.end(), 0);
 		actions.reserve(NUM_ACTIONS);
 		reset();
-		seed(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 	}
 
 	void BlackMage::reset()
@@ -86,7 +82,7 @@ namespace StrikingDummy
 		// actions
 		gcd_timer.reset(0, true);
 		cast_timer.reset(0, false);
-		lock_timer.reset(0, true);
+		action_timer.reset(0, true);
 		casting = Action::NONE;
 		casting_mp_cost = 0;
 
@@ -134,7 +130,7 @@ namespace StrikingDummy
 		// actions
 		gcd_timer.update(elapsed);
 		cast_timer.update(elapsed);
-		lock_timer.update(elapsed);
+		action_timer.update(elapsed);
 
 		// 
 		if (mp_timer.ready)
@@ -162,9 +158,9 @@ namespace StrikingDummy
 	void BlackMage::refresh_state()
 	{
 		actions.clear();
-		if (lock_timer.ready)
+		if (action_timer.ready)
 		{
-			std::remove_copy_if(int_range.cbegin(), int_range.cend(), std::back_inserter(actions), [this](int i) { return !this->can_use_action(i); });
+			for (int i = 0; i < NUM_ACTIONS; i++) if (can_use_action(i)) actions.push_back(i);
 			
 			if (actions.empty() || (actions.size() == 1 && actions[0] == NONE))
 				return;
@@ -274,11 +270,11 @@ namespace StrikingDummy
 		return 99999;
 	}
 
-	int BlackMage::get_lock_time(int action) const
+	int BlackMage::get_action_time(int action) const
 	{
 		if (is_instant_cast(action))
-			return ANIMATION_LOCK + CASTER_TAX;
-		return get_cast_time(action) + CASTER_TAX;
+			return ANIMATION_LOCK + ACTION_TAX;
+		return get_cast_time(action) + ACTION_TAX;
 	}
 
 	int BlackMage::get_gcd_time(int action) const
@@ -296,7 +292,6 @@ namespace StrikingDummy
 		case NONE:
 			if (!gcd_timer.ready)
 				return true;
-			//return true;
 			return !(get_mp_cost(B1) <= mp || get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || get_mp_cost(F1) <= mp || get_mp_cost(F3) <= mp || foul_timer.ready ||
 				(element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp) ||
 				(element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp));
@@ -357,7 +352,7 @@ namespace StrikingDummy
 				t3_count++;
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
-			lock_timer.reset(get_lock_time(action), false);
+			action_timer.reset(get_action_time(action), false);
 			casting = action;
 			casting_mp_cost = get_mp_cost(action);
 			assert(casting_mp_cost <= mp);
@@ -365,7 +360,7 @@ namespace StrikingDummy
 				end_action();
 			push_event(gcd_timer.time);
 			push_event(cast_timer.time);
-			push_event(lock_timer.time);
+			push_event(action_timer.time);
 			return;
 		case SWIFT:
 			swift.reset(SWIFT_DURATION, 1);
@@ -407,8 +402,8 @@ namespace StrikingDummy
 			push_event(ENO_CD);
 		}
 		// ogcd only
-		lock_timer.reset(ANIMATION_LOCK + CASTER_TAX, false);
-		push_event(lock_timer.time);
+		action_timer.reset(ANIMATION_LOCK + ACTION_TAX, false);
+		push_event(action_timer.time);
 	}
 
 	void BlackMage::end_action()

@@ -252,6 +252,26 @@ namespace StrikingDummy
 		arrayCopyToHost(m_b3.data(), _b3, NUM_OUT);
 	}
 
+	void Model::load(const char* filename)
+	{
+		std::fstream fs;
+		fs.open(filename, std::fstream::in | std::fstream::binary);
+		fs.read((char*)m_W1.data(), INNER_1 * NUM_IN * sizeof(float));
+		fs.read((char*)m_W2.data(), INNER_2 * INNER_1 * sizeof(float));
+		fs.read((char*)m_W3.data(), NUM_OUT * INNER_2 * sizeof(float));
+		fs.read((char*)m_b1.data(), INNER_1 * sizeof(float));
+		fs.read((char*)m_b2.data(), INNER_2 * sizeof(float));
+		fs.read((char*)m_b3.data(), NUM_OUT * sizeof(float));
+		fs.close();
+
+		arrayCopyToDevice(_W1, m_W1.data(), INNER_1 * NUM_IN);
+		arrayCopyToDevice(_W2, m_W2.data(), INNER_2 * INNER_1);
+		arrayCopyToDevice(_W3, m_W3.data(), NUM_OUT * INNER_2);
+		arrayCopyToDevice(_b1, m_b1.data(), INNER_1);
+		arrayCopyToDevice(_b2, m_b2.data(), INNER_2);
+		arrayCopyToDevice(_b3, m_b3.data(), NUM_OUT);
+	}
+
 	void Model::save(const char* filename)
 	{
 		std::fstream fs;

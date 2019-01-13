@@ -17,5 +17,6 @@ namespace StrikingDummy
 
 		void train();
 		void test();
+		void trace();
 	};
 }
