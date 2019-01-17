@@ -12,7 +12,7 @@ namespace StrikingDummy
 			BOOTSHINE, TRUESTRIKE, SNAPPUNCH, DRAGONKICK, TWINSNAKES, DEMOLISH, 
 			FISTSOFWIND, FISTSOFFIRE,
 			INTERNALRELEASE, PERFECTBALANCE, BROTHERHOOD, STEELPEAK, HOWLINGFIST, FORBIDDENCHAKRA, ELIXIRFIELD, TORNADOKICK,
-			RIDDLEOFWIND, RIDDLEOFFIRE, WINDTACKLE, FIRETACKLE
+			RIDDLEOFWIND, RIDDLEOFFIRE, WINDTACKLE, FIRETACKLE, WAIT
 		};
 
 		enum Form
@@ -26,7 +26,7 @@ namespace StrikingDummy
 		};
 
 		static constexpr float MIMU_ATTR = 110.0f;
-		static constexpr int NUM_ACTIONS = 21;
+		static constexpr int NUM_ACTIONS = 22;
 
 		static constexpr int ACTION_TAX = 10;
 		static constexpr int ANIMATION_LOCK = 50;
@@ -38,15 +38,15 @@ namespace StrikingDummy
 		static constexpr float IR_CRIT_RATE = 0.30f;
 
 		static constexpr int TICK_TIMER = 300;
-		static constexpr int FORM_DURATION = 1000;
-		static constexpr int GL_DURATION = 1600;
-		static constexpr int TWIN_DURATION = 1500;
-		static constexpr int DK_DURATION = 1500;
-		static constexpr int IR_DURATION = 1500;
+		static constexpr int FORM_DURATION = 1000 + ANIMATION_LOCK + ACTION_TAX;
+		static constexpr int GL_DURATION = 1600 + ANIMATION_LOCK + ACTION_TAX;
+		static constexpr int TWIN_DURATION = 1500 + ANIMATION_LOCK + ACTION_TAX;
+		static constexpr int DK_DURATION = 1500 + ANIMATION_LOCK + ACTION_TAX;
+		static constexpr int IR_DURATION = 1500 + ANIMATION_LOCK + ACTION_TAX;
 		static constexpr int DOT_DURATION = 1800;
-		static constexpr int ROW_DURATION = 1000;
-		static constexpr int ROF_DURATION = 2000;
-		static constexpr int BRO_DURATION = 1500;
+		static constexpr int ROW_DURATION = 1000 + ANIMATION_LOCK + ACTION_TAX;
+		static constexpr int ROF_DURATION = 2000 + ANIMATION_LOCK + ACTION_TAX;
+		static constexpr int BRO_DURATION = 1500 + ANIMATION_LOCK + ACTION_TAX;
 
 		static constexpr int IR_CD = 6000;
 		static constexpr int FISTS_CD = 300;
@@ -169,7 +169,7 @@ namespace StrikingDummy
 		float get_auto_damage() const;
 
 		void get_state(float* state);
-		int get_state_size() { return 63; }
+		int get_state_size() { return 60; }
 		int get_num_actions() { return NUM_ACTIONS; }
 	};
 }

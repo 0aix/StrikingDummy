@@ -9,10 +9,10 @@ namespace StrikingDummy
 		gl1_base_gcd(lround(floor(0.1f * floor(0.95f * floor(this->stats.ss_multiplier * BASE_GCD))))),
 		gl2_base_gcd(lround(floor(0.1f * floor(0.90f * floor(this->stats.ss_multiplier * BASE_GCD))))),
 		gl3_base_gcd(lround(floor(0.1f * floor(0.85f * floor(this->stats.ss_multiplier * BASE_GCD))))),
-		fire_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * BASE_GCD))))),
-		gl1_fire_gcd(lround(floor(0.1f * floor(0.5f * floor(0.95f * floor(this->stats.ss_multiplier * BASE_GCD)))))),
-		gl2_fire_gcd(lround(floor(0.1f * floor(0.5f * floor(0.90f * floor(this->stats.ss_multiplier * BASE_GCD)))))),
-		gl3_fire_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85f * floor(this->stats.ss_multiplier * BASE_GCD)))))),
+		fire_gcd(lround(floor(0.1f * floor(1.15f * floor(this->stats.ss_multiplier * BASE_GCD))))),
+		gl1_fire_gcd(lround(floor(0.1f * floor(1.15f * floor(0.95f * floor(this->stats.ss_multiplier * BASE_GCD)))))),
+		gl2_fire_gcd(lround(floor(0.1f * floor(1.15f * floor(0.90f * floor(this->stats.ss_multiplier * BASE_GCD)))))),
+		gl3_fire_gcd(lround(floor(0.1f * floor(1.15f * floor(0.85f * floor(this->stats.ss_multiplier * BASE_GCD)))))),
 		auto_gcd(lround(floor(0.1f * floor(1000.0f * this->stats.auto_delay)))),
 		gl1_auto_gcd(lround(floor(0.1f * floor(0.95f * floor(1000.0f * this->stats.auto_delay))))),
 		gl2_auto_gcd(lround(floor(0.1f * floor(0.90f * floor(1000.0f * this->stats.auto_delay))))),
@@ -129,7 +129,8 @@ namespace StrikingDummy
 		{
 			for (int i = 0; i < NUM_ACTIONS; i++) if (can_use_action(i)) actions.push_back(i);
 
-			if (actions.empty() || (actions.size() == 1 && actions[0] == NONE))
+			//if (actions.empty() || (actions.size() == 1 && actions[0] == NONE))
+			if (actions.empty())
 				return;
 
 			// state/transition
@@ -178,9 +179,6 @@ namespace StrikingDummy
 			break;
 		case 3:
 			auto_timer.reset(gl3_auto_gcd, false);
-			break;
-		default:
-			throw 0;
 		}
 		push_event(auto_timer.time);
 	}
@@ -205,47 +203,51 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
-			return !gcd_timer.ready;
+			return (gcd_timer.time % (ANIMATION_LOCK + ACTION_TAX)) > 0;
+			//return !gcd_timer.ready;
 		case BOOTSHINE:
-			return gcd_timer.ready;
+			return gcd_timer.ready && (form.count != Form::RAPTOR && form.count != Form::COEURL);
 		case TRUESTRIKE:
 			return gcd_timer.ready && (form.count == Form::RAPTOR || form.count == Form::PERFECT);
 		case SNAPPUNCH:
 			return gcd_timer.ready && (form.count == Form::COEURL || form.count == Form::PERFECT);
 		case DRAGONKICK:
-			return gcd_timer.ready;
+			return gcd_timer.ready && (form.count != Form::RAPTOR && form.count != Form::COEURL);
 		case TWINSNAKES:
 			return gcd_timer.ready && (form.count == Form::RAPTOR || form.count == Form::PERFECT);
 		case DEMOLISH:
 			return gcd_timer.ready && (form.count == Form::COEURL || form.count == Form::PERFECT);
 		case FISTSOFWIND:
-			return fists_cd.ready && fists != Fists::WIND;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && fists_cd.ready && fists != Fists::WIND;
 		case FISTSOFFIRE:
-			return fists_cd.ready && fists != Fists::FIRE;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && fists_cd.ready && fists != Fists::FIRE;
 		case INTERNALRELEASE:
-			return ir_cd.ready;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && ir_cd.ready;
 		case PERFECTBALANCE:
-			return pb_cd.ready;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && pb_cd.ready;
 		case BROTHERHOOD:
-			return bro_cd.ready;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && bro_cd.ready;
 		case STEELPEAK:
-			return steel_cd.ready;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && steel_cd.ready;
 		case HOWLINGFIST:
-			return howling_cd.ready;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && howling_cd.ready;
 		case FORBIDDENCHAKRA:
-			return chakra_cd.ready && chakra == 5;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && chakra_cd.ready && chakra == 5;
 		case ELIXIRFIELD:
-			return elixir_cd.ready;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && elixir_cd.ready;
 		case TORNADOKICK:
-			return tk_cd.ready && gl.count == 3;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && tk_cd.ready && gl.count == 3;
 		case RIDDLEOFWIND:
-			return row.count > 0;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && row.count > 0;
 		case RIDDLEOFFIRE:
-			return rof_cd.ready && fists == Fists::FIRE;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && rof_cd.ready && fists == Fists::FIRE;
 		case WINDTACKLE:
-			return tackle_cd.ready && fists == Fists::WIND;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && tackle_cd.ready && fists == Fists::WIND;
 		case FIRETACKLE:
-			return tackle_cd.ready && fists == Fists::FIRE;
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX && tackle_cd.ready && fists == Fists::FIRE;
+		case WAIT:
+			return gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
+			//return !gcd_timer.ready && gcd_timer.time >= 2 * (ANIMATION_LOCK + ACTION_TAX);
 		}
 		return false;
 	}
@@ -256,6 +258,8 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
+			action_timer.reset(gcd_timer.time % (ANIMATION_LOCK + ACTION_TAX), false);
+			push_event(action_timer.time);
 			return;
 		case BOOTSHINE:
 		case TRUESTRIKE:
@@ -274,8 +278,6 @@ namespace StrikingDummy
 			if (action == TORNADOKICK)
 				tk_count++;
 			use_damage_action(action);
-			gcd_timer.reset(get_gcd_time(), false);
-			push_event(gcd_timer.time);
 			break;
 		case FISTSOFWIND:
 			fists = Fists::WIND;
@@ -315,6 +317,8 @@ namespace StrikingDummy
 			push_event(ROF_DURATION);
 			push_event(ROF_CD);
 			break;
+		case WAIT:
+			break;
 		}
 		action_timer.reset(ANIMATION_LOCK + ACTION_TAX, false);
 		push_event(action_timer.time);
@@ -322,12 +326,13 @@ namespace StrikingDummy
 
 	void Mimu::use_damage_action(int action)
 	{
-		int damage = get_damage(action);
+		float damage = get_damage(action);
 		total_damage += damage;
 		history.back().reward += damage;
 
 		bool weaponskill = false;
 		bool is_crit = false; // bootshine only
+		int gcd_time = get_gcd_time();
 
 		switch (action)
 		{
@@ -445,6 +450,8 @@ namespace StrikingDummy
 				chakra++;
 			if (bro.count > 0 && prob(rng) < BRO_PROC_RATE && chakra < 5)
 				chakra++;
+			gcd_timer.reset(gcd_time, false);
+			push_event(gcd_time);
 		}
 	}
 
@@ -541,64 +548,64 @@ namespace StrikingDummy
 		state[0] = fists == Fists::WIND;
 		state[1] = fists == Fists::FIRE;
 		state[2] = 0.2f * chakra;
-		state[3] = (TICK_TIMER - dot_timer.time) / (float)TICK_TIMER;
-		state[4] = (auto_gcd - auto_timer.time) / (float)auto_gcd;
-		state[5] = form.count == Form::NORMAL;
-		state[6] = form.count == Form::OPOOPO;
-		state[7] = form.count == Form::RAPTOR;
-		state[8] = form.count == Form::COEURL;
-		state[9] = form.count == Form::PERFECT;
-		state[10] = form.time / (float)FORM_DURATION;
-		state[11] = gl.count == 1;
-		state[12] = gl.count == 2;
-		state[13] = gl.count == 3;
-		state[14] = gl.time / (float)GL_DURATION;
-		state[15] = twin.count > 0;
-		state[16] = twin.time / (float)TWIN_DURATION;
-		state[17] = ir.count > 0;
-		state[18] = ir.time / (float)IR_DURATION;
-		state[19] = dk.count > 0;
-		state[20] = dk.time / (float)DK_DURATION;
-		state[21] = row.count > 0;
-		state[22] = row.time / (float)ROW_DURATION;
-		state[23] = rof.count > 0;
-		state[24] = rof.time / (float)ROF_DURATION;
-		state[25] = bro.count > 0;
-		state[26] = bro.time / (float)DOT_DURATION;
-		state[27] = dot.count > 0;
-		state[28] = dot.time / (float)DOT_DURATION;
-		state[29] = dot.count > 0 && dot_gl == 1;
-		state[30] = dot.count > 0 && dot_gl == 2;
-		state[31] = dot.count > 0 && dot_gl == 3;
-		state[32] = dot.count > 0 && dot_fof;
-		state[33] = dot.count > 0 && dot_twin;
-		state[34] = dot.count > 0 && dot_dk;
-		state[35] = dot.count > 0 && dot_bro;
-		state[36] = dot.count > 0 && dot_rof;
-		state[37] = dot.count > 0 && dot_ir;
-		state[38] = ir_cd.ready;
-		state[39] = ir_cd.time / (float)IR_CD;
-		state[40] = fists_cd.ready;
-		state[41] = fists_cd.time / (float)FISTS_CD;
-		state[42] = tackle_cd.ready;
-		state[43] = tackle_cd.time / (float)TACKLE_CD;
-		state[44] = steel_cd.ready;
-		state[45] = steel_cd.time / (float)STEEL_CD;
-		state[46] = howling_cd.ready;
-		state[47] = howling_cd.time / (float)HOWLING_CD;
-		state[48] = pb_cd.ready;
-		state[49] = pb_cd.time / (float)PB_CD;
-		state[51] = chakra_cd.ready;
-		state[52] = chakra_cd.time / (float)CHAKRA_CD;
-		state[53] = elixir_cd.ready;
-		state[54] = elixir_cd.time / (float)ELIXIR_CD;
-		state[55] = tk_cd.ready;
-		state[56] = tk_cd.time / (float)TK_CD;
-		state[57] = rof_cd.ready;
-		state[58] = rof_cd.time / (float)ROF_CD;
-		state[59] = bro_cd.ready;
-		state[60] = bro_cd.time / (float)BRO_CD;
-		state[61] = gcd_timer.ready;
-		state[62] = gcd_timer.time / 250.0f;
+		//state[3] = dot_timer.time / (float)TICK_TIMER;
+		//state[4] = auto_timer.time / (float)auto_gcd;
+		state[3] = form.count == Form::NORMAL;
+		state[4] = form.count == Form::OPOOPO;
+		state[5] = form.count == Form::RAPTOR;
+		state[6] = form.count == Form::COEURL;
+		state[7] = form.count == Form::PERFECT;
+		state[8] = form.time / (float)FORM_DURATION;
+		state[9] = gl.count == 1;
+		state[10] = gl.count == 2;
+		state[11] = gl.count == 3;
+		state[12] = gl.time / (float)GL_DURATION;
+		state[13] = twin.count > 0;
+		state[14] = twin.time / (float)TWIN_DURATION;
+		state[15] = ir.count > 0;
+		state[16] = ir.time / (float)IR_DURATION;
+		state[17] = dk.count > 0;
+		state[18] = dk.time / (float)DK_DURATION;
+		state[19] = row.count > 0;
+		state[20] = row.time / (float)ROW_DURATION;
+		state[21] = rof.count > 0;
+		state[22] = rof.time / (float)ROF_DURATION;
+		state[23] = bro.count > 0;
+		state[24] = bro.time / (float)BRO_DURATION;
+		state[25] = dot.count > 0;
+		state[26] = dot.time / (float)DOT_DURATION;
+		state[27] = dot.count > 0 && dot_gl == 1;
+		state[28] = dot.count > 0 && dot_gl == 2;
+		state[29] = dot.count > 0 && dot_gl == 3;
+		state[30] = dot.count > 0 && dot_fof;
+		state[31] = dot.count > 0 && dot_twin;
+		state[32] = dot.count > 0 && dot_dk;
+		state[33] = dot.count > 0 && dot_bro;
+		state[34] = dot.count > 0 && dot_rof;
+		state[35] = dot.count > 0 && dot_ir;
+		state[36] = ir_cd.ready;
+		state[37] = ir_cd.time / (float)IR_CD;
+		state[38] = fists_cd.ready;
+		state[39] = fists_cd.time / (float)FISTS_CD;
+		state[40] = tackle_cd.ready;
+		state[41] = tackle_cd.time / (float)TACKLE_CD;
+		state[42] = steel_cd.ready;
+		state[43] = steel_cd.time / (float)STEEL_CD;
+		state[44] = howling_cd.ready;
+		state[45] = howling_cd.time / (float)HOWLING_CD;
+		state[46] = pb_cd.ready;
+		state[47] = pb_cd.time / (float)PB_CD;
+		state[48] = chakra_cd.ready;
+		state[49] = chakra_cd.time / (float)CHAKRA_CD;
+		state[50] = elixir_cd.ready;
+		state[51] = elixir_cd.time / (float)ELIXIR_CD;
+		state[52] = tk_cd.ready;
+		state[53] = tk_cd.time / (float)TK_CD;
+		state[54] = rof_cd.ready;
+		state[55] = rof_cd.time / (float)ROF_CD;
+		state[56] = bro_cd.ready;
+		state[57] = bro_cd.time / (float)BRO_CD;
+		state[58] = gcd_timer.ready;
+		state[59] = gcd_timer.time / 250.0f;
 	}
 }

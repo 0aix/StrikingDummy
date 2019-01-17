@@ -21,8 +21,8 @@ int main()
 	StrikingDummy::BlackMage blm(stats);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
-	//dummy.train();
-	dummy.trace();
+	dummy.train();
+	//dummy.trace();
 	//practice.start();
 #endif
 #ifdef MONK
@@ -38,6 +38,9 @@ int main()
 
 	StrikingDummy::Mimu mimu(stats);
 	StrikingDummy::TrainingDummy dummy(mimu);
+	StrikingDummy::StrikingDummy practice(mimu);
 	dummy.train();
+	//dummy.trace_mimu();
+	//practice.start();
 #endif
 }

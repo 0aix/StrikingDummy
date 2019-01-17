@@ -169,7 +169,7 @@ namespace StrikingDummy
 		float get_dot_damage() const;
 
 		void get_state(float* state);
-		int get_state_size() { return 46; }
+		int get_state_size() { return 44; }
 		int get_num_actions() { return NUM_ACTIONS; }
 	};
 }

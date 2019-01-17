@@ -61,8 +61,8 @@ namespace StrikingDummy
 
 	struct Transition
 	{
-		float t0[63];
-		float t1[63];
+		float t0[62];
+		float t1[62];
 		int action = 0;
 		float reward = 0.0f;
 		int dt = 0;
@@ -81,7 +81,7 @@ namespace StrikingDummy
 		std::uniform_real_distribution<float> damage_range;
 		std::uniform_int_distribution<int> tick;
 
-		float total_damage;
+		float total_damage = 0.0f;
 
 		Job(Stats& job_stats, float job_attr);
 		void step();

@@ -18,5 +18,6 @@ namespace StrikingDummy
 		void train();
 		void test();
 		void trace();
+		void trace_mimu();
 	};
 }

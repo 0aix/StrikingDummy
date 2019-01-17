@@ -21,9 +21,12 @@ namespace StrikingDummy
 		Model& model;
 		std::vector<int> random_action;
 		float eps;
+		float exp;
+		bool exploring;
 
 		ModelRotation(Job& job, Model& model);
 
+		void reset(float eps, float exp);
 		void step();
 	};
 

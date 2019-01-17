@@ -15,6 +15,15 @@ namespace StrikingDummy
 	{
 		random_action.push_back(-1);
 		eps = 0.0f;
+		exp = 0.0f;
+		exploring = false;
+	}
+
+	void ModelRotation::reset(float eps, float exp)
+	{
+		this->eps = eps;
+		this->exp = exp;
+		this->exploring = false;
 	}
 
 	void ModelRotation::step()
@@ -24,10 +33,11 @@ namespace StrikingDummy
 		else
 		{
 			int action;
-			if (unif(model_rotation_rng) < eps)
+			if (unif(model_rotation_rng) < (exploring ? std::max(eps, exp) : eps))
 			{
 				std::sample(job.actions.begin(), job.actions.end(), random_action.begin(), 1, model_rotation_rng);
 				action = random_action.front();
+				exploring = true;
 			}
 			else
 			{
@@ -46,6 +56,7 @@ namespace StrikingDummy
 					}
 				}
 				action = max_action;
+				exploring = false;
 			}
 			job.use_action(action);
 		}
