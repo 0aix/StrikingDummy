@@ -50,9 +50,54 @@ __global__ void _matrixInitialize(float* A, int n, float r)
 		A[i] = 2.0f * (A[i] - 0.5f) * r;
 }
 
-// dumb
 __global__ void _matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
 {
+	
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+
+	__shared__ float _A[32][32];
+	__shared__ float _B[32][32];
+
+	float sum = 0.0f;
+	bool compute = i < n0 && j < m1;
+	int Z = (m0 + 31) / 32;
+	int K = (m0 + 31) % 32 + 1;
+
+	for (int z = 0; z < Z; ++z)
+	{
+		int Ay = i;
+		int Ax = threadIdx.x + z * 32;
+		int By = threadIdx.y + z * 32;
+		int Bx = j;
+		if (Ay < n0 && Ax < m0)
+			_A[threadIdx.y][threadIdx.x] = A[Ay + Ax * n0];
+		if (By < n1 && Bx < m1)
+			_B[threadIdx.y][threadIdx.x] = B[By + Bx * n1];
+
+		__syncthreads();
+
+		if (compute)
+		{
+			if (z == Z - 1)
+			{
+				for (int k = 0; k < K; ++k)
+					sum += _A[threadIdx.y][k] * _B[k][threadIdx.x];
+			}
+			else
+			{
+#pragma unroll
+				for (int k = 0; k < 32; ++k)
+					sum += _A[threadIdx.y][k] * _B[k][threadIdx.x];
+			}
+		}
+
+		__syncthreads();
+	}
+	if (compute)
+		C[j * n0 + i] = sum;
+	
+	/*
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < n0 && j < m1)
@@ -62,6 +107,67 @@ __global__ void _matrixMultiply(float* C, float* A, int n0, int m0, float* B, in
 			sum += A[k * n0 + i] * B[j * n1 + k];
 		C[j * n0 + i] = sum;
 	}
+	*/
+}
+
+__global__ void _matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
+{
+
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+
+	__shared__ float _A[32][32];
+	__shared__ float _B[32][32];
+
+	float sum = 0.0f;
+	bool compute = i < n0 && j < m1;
+	int Z = (m0 + 31) / 32;
+	int K = (m0 + 31) % 32 + 1;
+
+	for (int z = 0; z < Z; ++z)
+	{
+		int Ay = i;
+		int Ax = threadIdx.x + z * 32;
+		int By = threadIdx.y + z * 32;
+		int Bx = j;
+		if (Ay < n0 && Ax < m0)
+			_A[threadIdx.y][threadIdx.x] = A[Ay + Ax * n0];
+		if (By < n1 && Bx < m1)
+			_B[threadIdx.y][threadIdx.x] = B[By * m1 + Bx];
+
+		__syncthreads();
+
+		if (compute)
+		{
+			if (z == Z - 1)
+			{
+				for (int k = 0; k < K; ++k)
+					sum += _A[threadIdx.y][k] * _B[k][threadIdx.x];
+			}
+			else
+			{
+#pragma unroll
+				for (int k = 0; k < 32; ++k)
+					sum += _A[threadIdx.y][k] * _B[k][threadIdx.x];
+			}
+		}
+
+		__syncthreads();
+	}
+	if (compute)
+		C[j * n0 + i] = sum;
+
+	/*
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n0 && j < m1)
+	{
+		float sum = 0.0f;
+		for (int k = 0; k < m0; k++)
+			sum += A[k * n0 + i] * B[j * n1 + k];
+		C[j * n0 + i] = sum;
+	}
+	*/
 }
 
 __global__ void _matrixTranspose(float* B, float* A, int n, int m)
@@ -156,6 +262,25 @@ void matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1
 	cudaSafeDeviceSynchronize();
 }
 
+void matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
+{
+	if (m0 != n1)
+		throw 0;
+
+	dim3 numThreads(32, 32);
+	dim3 numBlocks((m1 + 31) / 32, (n0 + 31) / 32);
+
+	_matrixMultiplyTranspose<<<numBlocks, numThreads>>>(C, A, n0, m0, B, n1, m1);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_matrixMultiply failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
 void matrixTranspose(float* B, float* A, int n, int m)
 {
 	dim3 numThreads(32, 32);
@@ -214,6 +339,13 @@ __global__ void _arrayMultiplyScalar(float* B, float* A, float b, int n)
 		B[i] = A[i] * b;
 }
 
+__global__ void _arrayDivide(float* C, float* A, float* B, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		C[i] = A[i] / B[i];
+}
+
 __global__ void _arraySigmoid(float* B, float* A, int n)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -240,6 +372,13 @@ __global__ void _arrayDerivReLU(float* B, float* A, int n)
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < n)
 		B[i] = A[i] > 0.0f ? 1.0f : 0.0f;
+}
+
+__global__ void _arraySqrt(float* B, float* A, int n)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		B[i] = sqrtf(A[i]);
 }
 
 void arrayCopyToDevice(float* _A, float* A, int n)
@@ -346,6 +485,20 @@ void arrayMultiply(float* C, float* A, float b, int n)
 	cudaSafeDeviceSynchronize();
 }
 
+void arrayDivide(float* C, float* A, float* B, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arrayDivide<<<numBlocks, blockSize>>>(C, A, B, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arrayDivide failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
 void arraySigmoid(float* B, float* A, int n)
 {
 	int numBlocks = (n + blockSize - 1) / blockSize;
@@ -397,6 +550,20 @@ void arrayDerivReLU(float* B, float* A, int n)
 	if (cudaStatus != cudaSuccess)
 	{
 		std::cerr << "_arrayDerivReLU failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	cudaSafeDeviceSynchronize();
+}
+
+void arraySqrt(float* B, float* A, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_arraySqrt<<<numBlocks, blockSize>>>(B, A, n);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_arraySqrt failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
 	cudaSafeDeviceSynchronize();

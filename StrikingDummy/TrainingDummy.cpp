@@ -28,20 +28,18 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE_MAX = 2000;
-		const int NUM_STEPS_PER_EPISODE = 50;
+		const int NUM_STEPS_PER_EPISODE_MAX = 1000;
+		const int NUM_STEPS_PER_EPISODE = 1000;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 1000;
-		const float WINDOW = 120000.0f;
-		const float WINDOW_MAX = 120000.0f;
-		const float WINDOW_GROWTH = 0.1f;
-		const float EPS_DECAY = 0.9999f;
+		const float WINDOW = 6000.0f;
+		const float WINDOW_MAX = 30000.0f;
+		const float WINDOW_GROWTH = 0.0f;
+		const float EPS_DECAY = 0.9995f;
 		const float EPS_MIN = 0.10f;
 		const float STEPS_GROWTH = 0.1f;
 		const float STEPS_MAX = NUM_STEPS_PER_EPISODE_MAX;
-
-		// EXPLORATION DEPTH ... probability to keep exploring
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -62,8 +60,8 @@ namespace StrikingDummy
 		// Initialize model
 		int state_size = job.get_state_size();
 		int num_actions = job.get_num_actions();
-		model.init(state_size, num_actions, BATCH_SIZE);
-		//model.load("Weights\\weights-best-481000");
+		model.init(state_size, num_actions, BATCH_SIZE, true);
+		//model.load("Weights\\weights");
 
 		BlackMage& blm = (BlackMage&)job;
 		Mimu& mimu = (Mimu&)job;
@@ -126,9 +124,18 @@ namespace StrikingDummy
 							if (q[index] > max_q)
 								max_q = q[index];
 						}
-						max_q = 80.0f + 10.0f * max_q;
-						rewards[i] = 0.1f * ((1.0f / window) * (t.reward + (window - t.dt) * max_q) - 80.0f);
+						
+						//max_q = 75.0f + 5.0f * max_q;
+						//rewards[i] = 0.2f * ((1.0f / window) * (t.reward + (window - t.dt) * max_q) - 75.0f);
+						
+						//max_q = 80.0f + 10.0f * max_q;
+						//rewards[i] = 0.1f * ((1.0f / window) * (t.reward + (window - t.dt) * max_q) - 80.0f);
+
+						max_q = 100.0f * max_q;
+						rewards[i] = 0.01f * ((1.0f / window) * (t.reward + (window - t.dt) * max_q));
+						
 						//rewards[i] = (1.0f / window) * (0.01f * t.reward + (window - t.dt) * max_q);
+
 						actions[i] = t.action;
 					}
 
@@ -149,6 +156,8 @@ namespace StrikingDummy
 					// train
 					model.train(nu);
 				}
+				model.copyToHost();
+
 				// adjust parameters
 				eps *= EPS_DECAY;
 				if (eps < EPS_MIN)
@@ -172,8 +181,8 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << std::endl;
-				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mimu.tk_count << std::endl;
+				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << std::endl;
+				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mimu.tk_count << std::endl;
 
 				Logger::log(ss.str().c_str());
 				std::cout << ss.str();
@@ -222,16 +231,9 @@ namespace StrikingDummy
 		BlackMage& blm = (BlackMage&)job;
 		blm.reset();
 
-		// B3 precast
-		int precast = blm.get_cast_time(2) + 80;
-		blm.use_action(11);
-		blm.step();
-		blm.use_action(2);
-		blm.step();
-
 		Logger::log("=============\n");
 
-		model.init(blm.get_state_size(), blm.get_num_actions(), 1);
+		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
@@ -244,28 +246,28 @@ namespace StrikingDummy
 		{
 			Transition& t = blm.history[i];
 			std::stringstream ss;
-			if (t.action == 5 && t.t0[22] == 1.0f)
+			if (t.action == 5 && t.t0[20] == 1.0f)
 				ss << t.t0[0] * 15480.0f << " F3p";
 			else if (t.action == 7)
 			{
-				if (t.t0[24] == 1.0f)
-					ss << t.t0[0] * 15480.0f << " T3p at " << t.t0[27] * 24 << "s left on dot";
+				if (t.t0[22] == 1.0f)
+					ss << t.t0[0] * 15480.0f << " T3p at " << t.t0[25] * 24 << "s left on dot";
 				else
-					ss << t.t0[0] * 15480.0f << " T3 at " << t.t0[27] * 24 << "s left on dot";
+					ss << t.t0[0] * 15480.0f << " T3 at " << t.t0[25] * 24 << "s left on dot";
 			}
 			else if (t.action != 0)
 				ss << t.t0[0] * 15480.0f << " " << blm_actions[t.action];
 			if (t.action != 0)
 			{
-				if (t.t0[24] == 1.0f)
-					ss << " (T3p w/ " << t.t0[25] * 18 << "s)";
+				if (t.t0[22] == 1.0f)
+					ss << " (T3p w/ " << t.t0[23] * 18 << "s)";
 				ss << std::endl;
 			}
 			Logger::log(ss.str().c_str());
 		}
 
 		std::stringstream ss;
-		ss << "DPS: " << 100.0f / (blm.timeline.time - precast) * blm.total_damage << "\n=============" << std::endl;
+		ss << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 
 		Logger::close();
@@ -277,7 +279,7 @@ namespace StrikingDummy
 		"BOOTSHINE", "TRUESTRIKE", "SNAPPUNCH", "DRAGONKICK", "TWINSNAKES", "DEMOLISH",
 		"FISTSOFWIND", "FISTSOFFIRE",
 		"INTERNALRELEASE", "PERFECTBALANCE", "BROTHERHOOD", "STEELPEAK", "HOWLINGFIST", "FORBIDDENCHAKRA", "ELIXIRFIELD", "TORNADOKICK",
-		"RIDDLEOFWIND", "RIDDLEOFFIRE", "WINDTACKLE", "FIRETACKLE"
+		"RIDDLEOFWIND", "RIDDLEOFFIRE", "WINDTACKLE", "FIRETACKLE", "WAIT"
 	};
 
 	void TrainingDummy::trace_mimu()
@@ -291,19 +293,19 @@ namespace StrikingDummy
 
 		Logger::log("=============\n");
 
-		model.init(mimu.get_state_size(), mimu.get_num_actions(), 1);
+		model.init(mimu.get_state_size(), mimu.get_num_actions(), 1, false);
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
 
-		while (mimu.timeline.time < 4000)
+		while (mimu.timeline.time < 7 * 24 * 360000)
 			rotation.step();
 
 		int length = mimu.history.size() - 1;
 		for (int i = 0; i < length; i++)
 		{
 			Transition& t = mimu.history[i];
-			if (t.action != 0)
+			if (t.action != 0 && t.action != 21)
 			{
 				std::stringstream ss;
 				ss << mimu_actions[t.action] << std::endl;

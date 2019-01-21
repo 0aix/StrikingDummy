@@ -10,6 +10,7 @@ namespace StrikingDummy
 	{
 		Job& job;
 		Model model;
+		Model modelB;
 		ModelRotation rotation;
 
 		TrainingDummy(Job& job);

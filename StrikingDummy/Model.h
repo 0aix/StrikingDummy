@@ -52,6 +52,20 @@ namespace StrikingDummy
 		float* _dLdb3 = NULL;
 		float* _ones = NULL;
 
+		float* _dLdW1m = NULL;
+		float* _dLdW2m = NULL;
+		float* _dLdW3m = NULL;
+		float* _dLdb1m = NULL;
+		float* _dLdb2m = NULL;
+		float* _dLdb3m = NULL;
+		float* _dLdW1v = NULL;
+		float* _dLdW2v = NULL;
+		float* _dLdW3v = NULL;
+		float* _dLdb1v = NULL;
+		float* _dLdb2v = NULL;
+		float* _dLdb3v = NULL;
+		float* _temp = NULL;
+
 		float* __X0 = NULL;
 		float* __X1 = NULL;
 		float* __X2 = NULL;
@@ -68,38 +82,30 @@ namespace StrikingDummy
 		MatrixXf m_b1;
 		MatrixXf m_b2;
 		MatrixXf m_b3;
+
+		static constexpr float BETA1 = 0.85f;
+		static constexpr float BETA2 = 0.85f;
+		static constexpr float EPSILON = 0.00000001f;
 		
 		int input_size = 0;
 		int output_size = 0;
 		int batch_size = 0;
+		float beta1 = BETA1;
+		float beta2 = BETA2;
+		bool adam = false;
 
 		//Model(ModelParams& params);
 		~Model();
 
-		void init(int input_size, int output_size, int batch_size);
+		void init(int input_size, int output_size, int batch_size, bool adam);
 
 		float* compute();
 		float* batch_compute();
 
 		void train(float nu);
+		void copyToHost();
+
 		void load(const char* filename);
 		void save(const char* filename);
-
-		/*
-		MatrixXf x0; // single input
-		MatrixXf xk; // single output
-		MatrixXf X0; // batch input
-		MatrixXf Xk; // batch output
-		MatrixXf target; // batch target
-
-		void init(int batch_size);
-
-		MatrixXf& compute();
-		MatrixXf& batch_compute();
-
-		void train(float nu);
-
-		void save();
-		*/
 	};
 }

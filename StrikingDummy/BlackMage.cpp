@@ -308,7 +308,7 @@ namespace StrikingDummy
 		case B4:
 			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;
 		case F1:
-			return gcd_timer.ready && get_mp_cost(F1);
+			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
 			return gcd_timer.ready && get_mp_cost(F3) <= mp;
 		case F4:
