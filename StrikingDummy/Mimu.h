@@ -29,7 +29,7 @@ namespace StrikingDummy
 		static constexpr int NUM_ACTIONS = 22;
 
 		static constexpr int ACTION_TAX = 10;
-		static constexpr int ANIMATION_LOCK = 50;
+		static constexpr int ANIMATION_LOCK = 60;
 
 		static constexpr float BASE_GCD = 2.50f;
 

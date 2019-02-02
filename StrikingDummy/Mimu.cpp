@@ -42,6 +42,8 @@ namespace StrikingDummy
 
 		// buffs
 		form.reset(FORM_DURATION, Form::COEURL);
+		timeline.push_event(form.time);
+
 		gl.reset(0, 0);
 		twin.reset(0, 0);
 		ir.reset(0, 0);
@@ -129,8 +131,7 @@ namespace StrikingDummy
 		{
 			for (int i = 0; i < NUM_ACTIONS; i++) if (can_use_action(i)) actions.push_back(i);
 
-			//if (actions.empty() || (actions.size() == 1 && actions[0] == NONE))
-			if (actions.empty())
+			if (actions.empty() || (actions.size() == 1 && actions[0] == NONE))
 				return;
 
 			// state/transition

@@ -9,8 +9,8 @@ namespace StrikingDummy
 		enum Action
 		{
 			NONE,
-			B1, B3, B4, F1, F3, F4, T3, FOUL, // Might want to code in F3P and T3P...
-			SWIFT, TRIPLE, SHARP, LEYLINES, CONVERT, ENOCHIAN
+			B1, B3, B4, F1, F3, F4, T3, FOUL, FLARE, // Might want to code in F3P and T3P...
+			SWIFT, TRIPLE, SHARP, LEYLINES, CONVERT, ENOCHIAN, TRANSPOSE
 		};
 
 		enum Element
@@ -20,7 +20,7 @@ namespace StrikingDummy
 
 		static constexpr float BLM_ATTR = 115.0f;
 
-		static constexpr int NUM_ACTIONS = 15;
+		static constexpr int NUM_ACTIONS = 17;
 
 		static constexpr int ACTION_TAX = 10;
 		static constexpr int ANIMATION_LOCK = 60;
@@ -36,6 +36,7 @@ namespace StrikingDummy
 		static constexpr float BASE_GCD = 2.50f;
 		static constexpr float III_GCD = 3.50f;
 		static constexpr float IV_GCD = 2.80f;
+		static constexpr float FLARE_GCD = 4.00f;
 
 		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
@@ -57,6 +58,7 @@ namespace StrikingDummy
 		static constexpr int LL_CD = 9000;
 		static constexpr int CONVERT_CD = 18000;
 		static constexpr int ENO_CD = 3000;
+		static constexpr int TRANSPOSE_CD = 800;
 
 		// Assume not using Flare
 		static constexpr float F1_POTENCY = 180.0f;
@@ -69,6 +71,7 @@ namespace StrikingDummy
 		static constexpr float T3_DOT_POTENCY = 40.0f;
 		static constexpr float TC_POTENCY = 390.0f;
 		static constexpr float FOUL_POTENCY = 650.0f;
+		static constexpr float FLARE_POTENCY = 260.0f;
 
 		static constexpr float ENO_MULTIPLIER = 1.10f;
 		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30f;
@@ -87,17 +90,22 @@ namespace StrikingDummy
 		static constexpr int B3_MP_COST = 1440;
 		static constexpr int B4_MP_COST = 960;
 		static constexpr int T3_MP_COST = 1920;
+		static constexpr int FLARE_MP_COST = 1200;
 
 		const int base_gcd;
 		const int iii_gcd;
 		const int iv_gcd;
+		const int flare_gcd;
 		const int fast_base_gcd;
 		const int fast_iii_gcd;
+		const int fast_flare_gcd;
 		const int ll_base_gcd;
 		const int ll_iii_gcd;
 		const int ll_iv_gcd;
+		const int ll_flare_gcd;
 		const int ll_fast_base_gcd;
 		const int ll_fast_iii_gcd;
+		const int ll_fast_flare_gcd;
 
 		int mp = MAX_MP;
 
@@ -130,6 +138,7 @@ namespace StrikingDummy
 		Timer leylines_cd;
 		Timer convert_cd;
 		Timer eno_cd;
+		Timer transpose_cd;
 
 		// actions
 		Timer gcd_timer;
@@ -143,6 +152,7 @@ namespace StrikingDummy
 		int f4_count = 0;
 		int b4_count = 0;
 		int t3_count = 0;
+		int flare_count = 0;
 
 		BlackMage(Stats& stats);
 
@@ -169,7 +179,7 @@ namespace StrikingDummy
 		float get_dot_damage() const;
 
 		void get_state(float* state);
-		int get_state_size() { return 44; }
+		int get_state_size() { return 46; }
 		int get_num_actions() { return NUM_ACTIONS; }
 	};
 }
