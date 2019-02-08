@@ -19,5 +19,6 @@ namespace StrikingDummy
 		void test();
 		void trace();
 		void trace_mimu();
+		void trace_sam();
 	};
 }

@@ -308,10 +308,11 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
+			return true;
 			if (!gcd_timer.ready)
 				return true;
-			return !(get_mp_cost(B1) <= mp || get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || 
-				get_mp_cost(F1) <= mp || get_mp_cost(F3) <= mp || foul_timer.ready ||
+			// can still choose NONE if only GCDs available are B1, F1, and FLARE
+			return !(get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || get_mp_cost(F3) <= mp || foul_timer.ready ||
 				(element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp) ||
 				(element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp));
 		case B1:
@@ -324,6 +325,7 @@ namespace StrikingDummy
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
 			return gcd_timer.ready && get_mp_cost(F3) <= mp;
+			//return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != Element::UI || umbral_hearts > 0);
 		case F4:
 			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp;
 		case T3:
@@ -331,6 +333,7 @@ namespace StrikingDummy
 		case FOUL:
 			return gcd_timer.ready && foul_timer.ready;
 		case FLARE:
+			//return false;
 			return gcd_timer.ready && get_mp_cost(FLARE) <= mp;
 		case SWIFT:
 			return swift_cd.ready;
@@ -345,6 +348,7 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
+			//return false;
 			return transpose_cd.ready && element != Element::NE;
 		}
 		return false;

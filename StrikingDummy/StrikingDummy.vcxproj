@@ -145,6 +145,7 @@
     </ClCompile>
     <ClCompile Include="ModelRotation.cpp" />
     <ClCompile Include="MyRotation.cpp" />
+    <ClCompile Include="Samurai.cpp" />
     <ClCompile Include="StrikingDummy.cpp" />
     <ClCompile Include="TrainingDummy.cpp" />
   </ItemGroup>
@@ -156,6 +157,7 @@
     <ClInclude Include="Mimu.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Rotation.h" />
+    <ClInclude Include="Samurai.h" />
     <ClInclude Include="StrikingDummy.h" />
     <ClInclude Include="TrainingDummy.h" />
   </ItemGroup>
