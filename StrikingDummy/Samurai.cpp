@@ -198,15 +198,15 @@ namespace StrikingDummy
 		case MIDARE:
 			return gcd_timer.ready && ((int)setsu + (int)getsu + (int)ka) == 3;
 		case MEIKYO:
-			return !gcd_timer.ready && meikyo_cd.ready;
+			return meikyo_cd.ready;
 		case KAITEN:
-			return !gcd_timer.ready && kaiten_cd.ready && kenki >= KAITEN_COST;
+			return kaiten_cd.ready && kenki >= KAITEN_COST;
 		case SHINTEN:
-			return !gcd_timer.ready && shinten_cd.ready && kenki >= SHINTEN_COST;
+			return shinten_cd.ready && kenki >= SHINTEN_COST;
 		case GUREN:
-			return !gcd_timer.ready && guren_cd.ready && kenki >= GUREN_COST;
+			return guren_cd.ready && kenki >= GUREN_COST;
 		case HAGAKURE:
-			return !gcd_timer.ready && hagakure_cd.ready && (setsu || getsu || ka);
+			return hagakure_cd.ready && (setsu || getsu || ka);
 		}
 		return false;
 	}

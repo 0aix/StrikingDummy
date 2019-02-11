@@ -33,8 +33,8 @@ namespace StrikingDummy
 		const int NUM_STEPS_PER_EPISODE = 100;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
-		const int BATCH_SIZE = 1000;
-		const float WINDOW = 12000.0f;
+		const int BATCH_SIZE = 10000;
+		const float WINDOW = 60000.0f;
 		const float WINDOW_MAX = 60000.0f;
 		const float WINDOW_GROWTH = 0.1f;
 		const float EPS_DECAY = 0.9995f;
@@ -64,13 +64,13 @@ namespace StrikingDummy
 		int state_size = job.get_state_size();
 		int num_actions = job.get_num_actions();
 		model.init(state_size, num_actions, BATCH_SIZE, false);
-		//model.load("Weights\\weights");
+		model.load("Weights\\weights");
 
 		BlackMage& blm = (BlackMage&)job;
 		Mimu& mimu = (Mimu&)job;
 		Samurai& sam = (Samurai&)job;
 
-		float nu = 0.01f;
+		float nu = 0.001f;
 		float eps = 1.0f;
 		float exp = 0.0f;
 		float window = WINDOW;
@@ -80,6 +80,8 @@ namespace StrikingDummy
 		float beta = 0.9f;
 		int epoch_offset = 0;
 		float adjust = 10.0f;
+		float max_dps = 0.0f;
+		int max_i = 0;
 
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
 		{
@@ -103,7 +105,7 @@ namespace StrikingDummy
 			}
 			if (m_size == CAPACITY)
 			{
-				float L = 75.0f - 0.5f * adjust;
+				float L = 85.0f - 0.5f * adjust;
 
 				// batch train a bunch
 				for (int batch = 0; batch < NUM_BATCHES_PER_EPOCH; batch++)
@@ -202,6 +204,14 @@ namespace StrikingDummy
 					filename << "Weights\\weights-" << _epoch << std::flush;
 					model.save(filename.str().c_str());
 				}
+				if (dps > max_dps)
+				{
+					max_dps = dps;
+					max_i++;
+					std::stringstream filename;
+					filename << "Weights\\max-" << max_i << std::flush;
+					model.save(filename.str().c_str());
+				}
 			}
 			else
 				epoch_offset++;
@@ -255,6 +265,8 @@ namespace StrikingDummy
 		Logger::log(zz.str().c_str());
 
 		int length = blm.history.size() - 1;
+		if (length > 1000)
+			length = 1000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{

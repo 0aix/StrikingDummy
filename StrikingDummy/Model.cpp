@@ -1,6 +1,7 @@
 #include "Model.h"
 #include "CUDA.cuh"
 #include <fstream>
+#include <iostream>
 
 namespace StrikingDummy
 {
@@ -334,6 +335,7 @@ namespace StrikingDummy
 			beta1 *= BETA1;
 			beta2 *= BETA2;
 		}
+
 		//
 		arrayMultiply(_dLdW3, _dLdW3, nu, output_size * INNER_2);
 		

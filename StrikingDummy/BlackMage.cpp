@@ -308,7 +308,7 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
-			return true;
+			//return true;
 			if (!gcd_timer.ready)
 				return true;
 			// can still choose NONE if only GCDs available are B1, F1, and FLARE
@@ -333,8 +333,8 @@ namespace StrikingDummy
 		case FOUL:
 			return gcd_timer.ready && foul_timer.ready;
 		case FLARE:
-			//return false;
-			return gcd_timer.ready && get_mp_cost(FLARE) <= mp;
+			return false;
+			//return gcd_timer.ready && get_mp_cost(FLARE) <= mp;
 		case SWIFT:
 			return swift_cd.ready;
 		case TRIPLE:
@@ -348,8 +348,8 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
-			//return false;
-			return transpose_cd.ready && element != Element::NE;
+			return false;
+			//return transpose_cd.ready && element != Element::NE;
 		}
 		return false;
 	}
