@@ -63,6 +63,9 @@ namespace StrikingDummy
 		// metrics
 		total_damage = 0.0f;
 		midare_count = 0;
+		kaiten_count = 0;
+		guren_count = 0;
+		shinten_count = 0;
 
 		history.clear();
 
@@ -198,15 +201,15 @@ namespace StrikingDummy
 		case MIDARE:
 			return gcd_timer.ready && ((int)setsu + (int)getsu + (int)ka) == 3;
 		case MEIKYO:
-			return meikyo_cd.ready;
+			return meikyo_cd.ready && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		case KAITEN:
-			return kaiten_cd.ready && kenki >= KAITEN_COST;
+			return kaiten_cd.ready && kenki >= KAITEN_COST && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		case SHINTEN:
-			return shinten_cd.ready && kenki >= SHINTEN_COST;
+			return shinten_cd.ready && kenki >= GUREN_COST && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		case GUREN:
-			return guren_cd.ready && kenki >= GUREN_COST;
+			return guren_cd.ready && kenki >= GUREN_COST && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		case HAGAKURE:
-			return hagakure_cd.ready && (setsu || getsu || ka);
+			return hagakure_cd.ready && (setsu || getsu || ka) && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		}
 		return false;
 	}
@@ -217,6 +220,8 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
+			action_timer.reset(gcd_timer.time, false);
+			push_event(action_timer.time);
 			return;
 		case HAKAZE:
 		case JINPU:
@@ -226,6 +231,10 @@ namespace StrikingDummy
 		case YUKIKAZE:
 		case SHINTEN:
 		case GUREN:
+			if (action == SHINTEN)
+				shinten_count++;
+			else if (action == GUREN)
+				guren_count++;
 			use_damage_action(action);
 			break;
 		case HIGANBANA:
@@ -262,6 +271,7 @@ namespace StrikingDummy
 			kaiten_cd.reset(KAITEN_CD, false);
 			push_event(KAITEN_DURATION);
 			push_event(KAITEN_CD);
+			kaiten_count++;
 			break;
 		case HAGAKURE:
 			kenki = std::min(MAX_KENKI, kenki + 20 * ((int)setsu + (int)getsu + (int)ka));

@@ -6,6 +6,16 @@
 #include "Logger.h"
 #include <iostream>
 
+/*
+
+This is a cheesy message to my future me who will definitely be looking at this for 5.0.
+
+I wrote this message after looking at the old game engine code which made me cringe so hard. 
+
+Good luck with this code, btw.
+
+*/
+
 #define SAMURAI
 
 int main()
@@ -22,8 +32,8 @@ int main()
 	StrikingDummy::BlackMage blm(stats);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
-	dummy.train();
-	//dummy.trace();
+	//dummy.train();
+	dummy.trace();
 	//practice.start();
 #endif
 #ifdef MONK
@@ -58,8 +68,8 @@ int main()
 	StrikingDummy::Samurai sam(stats);
 	StrikingDummy::TrainingDummy dummy(sam);
 	StrikingDummy::StrikingDummy practice(sam);
-	dummy.train();
-	//dummy.trace_sam();
+	//dummy.train();
+	dummy.trace_sam();
 	//practice.start();
 #endif
 }

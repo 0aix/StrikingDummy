@@ -113,6 +113,9 @@ namespace StrikingDummy
 
 		// metrics
 		int midare_count = 0;
+		int kaiten_count = 0;
+		int guren_count = 0;
+		int shinten_count = 0;
 
 		Samurai(Stats& stats);
 
