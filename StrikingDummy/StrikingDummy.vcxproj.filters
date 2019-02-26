@@ -48,6 +48,9 @@
     <ClCompile Include="Samurai.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Machinist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logger.h">
@@ -78,6 +81,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Samurai.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Machinist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

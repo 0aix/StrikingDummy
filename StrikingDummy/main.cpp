@@ -3,6 +3,7 @@
 #include "BlackMage.h"
 #include "Mimu.h"
 #include "Samurai.h"
+#include "Machinist.h"
 #include "Logger.h"
 #include <iostream>
 
@@ -16,7 +17,7 @@ Good luck with this code, btw.
 
 */
 
-#define SAMURAI
+#define MACHINIST
 
 int main()
 {
@@ -68,8 +69,26 @@ int main()
 	StrikingDummy::Samurai sam(stats);
 	StrikingDummy::TrainingDummy dummy(sam);
 	StrikingDummy::StrikingDummy practice(sam);
+	dummy.train();
+	//dummy.trace_sam();
+	//practice.start();
+#endif
+#ifdef MACHINIST
+	StrikingDummy::Stats stats;
+	stats.weapon_damage = 109;
+	stats.main_stat = 3226;
+	stats.critical_hit = 2656;
+	stats.direct_hit = 1908;
+	stats.determination = 1211;
+	stats.skill_speed = 793;
+	stats.auto_attack = 95.92f;
+	stats.auto_delay = 2.64f;
+
+	StrikingDummy::Machinist mch(stats);
+	StrikingDummy::TrainingDummy dummy(mch);
+	StrikingDummy::StrikingDummy practice(mch);
 	//dummy.train();
-	dummy.trace_sam();
+	dummy.trace_mch();
 	//practice.start();
 #endif
 }

@@ -20,5 +20,6 @@ namespace StrikingDummy
 		void trace();
 		void trace_mimu();
 		void trace_sam();
+		void trace_mch();
 	};
 }

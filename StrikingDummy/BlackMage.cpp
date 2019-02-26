@@ -308,13 +308,16 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
+			return !gcd_timer.ready;
 			//return true;
+			/*
 			if (!gcd_timer.ready)
 				return true;
 			// can still choose NONE if only GCDs available are B1, F1, and FLARE
 			return !(get_mp_cost(B3) <= mp || get_mp_cost(T3) <= mp || get_mp_cost(F3) <= mp || foul_timer.ready ||
 				(element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp) ||
 				(element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp));
+			*/
 		case B1:
 			return gcd_timer.ready && get_mp_cost(B1) <= mp;
 		case B3:
@@ -350,6 +353,8 @@ namespace StrikingDummy
 		case TRANSPOSE:
 			return false;
 			//return transpose_cd.ready && element != Element::NE;
+		case WAIT:
+			return gcd_timer.ready;
 		}
 		return false;
 	}
@@ -360,6 +365,7 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
+		case WAIT:
 			return;
 		case B1:
 		case B3:

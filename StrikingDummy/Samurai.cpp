@@ -205,7 +205,7 @@ namespace StrikingDummy
 		case KAITEN:
 			return kaiten_cd.ready && kenki >= KAITEN_COST && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		case SHINTEN:
-			return shinten_cd.ready && kenki >= GUREN_COST && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
+			return shinten_cd.ready && kenki >= SHINTEN_COST && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		case GUREN:
 			return guren_cd.ready && kenki >= GUREN_COST && gcd_timer.time >= ANIMATION_LOCK + ACTION_TAX;
 		case HAGAKURE:
@@ -368,7 +368,7 @@ namespace StrikingDummy
 				gekko_combo.reset(0, 0);
 				kasha_combo.reset(COMBO_DURATION, 1);
 				yukikaze_combo.reset(0, 0);
-				push_event(JINPU_DURATION);
+				push_event(SHIFU_DURATION);
 				push_event(COMBO_DURATION);
 			}
 			weaponskill = true;
@@ -432,6 +432,8 @@ namespace StrikingDummy
 			{
 				kenki = std::min(MAX_KENKI, kenki + 10);
 				setsu = true;
+				yukikaze.reset(YUKIKAZE_DURATION, 1);
+				push_event(YUKIKAZE_DURATION);
 				if (--meikyo.count == 0)
 				{
 					meikyo.reset(0, 0);
@@ -446,6 +448,8 @@ namespace StrikingDummy
 			{
 				kenki = std::min(MAX_KENKI, kenki + 10);
 				setsu = true;
+				yukikaze.reset(YUKIKAZE_DURATION, 1);
+				push_event(YUKIKAZE_DURATION);
 				jinpu_combo.reset(0, 0);
 				shifu_combo.reset(0, 0);
 				gekko_combo.reset(0, 0);

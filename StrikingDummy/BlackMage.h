@@ -9,8 +9,9 @@ namespace StrikingDummy
 		enum Action
 		{
 			NONE,
-			B1, B3, B4, F1, F3, F4, T3, FOUL, FLARE, // Might want to code in F3P and T3P...
-			SWIFT, TRIPLE, SHARP, LEYLINES, CONVERT, ENOCHIAN, TRANSPOSE
+			B1, B3, B4, F1, F3, F4, T3, FOUL, FLARE,
+			SWIFT, TRIPLE, SHARP, LEYLINES, CONVERT, ENOCHIAN, TRANSPOSE, 
+			WAIT
 		};
 
 		enum Element
@@ -20,7 +21,7 @@ namespace StrikingDummy
 
 		static constexpr float BLM_ATTR = 115.0f;
 
-		static constexpr int NUM_ACTIONS = 17;
+		static constexpr int NUM_ACTIONS = 18;
 
 		static constexpr int ACTION_TAX = 10;
 		static constexpr int ANIMATION_LOCK = 60;
