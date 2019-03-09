@@ -1,5 +1,6 @@
 #include "Machinist.h"
 #include <assert.h>
+#include <sstream>
 
 namespace StrikingDummy
 {
@@ -556,5 +557,26 @@ namespace StrikingDummy
 		state[53] = turret_cd.time / (float)TURRET_CD;
 		state[54] = gcd_timer.ready;
 		state[55] = gcd_timer.time / 250.0f;
+	}
+
+	std::string Machinist::get_info()
+	{
+		std::stringstream ss;
+
+		ss << "Heat: " << heat << std::endl;
+		ss << "Ammo: " << ammo << std::endl;
+		ss << "Gauss Barrel: " << gauss << std::endl;
+		ss << "Hot: " << hot.time / 100.0f << "s" << std::endl;
+		ss << "Overheat: " << overheat.time / 100.0f << "s" << std::endl;
+		ss << "Wildfire: " << wildfire.time / 100.0f << "s" << std::endl;
+		ss << "Vulnerability: " << vuln.time / 100.0f << "s" << std::endl;
+		ss << "Overdrive CD: " << overdrive_cd.time / 100.0f << "s" << std::endl;
+		ss << "Wildfire CD: " << wildfire_cd.time / 100.0f << "s" << std::endl;
+		ss << "Reload CD: " << reload_cd.time / 100.0f << "s" << std::endl;
+		ss << "Quick Reload CD: " << quick_reload_cd.time / 100.0f << "s" << std::endl;
+		ss << "Overheat CD: " << barrel_cd.time / 100.0f << "s" << std::endl;
+		ss << "Time til GCD: " << gcd_timer.time / 100.0f << "s" << std::endl;
+
+		return ss.str();
 	}
 }

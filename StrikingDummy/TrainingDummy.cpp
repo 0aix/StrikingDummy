@@ -31,7 +31,7 @@ namespace StrikingDummy
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
 		const int NUM_STEPS_PER_EPISODE_MAX = 2000;
-		const int NUM_STEPS_PER_EPISODE = 200;
+		const int NUM_STEPS_PER_EPISODE = NUM_STEPS_PER_EPISODE_MAX;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
@@ -65,14 +65,14 @@ namespace StrikingDummy
 		int state_size = job.get_state_size();
 		int num_actions = job.get_num_actions();
 		model.init(state_size, num_actions, BATCH_SIZE, false);
-		//model.load("Weights\\weights");
+		model.load("Weights\\weights");
 
 		BlackMage& blm = (BlackMage&)job;
 		Mimu& mimu = (Mimu&)job;
 		Samurai& sam = (Samurai&)job;
 
 		float nu = 0.001f;
-		float eps = 1.0f;
+		float eps = EPS_MIN;
 		float exp = 0.0f;
 		float window = WINDOW;
 		float steps_per_episode = NUM_STEPS_PER_EPISODE;
@@ -84,6 +84,8 @@ namespace StrikingDummy
 		float max_dps = 0.0f;
 		bool adjusted = true;
 		int max_i = 0;
+
+		// WEIGHT DISTRIBUTION LEARNING
 
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
 		{
@@ -107,7 +109,7 @@ namespace StrikingDummy
 			}
 			if (m_size == CAPACITY)
 			{
-				float L = 69.0f - 0.5f * adjust;
+				float L = 87.0f - 0.5f * adjust;
 
 				// batch train a bunch
 				for (int batch = 0; batch < NUM_BATCHES_PER_EPOCH; batch++)
@@ -198,10 +200,10 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				std::stringstream ss;
-				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", flares: " << blm.flare_count << std::endl;
+				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", flares: " << blm.flare_count << std::endl;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mimu.tk_count << std::endl;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", midares: " << sam.midare_count << ", kaitens: " << sam.kaiten_count << ", shintens: " << sam.shinten_count << ", gurens: " << sam.guren_count << std::endl;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << std::endl;
+				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << std::endl;
 
 				beta *= 0.9f;
 
@@ -244,14 +246,6 @@ namespace StrikingDummy
 			rotation.step();
 	}
 
-	std::string blm_actions[] =
-	{
-		"NONE",
-		"B1", "B3", "B4", "F1", "F3", "F4", "T3", "FOUL", "FLARE", 
-		"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "CONVERT", "ENOCHIAN", "TRANSPOSE",
-		"WAIT"
-	};
-
 	void TrainingDummy::trace()
 	{
 		Logger::open();
@@ -274,54 +268,55 @@ namespace StrikingDummy
 		std::stringstream zz;
 		zz << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n=============" << std::endl;
 		Logger::log(zz.str().c_str());
-
+		
 		int length = blm.history.size() - 1;
-		int t3 = 0;
-		int t3p = 0;
+		if (length > 1000)
+			length = 1000;
+		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
 			Transition& t = blm.history[i];
+			int hours = time / 360000;
+			int minutes = (time / 6000) % 60;
+			int seconds = (time / 100) % 60;
+			int centiseconds = time % 100;
 			std::stringstream ss;
-			//if (t.action == 3)
-			//{
-			//	ss << "B4 - MP: " << t.t0[0] * 15480;
-			//	ss << ", Gauge: " << t.t0[9] * 13;
-			//	ss << ", Foul: " << t.t0[10];
-			//	ss << ", Foul timer: " << t.t0[11] * 30;
-			//	ss << ", T3p: " << t.t0[22];
-			//	ss << ", Dot duration: " << t.t0[25] * 24;
-			//	ss << std::endl;
-			//	Logger::log(ss.str().c_str());
-			//}
-			if (t.action == 7)
+			if (t.action != 0)
 			{
-				if (t.t0[22] > 0.0f)
-				{
-					ss << "T3p - MP: " << t.t0[0] * 15480;
-					t3p++;
-				}
-				else
-				{
-					ss << "T3 - MP: " << t.t0[0] * 15480;
-					t3++;
-				}
-				if (t.t0[1] > 0.0f)
-					ss << ", UI";
-				else if (t.t0[2] > 0.0f)
-					ss << ", AF";
-				ss << ", Gauge: " << t.t0[9] * 13;
-				ss << ", Foul: " << t.t0[10];
-				ss << ", Foul timer: " << t.t0[11] * 30;
-				ss << ", Dot duration: " << t.t0[25] * 24;
-				ss << ", T3p duration: " << t.t0[23] * 18;
-				ss << std::endl;
-				if (t.t0[22] <= 0.0f && t.t0[2] > 0.0f)
-					Logger::log(ss.str().c_str());
+				ss << "[";
+				if (hours < 10)
+					ss << "0";
+				ss << hours << ":";
+				if (minutes < 10)
+					ss << "0";
+				ss << minutes << ":";
+				if (seconds < 10)
+					ss << "0";
+				ss << seconds << ".";
+				if (centiseconds < 10)
+					ss << "0";
+				ss << centiseconds << "] ";
 			}
+			if (t.action == 5 && t.t0[20] == 1.0f)
+				ss << t.t0[0] * 15480.0f << " F3p";
+			else if (t.action == 7)
+			{
+				if (t.t0[22] == 1.0f)
+					ss << t.t0[0] * 15480.0f << " T3p at " << t.t0[25] * 24 << "s left on dot";
+				else
+					ss << t.t0[0] * 15480.0f << " T3 at " << t.t0[25] * 24 << "s left on dot";
+			}
+			else if (t.action != 0)
+				ss << t.t0[0] * 15480.0f << " " << blm.get_action_name(t.action);
+			if (t.action != 0)
+			{
+				if (t.t0[22] == 1.0f)
+					ss << " (T3p w/ " << t.t0[23] * 18 << "s)";
+				ss << std::endl;
+			}
+			Logger::log(ss.str().c_str());
+			time += t.dt;
 		}
-		std::stringstream ss;
-		ss << "T3s: " << t3 << "\nT3ps: " << t3p << std::endl;
-		Logger::log(ss.str().c_str());
 		Logger::close();
 	}
 
@@ -439,16 +434,6 @@ namespace StrikingDummy
 		Logger::close();
 	}
 
-	std::string mch_actions[] =
-	{
-		"NONE",
-		"SPLIT", "SLUG", "HOT", "CLEAN", "COOLDOWN",
-		"GAUSS_ROUND", "RICOCHET",
-		"RELOAD", "REASSEMBLE", "QUICK_RELOAD", "RAPIDFIRE", "WILDFIRE", "GAUSS_BARREL", "STABILIZER",
-		"HYPERCHARGE", "OVERDRIVE",
-		"FLAMETHROWER_CAST", "FLAMETHROWER_TICK"
-	};
-
 	void TrainingDummy::trace_mch()
 	{
 		Logger::open();
@@ -501,7 +486,7 @@ namespace StrikingDummy
 				if (centiseconds < 10)
 					ss << "0";
 				ss << centiseconds << "] ";
-				ss << mch_actions[t.action] << " " << t.t0[0] * 100.0f << std::endl;
+				ss << mch.get_action_name(t.action) << " " << t.t0[0] * 100.0f << std::endl;
 				Logger::log(ss.str().c_str());
 			}
 			time += t.dt;

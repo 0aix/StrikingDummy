@@ -14,9 +14,9 @@ namespace StrikingDummy
 	void MyRotation::step()
 	{
 		std::stringstream ss;
-		ss << "Actions: " << job.actions.front();
+		ss << "Actions: " << job.get_action_name(job.actions.front()) << " (" << job.actions.front() << ")";
 		for (auto iter = job.actions.cbegin() + 1; iter != job.actions.cend(); iter++)
-			ss << ", " << *iter;
+			ss << ", " << job.get_action_name(*iter) << " (" << *iter << ")";
 		std::cout << ss.str() << std::endl << "Use: " << std::flush;
 		int action;
 		std::cin >> action;

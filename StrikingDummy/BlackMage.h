@@ -11,12 +11,20 @@ namespace StrikingDummy
 			NONE,
 			B1, B3, B4, F1, F3, F4, T3, FOUL, FLARE,
 			SWIFT, TRIPLE, SHARP, LEYLINES, CONVERT, ENOCHIAN, TRANSPOSE, 
-			WAIT
+			WAIT_FOR_MP
 		};
 
 		enum Element
 		{
 			NE, UI, AF
+		};
+
+		std::string blm_actions[18] =
+		{
+			"NONE",
+			"B1", "B3", "B4", "F1", "F3", "F4", "T3", "FOUL", "FLARE",
+			"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "CONVERT", "ENOCHIAN", "TRANSPOSE",
+			"WAIT_FOR_MP"
 		};
 
 		static constexpr float BLM_ATTR = 115.0f;
@@ -154,6 +162,7 @@ namespace StrikingDummy
 		int b4_count = 0;
 		int t3_count = 0;
 		int flare_count = 0;
+		int transpose_count = 0;
 
 		BlackMage(Stats& stats);
 
@@ -182,5 +191,7 @@ namespace StrikingDummy
 		void get_state(float* state);
 		int get_state_size() { return 46; }
 		int get_num_actions() { return NUM_ACTIONS; }
+		std::string get_action_name(int action) { return blm_actions[action]; }
+		std::string get_info();
 	};
 }

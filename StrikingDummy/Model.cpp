@@ -188,6 +188,8 @@ namespace StrikingDummy
 		// d3 = (Xk - target).cwiseProduct(Xk.unaryExpr(&dsigmoid));
 		arraySubtract(_target, _X3, _target, output_size * batch_size);
 
+		// MULTIPLY
+
 		arrayDerivSigmoid(_X3, _X3, output_size * batch_size);
 
 		arrayMultiply(_d3, _target, _X3, output_size * batch_size);

@@ -7,12 +7,12 @@ namespace StrikingDummy
 {
 	struct Stats
 	{
-		int weapon_damage;
-		int main_stat;
-		int critical_hit;
-		int direct_hit;
-		int determination;
-		int skill_speed;
+		float weapon_damage;
+		float main_stat;
+		float critical_hit;
+		float direct_hit;
+		float determination;
+		float skill_speed;
 		float auto_attack;
 		float auto_delay;
 
@@ -92,6 +92,8 @@ namespace StrikingDummy
 		virtual void get_state(float* state) = 0;
 		virtual int get_state_size() = 0;
 		virtual int get_num_actions() = 0;
+		virtual std::string get_action_name(int action) = 0;
+		virtual std::string get_info() = 0;
 
 	protected:
 		virtual void update(int elapsed) = 0;

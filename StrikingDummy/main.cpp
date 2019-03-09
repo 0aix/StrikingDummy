@@ -7,17 +7,7 @@
 #include "Logger.h"
 #include <iostream>
 
-/*
-
-This is a cheesy message to my future me who will definitely be looking at this for 5.0.
-
-I wrote this message after looking at the old game engine code which made me cringe so hard. 
-
-Good luck with this code, btw.
-
-*/
-
-#define MACHINIST
+#define BLACKMAGE
 
 int main()
 {
@@ -87,8 +77,8 @@ int main()
 	StrikingDummy::Machinist mch(stats);
 	StrikingDummy::TrainingDummy dummy(mch);
 	StrikingDummy::StrikingDummy practice(mch);
-	//dummy.train();
-	dummy.trace_mch();
+	dummy.train();
+	//dummy.trace_mch();
 	//practice.start();
 #endif
 }

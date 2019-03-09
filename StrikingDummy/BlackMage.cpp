@@ -65,15 +65,12 @@ namespace StrikingDummy
 		timeline.push_event(dot_timer.time);
 
 		// elemental gauge
-		//gauge.reset(0, 0);
-		gauge.reset(GAUGE_DURATION, 3);
+		gauge.reset(0, 0);
 		foul_timer.reset(0, false);
 
 		// buffs
 		swift.reset(0, 0);
-		//sharp.reset(0, 0);
-		sharp.reset(SHARP_DURATION - 1000, 1);
-		timeline.push_event(sharp.time);
+		sharp.reset(0, 0);
 
 		triple.reset(0, 0);
 		leylines.reset(0, 0);
@@ -84,8 +81,7 @@ namespace StrikingDummy
 		// cooldowns		
 		swift_cd.reset(0, true);
 		triple_cd.reset(0, true);
-		sharp_cd.reset(SHARP_CD - 1000, false);
-		timeline.push_event(sharp_cd.time);
+		sharp_cd.reset(0, true);
 		leylines_cd.reset(0, true);
 		convert_cd.reset(0, true);
 		eno_cd.reset(0, true);
@@ -105,6 +101,15 @@ namespace StrikingDummy
 		b4_count = 0;
 		t3_count = 0;
 		flare_count = 0;
+		transpose_count = 0;
+
+		// precast
+		gauge.reset(GAUGE_DURATION, 3);
+		sharp.reset(SHARP_DURATION - 1000, 1);
+		sharp_cd.reset(SHARP_CD - 1000, false);
+		timeline.push_event(gauge.time);
+		timeline.push_event(sharp.time);
+		timeline.push_event(sharp_cd.time);
 		
 		history.clear();
 
@@ -353,8 +358,8 @@ namespace StrikingDummy
 		case TRANSPOSE:
 			return false;
 			//return transpose_cd.ready && element != Element::NE;
-		case WAIT:
-			return gcd_timer.ready;
+		case WAIT_FOR_MP:
+			return gcd_timer.ready && element != Element::AF;
 		}
 		return false;
 	}
@@ -365,7 +370,10 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case NONE:
-		case WAIT:
+			return;
+		case WAIT_FOR_MP:
+			action_timer.reset(mp_timer.time, false);
+			push_event(action_timer.time);
 			return;
 		case B1:
 		case B3:
@@ -444,6 +452,7 @@ namespace StrikingDummy
 			gauge.reset(GAUGE_DURATION, 1);
 			push_event(TRANSPOSE_CD);
 			push_event(GAUGE_DURATION);
+			transpose_count++;
 		}
 		// ogcd only
 		action_timer.reset(ANIMATION_LOCK + ACTION_TAX, false);
@@ -777,5 +786,10 @@ namespace StrikingDummy
 		state[43] = umbral_hearts == 3;
 		state[44] = transpose_cd.ready;
 		state[45] = transpose_cd.time / (float)TRANSPOSE_CD;
+	}
+
+	std::string BlackMage::get_info()
+	{
+		return "\n";
 	}
 }

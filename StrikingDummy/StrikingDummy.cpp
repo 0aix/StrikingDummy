@@ -14,24 +14,13 @@ namespace StrikingDummy
 
 	void StrikingDummy::start()
 	{
-		//BlackMage& blm = (BlackMage&)job;
-		//blm.reset();
 		job.reset();
 
 		while(true)
 		{
 			// State
 			std::cout << "================================\n";
-			//std::cout << "MP: " << blm.mp << "\n";
-			//std::cout << "Procs: ";
-			//if (blm.fs_proc.count)
-			//	std::cout << "F3p ";
-			//if (blm.tc_proc.count)
-			//	std::cout << "T3p ";
-			//if (blm.foul_timer.ready)
-			//	std::cout << "Foul";
-			//std::cout << "\n";
-			//std::cout << "Gauge: " << blm.gauge.time / 100.0f << std::endl;
+			std::cout << job.get_info() << std::flush;
 
 			rotation.step();
 

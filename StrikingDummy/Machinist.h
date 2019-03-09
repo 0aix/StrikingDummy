@@ -16,6 +16,16 @@ namespace StrikingDummy
 			FLAMETHROWER_CAST, FLAMETHROWER_TICK
 		};
 
+		std::string mch_actions[19] =
+		{
+			"NONE",
+			"SPLIT", "SLUG", "HOT", "CLEAN", "COOLDOWN",
+			"GAUSS_ROUND", "RICOCHET",
+			"RELOAD", "REASSEMBLE", "QUICK_RELOAD", "RAPIDFIRE", "WILDFIRE", "GAUSS_BARREL", "STABILIZER",
+			"HYPERCHARGE", "OVERDRIVE",
+			"FLAMETHROWER_CAST", "FLAMETHROWER_TICK"
+		};
+
 		static constexpr float MCH_ATTR = 115.0f;
 		static constexpr int NUM_ACTIONS = 19;
 
@@ -151,5 +161,7 @@ namespace StrikingDummy
 		void get_state(float* state);
 		int get_state_size() { return 56; }
 		int get_num_actions() { return NUM_ACTIONS; }
+		std::string get_action_name(int action) { return mch_actions[action]; }
+		std::string get_info();
 	};
 }

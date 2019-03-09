@@ -9,10 +9,9 @@ namespace Logger
 
 	void open()
 	{
-		// not actually time in milliseconds
-		long long millis = std::chrono::high_resolution_clock::now().time_since_epoch().count() / 1000000;
+		long long seconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		std::stringstream ss;
-		ss << "log-" << millis << ".txt";
+		ss << "log-" << seconds << ".txt";
 		fs.open(ss.str(), std::fstream::out | std::fstream::app);
 		is_open = true;
 	}

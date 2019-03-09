@@ -95,7 +95,7 @@ namespace StrikingDummy
 	{
 		if (time > 0 && (time -= elapsed) == 0)
 			ready = true;
-		DBG(assert(time >= 0));
+		assert(time >= 0);
 	}
 
 	void Timer::reset(int duration, bool ready)
@@ -110,7 +110,7 @@ namespace StrikingDummy
 	{
 		if (time > 0 && (time -= elapsed) == 0)
 			count = 0;
-		DBG(assert(time >= 0));
+		assert(time >= 0);
 	}
 
 	void Buff::reset(int duration, int count)
