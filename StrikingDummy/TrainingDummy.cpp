@@ -30,16 +30,16 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE_MAX = 2000;
+		const int NUM_STEPS_PER_EPISODE_MAX = 5000;
 		const int NUM_STEPS_PER_EPISODE = NUM_STEPS_PER_EPISODE_MAX;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
-		const int BATCH_SIZE = 10000;
-		const float WINDOW = 60000.0f;
-		const float WINDOW_MAX = 60000.0f;
+		const int BATCH_SIZE = 20000;
+		const float WINDOW_MAX = 120000.0f;
+		const float WINDOW = WINDOW_MAX;
 		const float WINDOW_GROWTH = 0.1f;
 		const float EPS_DECAY = 0.9995f;
-		const float EPS_MIN = 0.1f;
+		const float EPS_MIN = 0.01f;
 		const float STEPS_GROWTH = 0.1f;
 		const float STEPS_MAX = NUM_STEPS_PER_EPISODE_MAX;
 		const float ADJUST = 0.00005f;
@@ -71,7 +71,8 @@ namespace StrikingDummy
 		Mimu& mimu = (Mimu&)job;
 		Samurai& sam = (Samurai&)job;
 
-		float nu = 0.001f;
+		//float nu = 0.001f;
+		float nu = 0.0001f;
 		float eps = EPS_MIN;
 		float exp = 0.0f;
 		float window = WINDOW;
@@ -262,7 +263,8 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		while (blm.timeline.time < 7 * 24 * 360000)
+		//while (blm.timeline.time < 7 * 24 * 360000)
+		while (blm.timeline.time < 180000)
 			rotation.step();
 
 		std::stringstream zz;
@@ -270,8 +272,8 @@ namespace StrikingDummy
 		Logger::log(zz.str().c_str());
 		
 		int length = blm.history.size() - 1;
-		if (length > 1000)
-			length = 1000;
+		//if (length > 1000)
+		//	length = 1000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
