@@ -30,19 +30,19 @@ int main()
 #ifdef MONK
 	StrikingDummy::Stats stats;
 	stats.weapon_damage = 109;
-	stats.main_stat = 3177;
-	stats.critical_hit = 2571;
-	stats.direct_hit = 1845;
-	stats.determination = 1545;
-	stats.skill_speed = 758;
+	stats.main_stat = 3193;
+	stats.critical_hit = 2484;
+	stats.direct_hit = 1994;
+	stats.determination = 1330;
+	stats.skill_speed = 819;
 	stats.auto_attack = 93.01f;
 	stats.auto_delay = 2.56f;
 
 	StrikingDummy::Mimu mimu(stats);
 	StrikingDummy::TrainingDummy dummy(mimu);
 	StrikingDummy::StrikingDummy practice(mimu);
-	//dummy.train();
-	dummy.trace_mimu();
+	dummy.train();
+	//dummy.trace_mimu();
 	//practice.start();
 #endif
 #ifdef SAMURAI

@@ -30,20 +30,16 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE_MAX = 5000;
-		const int NUM_STEPS_PER_EPISODE = NUM_STEPS_PER_EPISODE_MAX;
+		const int NUM_STEPS_PER_EPISODE = 2000;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
-		const int BATCH_SIZE = 20000;
-		const float WINDOW_MAX = 120000.0f;
-		const float WINDOW = WINDOW_MAX;
-		const float WINDOW_GROWTH = 0.1f;
+		const int BATCH_SIZE = 10000;
+		const float WINDOW = 60000.0f;
 		const float EPS_DECAY = 0.9995f;
-		const float EPS_MIN = 0.01f;
-		const float STEPS_GROWTH = 0.1f;
-		const float STEPS_MAX = NUM_STEPS_PER_EPISODE_MAX;
-		const float ADJUST = 0.00005f;
-		const float ADJUST_MIN = 4.0f;
+		const float EPS_MIN = 0.1f;
+		const float OUTPUT_LOWER = 84.9f;
+		const float OUTPUT_UPPER = 87.0f;
+		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -71,22 +67,18 @@ namespace StrikingDummy
 		Mimu& mimu = (Mimu&)job;
 		Samurai& sam = (Samurai&)job;
 
-		//float nu = 0.001f;
-		float nu = 0.0001f;
-		float eps = EPS_MIN;
+		float nu = 0.001f;
+		float eps = 1.0f;
 		float exp = 0.0f;
-		float window = WINDOW;
 		float steps_per_episode = NUM_STEPS_PER_EPISODE;
 		float avg_dps = 0.0f;
 		float est_dps = 0.0f;
 		float beta = 0.9f;
 		int epoch_offset = 0;
-		float adjust = 4.0f;
 		float max_dps = 0.0f;
-		bool adjusted = true;
 		int max_i = 0;
 
-		// WEIGHT DISTRIBUTION LEARNING
+		// TODO WEIGHT DISTRIBUTION LEARNING
 
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
 		{
@@ -110,8 +102,6 @@ namespace StrikingDummy
 			}
 			if (m_size == CAPACITY)
 			{
-				float L = 87.0f - 0.5f * adjust;
-
 				// batch train a bunch
 				for (int batch = 0; batch < NUM_BATCHES_PER_EPOCH; batch++)
 				{
@@ -141,19 +131,8 @@ namespace StrikingDummy
 							if (q[index] > max_q)
 								max_q = q[index];
 						}
-						if (adjusted)
-						{
-							max_q = L + adjust * max_q;
-							rewards[i] = (1.0f / adjust) * ((1.0f / window) * (t.reward + (window - t.dt) * max_q) - L);
-						}
-						else
-						{
-							max_q = 100.0f * max_q;
-							rewards[i] = 0.01f * ((1.0f / window) * (t.reward + (window - t.dt) * max_q));
-						}
-						//max_q = L + adjust * max_q;
-						//rewards[i] = (1.0f / adjust) * ((1.0f / window) * (t.reward + (window - t.dt) * max_q) - L);
-
+						max_q = OUTPUT_LOWER + OUTPUT_RANGE * max_q;
+						rewards[i] = (1.0f / OUTPUT_RANGE) * ((1.0f / WINDOW) * (t.reward + (WINDOW - t.dt) * max_q) - OUTPUT_LOWER);
 						actions[i] = t.action;
 					}
 
@@ -180,15 +159,6 @@ namespace StrikingDummy
 				eps *= EPS_DECAY;
 				if (eps < EPS_MIN)
 					eps = EPS_MIN;
-				window += WINDOW_GROWTH;
-				if (window > WINDOW_MAX)
-					window = WINDOW_MAX;
-				steps_per_episode += STEPS_GROWTH;
-				if (steps_per_episode > STEPS_MAX)
-					steps_per_episode = STEPS_MAX;
-				adjust -= ADJUST;
-				if (adjust < ADJUST_MIN)
-					adjust = ADJUST_MIN;
 
 				// test model
 				test();
@@ -201,7 +171,7 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", flares: " << blm.flare_count << std::endl;
+				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", flares: " << blm.flare_count << std::endl;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mimu.tk_count << std::endl;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", midares: " << sam.midare_count << ", kaitens: " << sam.kaiten_count << ", shintens: " << sam.shinten_count << ", gurens: " << sam.guren_count << std::endl;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << std::endl;
@@ -263,8 +233,8 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		//while (blm.timeline.time < 7 * 24 * 360000)
-		while (blm.timeline.time < 180000)
+		while (blm.timeline.time < 7 * 24 * 360000)
+		//while (blm.timeline.time < 180000)
 			rotation.step();
 
 		std::stringstream zz;
@@ -272,8 +242,8 @@ namespace StrikingDummy
 		Logger::log(zz.str().c_str());
 		
 		int length = blm.history.size() - 1;
-		//if (length > 1000)
-		//	length = 1000;
+		if (length > 1000)
+			length = 1000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{

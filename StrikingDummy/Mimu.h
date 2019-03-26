@@ -25,6 +25,15 @@ namespace StrikingDummy
 			WIND, FIRE
 		};
 
+		std::string mimu_actions[22] =
+		{
+			"NONE",
+			"BOOTSHINE", "TRUESTRIKE", "SNAPPUNCH", "DRAGONKICK", "TWINSNAKES", "DEMOLISH",
+			"FISTSOFWIND", "FISTSOFFIRE",
+			"INTERNALRELEASE", "PERFECTBALANCE", "BROTHERHOOD", "STEELPEAK", "HOWLINGFIST", "FORBIDDENCHAKRA", "ELIXIRFIELD", "TORNADOKICK",
+			"RIDDLEOFWIND", "RIDDLEOFFIRE", "WINDTACKLE", "FIRETACKLE", "WAIT"
+		};
+
 		static constexpr float MIMU_ATTR = 110.0f;
 		static constexpr int NUM_ACTIONS = 22;
 
@@ -171,5 +180,7 @@ namespace StrikingDummy
 		void get_state(float* state);
 		int get_state_size() { return 60; }
 		int get_num_actions() { return NUM_ACTIONS; }
+		std::string get_action_name(int action) { return mimu_actions[action]; }
+		std::string get_info();
 	};
 }

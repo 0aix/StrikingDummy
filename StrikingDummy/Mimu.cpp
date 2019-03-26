@@ -609,4 +609,9 @@ namespace StrikingDummy
 		state[58] = gcd_timer.ready;
 		state[59] = gcd_timer.time / 250.0f;
 	}
+
+	std::string Mimu::get_info()
+	{
+		return std::string();
+	}
 }
