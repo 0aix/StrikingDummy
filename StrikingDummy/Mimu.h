@@ -178,7 +178,7 @@ namespace StrikingDummy
 		float get_auto_damage() const;
 
 		void get_state(float* state);
-		int get_state_size() { return 60; }
+		int get_state_size() { return 64; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return mimu_actions[action]; }
 		std::string get_info();

@@ -341,8 +341,8 @@ namespace StrikingDummy
 		case FOUL:
 			return gcd_timer.ready && foul_timer.ready;
 		case FLARE:
-			return false;
-			//return gcd_timer.ready && get_mp_cost(FLARE) <= mp;
+			//return false;
+			return gcd_timer.ready && get_mp_cost(FLARE) <= mp;
 		case SWIFT:
 			return swift_cd.ready;
 		case TRIPLE:
@@ -356,8 +356,8 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
-			return false;
-			//return transpose_cd.ready && element != Element::NE;
+			//return false;
+			return transpose_cd.ready && element != Element::NE;
 		case WAIT_FOR_MP:
 			return gcd_timer.ready && element != Element::AF;
 		}
@@ -786,6 +786,7 @@ namespace StrikingDummy
 		state[43] = umbral_hearts == 3;
 		state[44] = transpose_cd.ready;
 		state[45] = transpose_cd.time / (float)TRANSPOSE_CD;
+		state[46] = element != AF && can_use_action(F3) && get_cast_time(F3) >= mp_timer.time;
 	}
 
 	std::string BlackMage::get_info()

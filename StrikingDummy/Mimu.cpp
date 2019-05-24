@@ -608,6 +608,10 @@ namespace StrikingDummy
 		state[57] = bro_cd.time / (float)BRO_CD;
 		state[58] = gcd_timer.ready;
 		state[59] = gcd_timer.time / 250.0f;
+		state[60] = (gcd_timer.time % (ANIMATION_LOCK + ACTION_TAX)) > 0;
+		state[61] = (gcd_timer.time / (ANIMATION_LOCK + ACTION_TAX)) == 1;
+		state[62] = (gcd_timer.time / (ANIMATION_LOCK + ACTION_TAX)) == 2;
+		state[63] = (gcd_timer.time / (ANIMATION_LOCK + ACTION_TAX)) == 3;
 	}
 
 	std::string Mimu::get_info()

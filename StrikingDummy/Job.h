@@ -61,8 +61,8 @@ namespace StrikingDummy
 
 	struct Transition
 	{
-		float t0[62];
-		float t1[62];
+		float t0[64];
+		float t1[64];
 		int action = 0;
 		float reward = 0.0f;
 		int dt = 0;

@@ -30,15 +30,17 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE = 2000;
+		const int NUM_STEPS_PER_EPISODE = 2500;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
 		const float WINDOW = 60000.0f;
 		const float EPS_DECAY = 0.9995f;
 		const float EPS_MIN = 0.1f;
-		const float OUTPUT_LOWER = 84.9f;
-		const float OUTPUT_UPPER = 87.0f;
+		const float OUTPUT_LOWER = 86.0f;
+		const float OUTPUT_UPPER = 87.5f;
+		//const float OUTPUT_LOWER = 75.0f;
+		//const float OUTPUT_UPPER = 78.0f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -75,8 +77,6 @@ namespace StrikingDummy
 		float est_dps = 0.0f;
 		float beta = 0.9f;
 		int epoch_offset = 0;
-		float max_dps = 0.0f;
-		int max_i = 0;
 
 		// TODO WEIGHT DISTRIBUTION LEARNING
 
@@ -109,19 +109,14 @@ namespace StrikingDummy
 
 					// compute Q1
 					for (int i = 0; i < BATCH_SIZE; i++)
-					{
-						//memcpy(model.X0.col(i).data(), &memory[indices[i]].t1, sizeof(State));
 						memcpy(&model.X0[i * state_size], &memory[indices[i]].t1, sizeof(float) * state_size);
-					}
 
-					//MatrixXf& Q1 = model.batch_compute();
 					float* Q1 = model.batch_compute();
 
 					// calculate rewards
 					for (int i = 0; i < BATCH_SIZE; i++)
 					{
 						Transition& t = memory[indices[i]];
-						//float* q = Q1.col(i).data();
 						float* q = &Q1[i * num_actions];
 						float max_q = q[t.actions[0]];
 						auto cend = t.actions.cend();
@@ -138,16 +133,13 @@ namespace StrikingDummy
 
 					// compute Q0
 					for (int i = 0; i < BATCH_SIZE; i++)
-						//memcpy(model.X0.col(i).data(), &memory[indices[i]].t0, sizeof(State));
 						memcpy(&model.X0[i * state_size], &memory[indices[i]].t0, sizeof(float) * state_size);
 
 					model.batch_compute();
 
 					// calculate target
-					//model.target = model.Xk;
 					memcpy(model.target, model.X3, sizeof(float) * num_actions * BATCH_SIZE);
 					for (int i = 0; i < BATCH_SIZE; i++)
-						//model.target.col(i)(actions[i]) = rewards[i];
 						model.target[i * num_actions + actions[i]] = rewards[i];
 
 					// train
@@ -172,7 +164,7 @@ namespace StrikingDummy
 
 				std::stringstream ss;
 				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", fouls: " << blm.foul_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", flares: " << blm.flare_count << std::endl;
-				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mimu.tk_count << std::endl;
+				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mimu.tk_count << std::endl;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", midares: " << sam.midare_count << ", kaitens: " << sam.kaiten_count << ", shintens: " << sam.shinten_count << ", gurens: " << sam.guren_count << std::endl;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << window << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << std::endl;
 
@@ -185,14 +177,6 @@ namespace StrikingDummy
 				{
 					std::stringstream filename;
 					filename << "Weights\\weights-" << _epoch << std::flush;
-					model.save(filename.str().c_str());
-				}
-				if (dps > max_dps)
-				{
-					max_dps = dps;
-					max_i++;
-					std::stringstream filename;
-					filename << "Weights\\max-" << max_i << std::flush;
 					model.save(filename.str().c_str());
 				}
 			}
@@ -282,6 +266,8 @@ namespace StrikingDummy
 				ss << t.t0[0] * 15480.0f << " " << blm.get_action_name(t.action);
 			if (t.action != 0)
 			{
+				if (t.t0[46] == 1.0f)
+					ss << "*";
 				if (t.t0[22] == 1.0f)
 					ss << " (T3p w/ " << t.t0[23] * 18 << "s)";
 				ss << std::endl;
@@ -317,25 +303,46 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		while (mimu.timeline.time < 7 * 24 * 360000)
+		while (mimu.timeline.time < 180000)
 			rotation.step();
 
+		std::stringstream zz;
+		zz << "DPS: " << 100.0f / mimu.timeline.time * mimu.total_damage << "\n=============" << std::endl;
+		Logger::log(zz.str().c_str());
+
 		int length = mimu.history.size() - 1;
+		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
 			Transition& t = mimu.history[i];
+			int hours = time / 360000;
+			int minutes = (time / 6000) % 60;
+			int seconds = (time / 100) % 60;
+			int centiseconds = time % 100;
+			std::stringstream ss;
 			if (t.action != 0)
 			{
-				std::stringstream ss;
+				ss << "[";
+				if (hours < 10)
+					ss << "0";
+				ss << hours << ":";
+				if (minutes < 10)
+					ss << "0";
+				ss << minutes << ":";
+				if (seconds < 10)
+					ss << "0";
+				ss << seconds << ".";
+				if (centiseconds < 10)
+					ss << "0";
+				ss << centiseconds << "] ";
+			}
+			if (t.action != 0)
+			{
 				ss << mimu_actions[t.action] << std::endl;
 				Logger::log(ss.str().c_str());
 			}
+			time += t.dt;
 		}
-
-		std::stringstream ss;
-		ss << "DPS: " << 100.0f / mimu.timeline.time * mimu.total_damage << "\n=============" << std::endl;
-		Logger::log(ss.str().c_str());
-
 		Logger::close();
 	}
 
