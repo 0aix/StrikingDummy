@@ -19,7 +19,7 @@ int main()
 	StrikingDummy::BlackMage blm(stats);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
-	//dummy.train();
-	dummy.trace();
+	dummy.train();
+	//dummy.trace();
 	//practice.start();
 }

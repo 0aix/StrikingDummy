@@ -343,7 +343,7 @@ namespace StrikingDummy
 		case DESPAIR:
 			return gcd_timer.ready && element == AF && enochian && get_mp_cost(DESPAIR) <= mp;
 		case UMBRAL_SOUL:
-			return gcd_timer.ready && element == UI && enochian;
+			return gcd_timer.ready && element == UI && enochian && gauge.count < 3;
 		case SWIFT:
 			return swift_cd.ready;
 		case TRIPLE:
@@ -827,6 +827,7 @@ namespace StrikingDummy
 			}
 			else
 				potency = DESPAIR_POTENCY;
+			break;
 		case UMBRAL_SOUL:
 			potency = 0.0f;
 		}

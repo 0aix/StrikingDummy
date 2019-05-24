@@ -27,15 +27,15 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE = 2500;
+		const int NUM_STEPS_PER_EPISODE = 2000;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
 		const float WINDOW = 60000.0f;
 		const float EPS_DECAY = 0.9995f;
 		const float EPS_MIN = 0.1f;
-		const float OUTPUT_LOWER = 80.0f;
-		const float OUTPUT_UPPER = 120.0f;
+		const float OUTPUT_LOWER = 90.0f;
+		const float OUTPUT_UPPER = 110.0f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
