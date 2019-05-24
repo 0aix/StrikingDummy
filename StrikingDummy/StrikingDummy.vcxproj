@@ -135,18 +135,15 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BlackMage.cpp" />
+    <ClCompile Include="BlackMageV2.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="Machinist.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Mimu.cpp" />
     <ClCompile Include="Model.cpp">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Include="ModelRotation.cpp" />
     <ClCompile Include="MyRotation.cpp" />
-    <ClCompile Include="Samurai.cpp" />
     <ClCompile Include="StrikingDummy.cpp" />
     <ClCompile Include="TrainingDummy.cpp" />
   </ItemGroup>
@@ -155,11 +152,8 @@
     <ClInclude Include="CUDA.cuh" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="Machinist.h" />
-    <ClInclude Include="Mimu.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Rotation.h" />
-    <ClInclude Include="Samurai.h" />
     <ClInclude Include="StrikingDummy.h" />
     <ClInclude Include="TrainingDummy.h" />
   </ItemGroup>
