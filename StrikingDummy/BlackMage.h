@@ -166,7 +166,6 @@ namespace StrikingDummy
 		int t3_count = 0;
 		int despair_count = 0;
 		int transpose_count = 0;
-		int soul_count = 0;
 
 		BlackMage(Stats& stats);
 

@@ -18,13 +18,6 @@ using namespace Eigen;
 
 namespace StrikingDummy
 {
-	std::string action_names[] =
-	{
-		"NONE",
-		"B1", "B3", "B4", "F1", "F3", "F4", "T3", "FOUL",
-		"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "CONVERT", "ENOCHIAN"
-	};
-
 	BlackMage::BlackMage(Stats& stats) : 
 		Job(stats, BLM_ATTR),
 		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD)))),
@@ -104,6 +97,7 @@ namespace StrikingDummy
 		despair_count = 0;
 		transpose_count = 0;
 		soul_count = 0;
+		freeze_count = 0;
 
 		// precast
 		gauge.reset(GAUGE_DURATION, 3);
@@ -251,7 +245,7 @@ namespace StrikingDummy
 	bool BlackMage::is_instant_cast(int action) const
 	{
 		// for gcds
-		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0) || action == UMBRAL_SOUL;
+		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0) || action == XENO ||action == UMBRAL_SOUL;
 	}
 
 	int BlackMage::get_ll_cast_time(int ll_cast_time, int cast_time) const
@@ -329,7 +323,8 @@ namespace StrikingDummy
 		case B4:
 			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;
 		case FREEZE:
-			return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
+			return false;
+			//return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
 		case F1:
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
@@ -343,7 +338,8 @@ namespace StrikingDummy
 		case DESPAIR:
 			return gcd_timer.ready && element == AF && enochian && get_mp_cost(DESPAIR) <= mp;
 		case UMBRAL_SOUL:
-			return gcd_timer.ready && element == UI && enochian && gauge.count < 3;
+			return false;
+			//return gcd_timer.ready && element == UI && enochian && gauge.count < 3;
 		case SWIFT:
 			return swift_cd.ready;
 		case TRIPLE:
@@ -398,6 +394,8 @@ namespace StrikingDummy
 				despair_count++;
 			else if (action == UMBRAL_SOUL)
 				soul_count++;
+			else if (action == FREEZE)
+				freeze_count++;
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
 			action_timer.reset(get_action_time(action), false);
