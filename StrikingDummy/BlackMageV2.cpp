@@ -96,8 +96,6 @@ namespace StrikingDummy
 		t3_count = 0;
 		despair_count = 0;
 		transpose_count = 0;
-		soul_count = 0;
-		freeze_count = 0;
 
 		// precast
 		gauge.reset(GAUGE_DURATION, 3);
@@ -392,10 +390,6 @@ namespace StrikingDummy
 				t3_count++;
 			else if (action == DESPAIR)
 				despair_count++;
-			else if (action == UMBRAL_SOUL)
-				soul_count++;
-			else if (action == FREEZE)
-				freeze_count++;
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
 			action_timer.reset(get_action_time(action), false);
