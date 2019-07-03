@@ -11,6 +11,7 @@ int main()
 	StrikingDummy::Stats stats;
 	stats.weapon_damage = 147;
 	stats.main_stat = 3237;
+	stats.pot_stat = 3237 + 225;
 	stats.critical_hit = 2681;
 	stats.direct_hit = 1375;
 	stats.determination = 994;

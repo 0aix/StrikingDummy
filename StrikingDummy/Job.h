@@ -9,6 +9,7 @@ namespace StrikingDummy
 	{
 		float weapon_damage;
 		float main_stat;
+		float pot_stat;
 		float critical_hit;
 		float direct_hit;
 		float determination;
@@ -18,6 +19,7 @@ namespace StrikingDummy
 
 		float wep_multiplier;
 		float attk_multiplier;
+		float pot_multiplier;
 		float crit_rate;
 		float crit_multiplier;
 		float dhit_rate;

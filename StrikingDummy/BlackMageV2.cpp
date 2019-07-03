@@ -71,6 +71,7 @@ namespace StrikingDummy
 		fs_proc.reset(0, 0);
 		tc_proc.reset(0, 0);
 		dot.reset(0, 0);
+		pot.reset(0, 0);
 
 		// cooldowns		
 		swift_cd.reset(0, true);
@@ -80,6 +81,7 @@ namespace StrikingDummy
 		manafont_cd.reset(0, true);
 		eno_cd.reset(0, true);
 		transpose_cd.reset(0, true);
+		pot_cd.reset(0, true);
 
 		// actions
 		gcd_timer.reset(0, true);
@@ -96,6 +98,7 @@ namespace StrikingDummy
 		t3_count = 0;
 		despair_count = 0;
 		transpose_count = 0;
+		pot_count = 0;
 
 		// precast
 		gauge.reset(GAUGE_DURATION, 3);
@@ -130,6 +133,7 @@ namespace StrikingDummy
 		fs_proc.update(elapsed);
 		tc_proc.update(elapsed);
 		dot.update(elapsed);
+		pot.update(elapsed);
 
 		// cooldowns
 		swift_cd.update(elapsed);
@@ -139,6 +143,7 @@ namespace StrikingDummy
 		manafont_cd.update(elapsed);
 		eno_cd.update(elapsed);
 		transpose_cd.update(elapsed);
+		pot_cd.update(elapsed);
 
 		// actions
 		gcd_timer.update(elapsed);
@@ -327,6 +332,7 @@ namespace StrikingDummy
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
 			return gcd_timer.ready && get_mp_cost(F3) <= mp;
+			//return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != Element::UI || umbral_hearts == 3);
 		case F4:
 			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp;
 		case T3:
@@ -334,7 +340,7 @@ namespace StrikingDummy
 		case XENO:
 			return gcd_timer.ready && xeno_procs > 0;
 		case DESPAIR:
-			return gcd_timer.ready && element == AF && enochian && get_mp_cost(DESPAIR) <= mp;
+			return gcd_timer.ready && element == AF && enochian && get_cast_time(DESPAIR) < gauge.time && get_mp_cost(DESPAIR) <= mp;
 		case UMBRAL_SOUL:
 			return false;
 			//return gcd_timer.ready && element == UI && enochian && gauge.count < 3;
@@ -351,9 +357,13 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
+			//return false;
 			return transpose_cd.ready && element != Element::NE;
 		case WAIT_FOR_MP:
 			return gcd_timer.ready && element != Element::AF;
+		case POT:
+			return false;
+			//return pot_cd.ready;
 		}
 		return false;
 	}
@@ -449,6 +459,16 @@ namespace StrikingDummy
 			push_event(TRANSPOSE_CD);
 			push_event(GAUGE_DURATION);
 			transpose_count++;
+			break;
+		case POT:
+			pot_count++;
+			pot.reset(POT_DURATION, 1);
+			pot_cd.reset(POT_CD, false);
+			push_event(POT_DURATION);
+			push_event(POT_CD);
+			action_timer.reset(POTION_LOCK + ACTION_TAX, false);
+			push_event(action_timer.time);
+			return;
 		}
 		// ogcd only
 		action_timer.reset(ANIMATION_LOCK + ACTION_TAX, false);
@@ -464,7 +484,7 @@ namespace StrikingDummy
 
 		if (casting == DESPAIR)
 			mp = 0;
-			//mp = umbral_hearts > 0 ? mp / 3.0f : 0;
+			//mp = umbral_hearts > 0 ? 0.34 * mp : 0;
 		else
 			mp -= casting_mp_cost;
 
@@ -477,7 +497,9 @@ namespace StrikingDummy
 		else if (casting == T3 && tc_proc.count > 0);
 		// thundercloud doesn't use swift or triple
 		else if (casting == UMBRAL_SOUL);
-		// umbral dsoul doesn't use swift or triple
+		// umbral soul doesn't use swift or triple
+		else if (casting == XENO);
+		// xeno doesn't use swift or triple
 		else if (swift.count > 0)
 			swift.reset(0, 0);
 		else if (triple.count > 1)
@@ -557,7 +579,7 @@ namespace StrikingDummy
 		case T3:
 			if (tc_proc.count > 0)
 				tc_proc.reset(0, 0);
-			dot.reset(DOT_DURATION, enochian ? 1 : 2);
+			dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0)));
 			push_event(DOT_DURATION);
 			if (sharp.count > 0)
 			{
@@ -571,7 +593,7 @@ namespace StrikingDummy
 			xeno_procs--;
 			break;
 		case DESPAIR:
-			umbral_hearts = 0;
+			//umbral_hearts = 0;
 			element = AF;
 			gauge.reset(GAUGE_DURATION, 3);
 			push_event(GAUGE_DURATION);
@@ -799,16 +821,7 @@ namespace StrikingDummy
 			potency = XENO_POTENCY;
 			break;
 		case DESPAIR:
-			if (element == UI)
-			{
-				if (gauge.count == 1)
-					potency = DESPAIR_POTENCY * AF1UI1_MULTIPLIER;
-				else if (gauge.count == 2)
-					potency = DESPAIR_POTENCY * AF2UI2_MULTIPLIER;
-				else if (gauge.count == 3)
-					potency = DESPAIR_POTENCY * AF3UI3_MULTIPLIER;
-			}
-			else if (element == AF)
+			if (element == AF)
 			{
 				if (gauge.count == 1)
 					potency = DESPAIR_POTENCY * AF1_MULTIPLIER;
@@ -817,20 +830,18 @@ namespace StrikingDummy
 				else if (gauge.count == 3)
 					potency = DESPAIR_POTENCY * AF3_MULTIPLIER;
 			}
-			else
-				potency = DESPAIR_POTENCY;
 			break;
 		case UMBRAL_SOUL:
 			potency = 0.0f;
 		}
 		// floor(ptc * wd * ap * det * traits) * chr | * dhr | * rand(.95, 1.05) | ...
-		return potency * stats.potency_multiplier * stats.expected_multiplier * (enochian ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
+		return potency * stats.potency_multiplier * stats.expected_multiplier * (enochian ? ENO_MULTIPLIER : 1.0f) * (pot.count > 0 ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
 	}
 	
 	float BlackMage::get_dot_damage() const
 	{
 		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
-		return T3_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * stats.expected_multiplier * (dot.count == 1 ? ENO_MULTIPLIER : 1.0) * MAGICK_AND_MEND_MULTIPLIER;
+		return T3_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * stats.expected_multiplier * ((dot.count & 2) ? ENO_MULTIPLIER : 1.0f) * ((dot.count & 4) ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
 	}
 
 	void BlackMage::get_state(float* state)
@@ -862,26 +873,32 @@ namespace StrikingDummy
 		state[24] = tc_proc.time / (float)TC_DURATION;
 		state[25] = dot.count > 0;
 		state[26] = dot.time / (float)DOT_DURATION;
-		state[27] = dot.count == 1;
-		state[28] = swift_cd.ready;
-		state[29] = swift_cd.time / (float)SWIFT_CD;
-		state[30] = triple_cd.ready;
-		state[31] = triple_cd.time / (float)TRIPLE_CD;
-		state[32] = sharp_cd.ready;
-		state[33] = sharp_cd.time / (float)SHARP_CD;
-		state[34] = leylines_cd.ready;
-		state[35] = leylines_cd.time / (float)LL_CD;
-		state[36] = manafont_cd.ready;
-		state[37] = manafont_cd.time / (float)MANAFONT_CD;
-		state[38] = eno_cd.ready;
-		state[39] = eno_cd.time / (float)ENO_CD;
-		state[40] = gcd_timer.ready;
-		state[41] = gcd_timer.time / 250.0f;
-		state[42] = umbral_hearts == 1;
-		state[43] = umbral_hearts == 2;
-		state[44] = umbral_hearts == 3;
-		state[45] = transpose_cd.ready;
-		state[46] = transpose_cd.time / (float)TRANSPOSE_CD;
+		state[27] = (dot.count & 2) != 0;
+		state[28] = (dot.count & 4) != 0;
+		state[29] = pot.count > 0;
+		state[30] = pot.time / (float)POT_DURATION;
+		state[31] = swift_cd.ready;
+		state[32] = swift_cd.time / (float)SWIFT_CD;
+		state[33] = triple_cd.ready;
+		state[34] = triple_cd.time / (float)TRIPLE_CD;
+		state[35] = sharp_cd.ready;
+		state[36] = sharp_cd.time / (float)SHARP_CD;
+		state[37] = leylines_cd.ready;
+		state[38] = leylines_cd.time / (float)LL_CD;
+		state[39] = manafont_cd.ready;
+		state[40] = manafont_cd.time / (float)MANAFONT_CD;
+		state[41] = eno_cd.ready;
+		state[42] = eno_cd.time / (float)ENO_CD;
+		state[43] = pot_cd.ready;
+		state[44] = pot_cd.time / (float)POT_CD;
+		state[45] = gcd_timer.ready;
+		state[46] = gcd_timer.time / 250.0f;
+		state[47] = umbral_hearts == 1;
+		state[48] = umbral_hearts == 2;
+		state[49] = umbral_hearts == 3;
+		state[50] = transpose_cd.ready;
+		state[51] = transpose_cd.time / (float)TRANSPOSE_CD;
+		//state[52] = element != AF && can_use_action(F3) && get_cast_time(F3) >= mp_timer.time;
 	}
 
 	std::string BlackMage::get_info()

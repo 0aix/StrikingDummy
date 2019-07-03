@@ -32,10 +32,10 @@ namespace StrikingDummy
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
 		const float WINDOW = 60000.0f;
-		const float EPS_DECAY = 0.9995f;
-		const float EPS_MIN = 0.1f;
-		const float OUTPUT_LOWER = 96.0f;
-		const float OUTPUT_UPPER = 97.8f;
+		const float EPS_DECAY = 0.999f;
+		const float EPS_MIN = 0.08f;
+		const float OUTPUT_LOWER = 96.5f;
+		const float OUTPUT_UPPER = 98.0f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -63,7 +63,7 @@ namespace StrikingDummy
 		BlackMage& blm = (BlackMage&)job;
 
 		float nu = 0.001f;
-		float eps = 0.2f;
+		float eps = 1.0f;
 		float exp = 0.0f;
 		float steps_per_episode = NUM_STEPS_PER_EPISODE;
 		float avg_dps = 0.0f;
@@ -154,7 +154,7 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << std::endl;
+				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", pots: " << blm.pot_count << std::endl;
 
 				beta *= 0.9f;
 
@@ -241,9 +241,9 @@ namespace StrikingDummy
 					ss << "0";
 				ss << centiseconds << "] ";
 			}
-			if (t.action == 6 && t.t0[21] == 1.0f)
+			if (t.action == 5 && t.t0[21] == 1.0f)
 				ss << t.t0[0] * 10000.0f << " F3p";
-			else if (t.action == 8)
+			else if (t.action == 7)
 			{
 				if (t.t0[23] == 1.0f)
 					ss << t.t0[0] * 10000.0f << " T3p at " << t.t0[26] * 24 << "s left on dot";
@@ -254,6 +254,8 @@ namespace StrikingDummy
 				ss << t.t0[0] * 10000.0f << " " << blm.get_action_name(t.action);
 			if (t.action != 0)
 			{
+				//if (t.t0[47] == 1.0f)
+				//	ss << "*";
 				if (t.t0[23] == 1.0f)
 					ss << " (T3p w/ " << t.t0[24] * 18 << "s)";
 				ss << std::endl;
