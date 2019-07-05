@@ -143,6 +143,7 @@
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Include="ModelRotation.cpp" />
+    <ClCompile Include="Monk.cpp" />
     <ClCompile Include="MyRotation.cpp" />
     <ClCompile Include="StrikingDummy.cpp" />
     <ClCompile Include="TrainingDummy.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="Job.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Monk.h" />
     <ClInclude Include="Rotation.h" />
     <ClInclude Include="StrikingDummy.h" />
     <ClInclude Include="TrainingDummy.h" />

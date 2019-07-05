@@ -42,6 +42,9 @@
     <ClCompile Include="BlackMageV2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Monk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logger.h">
@@ -66,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CUDA.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Monk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

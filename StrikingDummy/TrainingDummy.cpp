@@ -1,5 +1,5 @@
 #include "TrainingDummy.h"
-#include "BlackMage.h"
+#include "Monk.h"
 #include "Logger.h"
 #include <chrono>
 #include <iostream>
@@ -27,15 +27,15 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE = 2000;
+		const int NUM_STEPS_PER_EPISODE = 2500;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
 		const float WINDOW = 60000.0f;
 		const float EPS_DECAY = 0.999f;
 		const float EPS_MIN = 0.08f;
-		const float OUTPUT_LOWER = 96.5f;
-		const float OUTPUT_UPPER = 98.0f;
+		const float OUTPUT_LOWER = 85.5f;
+		const float OUTPUT_UPPER = 87.5f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -60,7 +60,7 @@ namespace StrikingDummy
 		model.init(state_size, num_actions, BATCH_SIZE, false);
 		model.load("Weights\\weights");
 
-		BlackMage& blm = (BlackMage&)job;
+		Monk& mnk = (Monk&)job;
 
 		float nu = 0.001f;
 		float eps = 1.0f;
@@ -154,7 +154,7 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mnk.tk_count << ", sss: " << mnk.sss_count << ", anatmans: " << mnk.anatman_count << std::endl;
 
 				beta *= 0.9f;
 
@@ -195,37 +195,36 @@ namespace StrikingDummy
 
 		std::cout.precision(4);
 
-		BlackMage& blm = (BlackMage&)job;
-		blm.reset();
+		Monk& mnk = (Monk&)job;
+		mnk.reset();
 
 		Logger::log("=============\n");
 
-		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
+		model.init(mnk.get_state_size(), mnk.get_num_actions(), 1, false);
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
 
-		while (blm.timeline.time < 7 * 24 * 360000)
-		//while (blm.timeline.time < 180000)
+		while (mnk.timeline.time < 7 * 24 * 360000)
 			rotation.step();
 
 		std::stringstream zz;
-		zz << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n=============" << std::endl;
+		zz << "DPS: " << 100.0f / mnk.timeline.time * mnk.total_damage << "\n=============" << std::endl;
 		Logger::log(zz.str().c_str());
-		
-		int length = blm.history.size() - 1;
+
+		int length = mnk.history.size() - 1;
 		if (length > 1000)
 			length = 1000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
-			Transition& t = blm.history[i];
+			Transition& t = mnk.history[i];
 			int hours = time / 360000;
 			int minutes = (time / 6000) % 60;
 			int seconds = (time / 100) % 60;
 			int centiseconds = time % 100;
 			std::stringstream ss;
-			if (t.action != 0)
+			if (t.action != 0 && t.action != 18)
 			{
 				ss << "[";
 				if (hours < 10)
@@ -240,27 +239,28 @@ namespace StrikingDummy
 				if (centiseconds < 10)
 					ss << "0";
 				ss << centiseconds << "] ";
-			}
-			if (t.action == 5 && t.t0[21] == 1.0f)
-				ss << t.t0[0] * 10000.0f << " F3p";
-			else if (t.action == 7)
-			{
-				if (t.t0[23] == 1.0f)
-					ss << t.t0[0] * 10000.0f << " T3p at " << t.t0[26] * 24 << "s left on dot";
+				ss << mnk.get_action_name(t.action) << " (";
+
+				if (t.t0[9] == 1.0f)
+					ss << "1";
+				else if (t.t0[10] == 1.0f)
+					ss << "2";
+				else if (t.t0[11] == 1.0f)
+					ss << "3";
+				else if (t.t0[12] == 1.0f)
+					ss << "4";
 				else
-					ss << t.t0[0] * 10000.0f << " T3 at " << t.t0[26] * 24 << "s left on dot";
+					ss << "0";
+				ss << "/";
+				if (t.t0[0] == 1.0f)
+					ss << "4";
+				else if (t.t0[1] == 1.0f)
+					ss << "3";
+				else
+					ss << "0";
+				ss << ")" << std::endl;
+				Logger::log(ss.str().c_str());
 			}
-			else if (t.action != 0)
-				ss << t.t0[0] * 10000.0f << " " << blm.get_action_name(t.action);
-			if (t.action != 0)
-			{
-				//if (t.t0[47] == 1.0f)
-				//	ss << "*";
-				if (t.t0[23] == 1.0f)
-					ss << " (T3p w/ " << t.t0[24] * 18 << "s)";
-				ss << std::endl;
-			}
-			Logger::log(ss.str().c_str());
 			time += t.dt;
 		}
 		Logger::close();
