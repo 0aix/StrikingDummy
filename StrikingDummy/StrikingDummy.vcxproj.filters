@@ -39,7 +39,7 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BlackMageV2.cpp">
+    <ClCompile Include="BlackMage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

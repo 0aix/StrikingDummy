@@ -9,13 +9,13 @@
 int main()
 {
 	StrikingDummy::Stats stats;
-	stats.weapon_damage = 147;
-	stats.main_stat = 3237;
-	stats.pot_stat = 3237 + 225;
-	stats.critical_hit = 2681;
-	stats.direct_hit = 1375;
-	stats.determination = 994;
-	stats.skill_speed = 1450;
+	stats.weapon_damage = 158;
+	stats.main_stat = 3726;
+	stats.pot_stat = 3726 + 312;
+	stats.critical_hit = 1692;
+	stats.direct_hit = 2121;
+	stats.determination = 1510;
+	stats.skill_speed = 2388;
 
 	StrikingDummy::BlackMage blm(stats);
 	StrikingDummy::TrainingDummy dummy(blm);

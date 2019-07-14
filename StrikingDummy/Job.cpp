@@ -9,9 +9,9 @@
 #define DBG(x)
 #endif
 
-#define LV_SUB 364.0f
-#define LV_DIV 2170.0f
-#define LV_MAIN 292.0f
+#define LV_SUB 380.0f
+#define LV_DIV 3300.0f
+#define LV_MAIN 340.0f
 
 namespace StrikingDummy
 {
@@ -55,8 +55,8 @@ namespace StrikingDummy
 	void Stats::calculate_stats(float job_attr)
 	{
 		wep_multiplier = floor(LV_MAIN * job_attr / 1000.0f + weapon_damage);
-		attk_multiplier = floor(125.0f * (main_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f;
-		pot_multiplier = (floor(125.0f * (pot_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f) / attk_multiplier;
+		attk_multiplier = floor(165.0f * (main_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f;
+		pot_multiplier = (floor(165.0f * (pot_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f) / attk_multiplier;
 		crit_multiplier = floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 1400.0f) / 1000.0f;
 		crit_rate = std::min(floor(200.0f * (critical_hit - LV_SUB) / LV_DIV + 50.0f) / 1000.0f, 1.0f);
 		dhit_rate = std::min(floor(550.0f * (direct_hit - LV_SUB) / LV_DIV) / 1000.0f, 1.0f);

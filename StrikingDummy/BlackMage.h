@@ -11,8 +11,8 @@ namespace StrikingDummy
 			NONE,
 			B1, B3, B4, F1, F3, F4, T3, XENO, DESPAIR,
 			SWIFT, TRIPLE, SHARP, LEYLINES, MANAFONT, ENOCHIAN, TRANSPOSE,
-			WAIT_FOR_MP, POT,
-			FREEZE, UMBRAL_SOUL
+			LUCID, WAIT_FOR_MP,
+			POT, FREEZE, UMBRAL_SOUL
 		};
 
 		enum Element
@@ -20,18 +20,18 @@ namespace StrikingDummy
 			NE, UI, AF
 		};
 
-		std::string blm_actions[21] =
+		std::string blm_actions[22] =
 		{
 			"NONE",
 			"B1", "B3", "B4", "F1", "F3", "F4", "T3", "XENO", "DESPAIR",
 			"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "MANAFONT", "ENOCHIAN", "TRANSPOSE",
-			"WAIT_FOR_MP", "HQ_GRADE_3_INFUSION_OF_INTELLIGENCE",
-			"FREEZE", "UMBRAL_SOUL"
+			"LUCID", "WAIT_FOR_MP",
+			"HQ_TINCTURE_OF_INTELLIGENCE", "FREEZE", "UMBRAL_SOUL"
 		};
 
 		static constexpr float BLM_ATTR = 115.0f;
 
-		static constexpr int NUM_ACTIONS = 18;
+		static constexpr int NUM_ACTIONS = 20;
 
 		static constexpr int ACTION_TAX = 10;
 		static constexpr int ANIMATION_LOCK = 60;
@@ -44,6 +44,7 @@ namespace StrikingDummy
 		static constexpr int MP_PER_TICK_UI2 = 4700;	// 47% per tick in UI2
 		static constexpr int MP_PER_TICK_UI3 = 6200;	// 62% per tick in UI3
 		static constexpr int MANAFONT_MP = 3000;		// 30%
+		static constexpr int LUCID_MP = 500;			// 5%
 
 		static constexpr float BASE_GCD = 2.50f;
 		static constexpr float III_GCD = 3.50f;
@@ -63,6 +64,7 @@ namespace StrikingDummy
 		static constexpr int TC_DURATION = 1800;
 		static constexpr int LL_DURATION = 3000;
 		static constexpr int DOT_DURATION = 2400;
+		static constexpr int LUCID_DURATION = 2100;
 		static constexpr int POT_DURATION = 3000;
 
 		static constexpr int SWIFT_CD = 6000;
@@ -72,6 +74,7 @@ namespace StrikingDummy
 		static constexpr int MANAFONT_CD = 18000;
 		static constexpr int ENO_CD = 3000;
 		static constexpr int TRANSPOSE_CD = 500;
+		static constexpr int LUCID_CD = 6000;
 		static constexpr int POT_CD = 27000;
 
 		// Assume not using Flare
@@ -114,14 +117,12 @@ namespace StrikingDummy
 		const int despair_gcd;
 		const int fast_base_gcd;
 		const int fast_iii_gcd;
-		const int fast_despair_gcd;
 		const int ll_base_gcd;
 		const int ll_iii_gcd;
 		const int ll_iv_gcd;
 		const int ll_despair_gcd;
 		const int ll_fast_base_gcd;
 		const int ll_fast_iii_gcd;
-		const int ll_fast_despair_gcd;
 
 		int mp = MAX_MP;
 
@@ -132,6 +133,9 @@ namespace StrikingDummy
 		// ticks
 		Timer mp_timer;
 		Timer dot_timer;
+		Timer lucid_timer;
+
+		bool skip_lucid_tick = false;
 
 		// elemental gauge
 		Buff gauge;
@@ -147,9 +151,10 @@ namespace StrikingDummy
 		Buff tc_proc;
 		Buff dot;	// NOT ACTUALLY A BUFF BUT YOU KNOW
 					// (value & 2) <=> enochian; (value & 4) <=> pot
+		Buff lucid;
 		Buff pot;
 
-					// cooldowns		
+		// cooldowns		
 		Timer swift_cd;
 		Timer triple_cd;
 		Timer sharp_cd;
@@ -157,6 +162,7 @@ namespace StrikingDummy
 		Timer manafont_cd;
 		Timer eno_cd;
 		Timer transpose_cd;
+		Timer lucid_cd;
 		Timer pot_cd;
 
 		// actions
@@ -168,11 +174,13 @@ namespace StrikingDummy
 
 		// metrics
 		int xeno_count = 0;
+		int f1_count = 0;
 		int f4_count = 0;
 		int b4_count = 0;
 		int t3_count = 0;
 		int despair_count = 0;
 		int transpose_count = 0;
+		int lucid_count = 0;
 		int pot_count = 0;
 
 		BlackMage(Stats& stats);
@@ -183,6 +191,7 @@ namespace StrikingDummy
 
 		void update_mp();
 		void update_dot();
+		void update_lucid();
 
 		bool is_instant_cast(int action) const;
 		int get_ll_cast_time(int ll_cast_time, int cast_time) const;
@@ -200,7 +209,7 @@ namespace StrikingDummy
 		float get_dot_damage() const;
 
 		void get_state(float* state);
-		int get_state_size() { return 52; }
+		int get_state_size() { return 56; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();
