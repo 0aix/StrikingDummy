@@ -63,6 +63,7 @@ namespace StrikingDummy
 
 	struct Transition
 	{
+		float prev[64];
 		float t0[64];
 		float t1[64];
 		int action = 0;
@@ -84,9 +85,11 @@ namespace StrikingDummy
 		std::uniform_int_distribution<int> tick;
 
 		float total_damage = 0.0f;
+		float prev[64];
 
 		Job(Stats& job_stats, float job_attr);
 		void step();
+		float* get_prev() { return history.back().prev; }
 		float* get_state() { return history.back().t0; }
 
 		virtual void reset() = 0;

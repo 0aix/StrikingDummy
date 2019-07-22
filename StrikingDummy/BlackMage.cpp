@@ -41,11 +41,9 @@ namespace StrikingDummy
 	{
 		timeline = {};
 
-		//mp = MAX_MP;
-		mp = MAX_MP - B3_MP_COST;
+		mp = MAX_MP;
 
-		//element = Element::NE;
-		element = Element::UI;
+		element = Element::NE;
 		umbral_hearts = 0;
 		enochian = false;
 
@@ -104,8 +102,16 @@ namespace StrikingDummy
 		transpose_count = 0;
 		lucid_count = 0;
 		pot_count = 0;
+		freeze_count = 0;
+
+		// prev
+		sharp.reset(SHARP_DURATION - 1000 + get_cast_time(B3), 1);
+		sharp_cd.reset(SHARP_CD - 1000 + get_cast_time(B3), false);
+		get_state(prev);
 
 		// precast
+		mp = MAX_MP - B3_MP_COST;
+		element = Element::UI;
 		gauge.reset(GAUGE_DURATION, 3);
 		sharp.reset(SHARP_DURATION - 1000, 1);
 		sharp_cd.reset(SHARP_CD - 1000, false);
@@ -207,7 +213,9 @@ namespace StrikingDummy
 
 			history.emplace_back();
 			Transition& t = history.back();
+			memcpy(t.prev, prev, STATE_SIZE * sizeof(float));
 			get_state(t.t0);
+			memcpy(prev, t.t0, STATE_SIZE * sizeof(float));
 			t.reward = 0.0f;
 			t.dt = timeline.time;
 		}
@@ -355,8 +363,7 @@ namespace StrikingDummy
 		case B4:
 			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;
 		case FREEZE:
-			//return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
-			return false;
+			return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
 		case F1:
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
@@ -390,8 +397,7 @@ namespace StrikingDummy
 		case POT:
 			return pot_cd.ready;
 		case UMBRAL_SOUL:
-			//return gcd_timer.ready && element == UI && enochian && gauge.count < 3;
-			return false;
+			return gcd_timer.ready && element == UI && enochian && gauge.count < 3;
 		}
 		return false;
 	}
@@ -438,6 +444,8 @@ namespace StrikingDummy
 				t3_count++;
 			else if (action == DESPAIR)
 				despair_count++;
+			else if (action == FREEZE)
+				freeze_count++;
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
 			action_timer.reset(get_action_time(action), false);

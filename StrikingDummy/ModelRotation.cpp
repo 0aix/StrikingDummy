@@ -41,7 +41,8 @@ namespace StrikingDummy
 			}
 			else
 			{
-				memcpy(model.m_x0.data(), job.get_state(), sizeof(float)* job.get_state_size());
+				memcpy(model.m_x0.data(), job.get_prev(), sizeof(float) * job.get_state_size());
+				memcpy(model.m_x0.data() + job.get_state_size(), job.get_state(), sizeof(float) * job.get_state_size());
 				float* output = model.compute();
 				int max_action = job.actions[0];
 				float max_weight = output[max_action];

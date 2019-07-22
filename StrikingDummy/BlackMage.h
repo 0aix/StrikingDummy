@@ -31,6 +31,7 @@ namespace StrikingDummy
 
 		static constexpr float BLM_ATTR = 115.0f;
 
+		static constexpr int STATE_SIZE = 56;
 		static constexpr int NUM_ACTIONS = 20;
 
 		static constexpr int ACTION_TAX = 10;
@@ -182,6 +183,7 @@ namespace StrikingDummy
 		int transpose_count = 0;
 		int lucid_count = 0;
 		int pot_count = 0;
+		int freeze_count = 0;
 
 		BlackMage(Stats& stats);
 
@@ -209,7 +211,7 @@ namespace StrikingDummy
 		float get_dot_damage() const;
 
 		void get_state(float* state);
-		int get_state_size() { return 56; }
+		int get_state_size() { return STATE_SIZE; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

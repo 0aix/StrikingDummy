@@ -35,8 +35,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 127.0f;
-		const float OUTPUT_UPPER = 130.0f;
+		const float OUTPUT_LOWER = 128.0f;
+		const float OUTPUT_UPPER = 132.0f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -58,7 +58,7 @@ namespace StrikingDummy
 		// Initialize model
 		int state_size = job.get_state_size();
 		int num_actions = job.get_num_actions();
-		model.init(state_size, num_actions, BATCH_SIZE, false);
+		model.init(state_size * 2, num_actions, BATCH_SIZE, false);
 		model.load("Weights\\weights");
 
 		BlackMage& blm = (BlackMage&)job;
@@ -101,7 +101,10 @@ namespace StrikingDummy
 
 					// compute Q1
 					for (int i = 0; i < BATCH_SIZE; i++)
-						memcpy(&model.X0[i * state_size], &memory[indices[i]].t1, sizeof(float) * state_size);
+					{
+						memcpy(&model.X0[(i * 2) * state_size], &memory[indices[i]].t0, sizeof(float) * state_size);
+						memcpy(&model.X0[(i * 2 + 1) * state_size], &memory[indices[i]].t1, sizeof(float) * state_size);
+					}
 
 					float* Q1 = model.batch_compute();
 
@@ -125,7 +128,10 @@ namespace StrikingDummy
 
 					// compute Q0
 					for (int i = 0; i < BATCH_SIZE; i++)
-						memcpy(&model.X0[i * state_size], &memory[indices[i]].t0, sizeof(float) * state_size);
+					{
+						memcpy(&model.X0[(i * 2) * state_size], &memory[indices[i]].prev, sizeof(float) * state_size);
+						memcpy(&model.X0[(i * 2 + 1) * state_size], &memory[indices[i]].t0, sizeof(float) * state_size);
+					}
 
 					model.batch_compute();
 
@@ -201,7 +207,7 @@ namespace StrikingDummy
 
 		Logger::log("=============\n");
 
-		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
+		model.init(blm.get_state_size() * 2, blm.get_num_actions(), 1, false);
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
