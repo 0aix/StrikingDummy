@@ -184,6 +184,7 @@ namespace StrikingDummy
 		int lucid_count = 0;
 		int pot_count = 0;
 		int freeze_count = 0;
+		int total_dot_time = 0;
 
 		BlackMage(Stats& stats);
 

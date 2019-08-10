@@ -128,6 +128,9 @@ namespace StrikingDummy
 	{
 		DBG(assert(elapsed > 0));
 
+		if (dot.time > 0)
+			total_dot_time += elapsed;
+
 		// server ticks
 		mp_timer.update(elapsed);
 		dot_timer.update(elapsed);

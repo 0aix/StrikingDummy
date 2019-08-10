@@ -35,8 +35,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 128.0f;
-		const float OUTPUT_UPPER = 132.0f;
+		const float OUTPUT_LOWER = 165.0f;
+		const float OUTPUT_UPPER = 171.0f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -216,12 +216,13 @@ namespace StrikingDummy
 			rotation.step();
 
 		std::stringstream zz;
-		zz << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n=============" << std::endl;
+		zz << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n";
+		zz << "T3 uptime: " << 100.0f / blm.timeline.time * blm.total_dot_time << "%\n=============" << std::endl;
 		Logger::log(zz.str().c_str());
 		
 		int length = blm.history.size() - 1;
-		if (length > 2000)
-			length = 2000;
+		if (length > 10000)
+			length = 10000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
