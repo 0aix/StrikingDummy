@@ -134,6 +134,7 @@ namespace StrikingDummy
 		Timer mp_timer;
 		Timer dot_timer;
 		Timer lucid_timer;
+		int mp_wait = 0;
 
 		bool skip_lucid_tick = false;
 
@@ -182,6 +183,7 @@ namespace StrikingDummy
 		int transpose_count = 0;
 		int lucid_count = 0;
 		int pot_count = 0;
+		int total_dot_time = 0;
 
 		BlackMage(Stats& stats);
 
@@ -209,7 +211,7 @@ namespace StrikingDummy
 		float get_dot_damage() const;
 
 		void get_state(float* state);
-		int get_state_size() { return 56; }
+		int get_state_size() { return 57; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

@@ -56,6 +56,7 @@ namespace StrikingDummy
 		timeline.push_event(mp_timer.time);
 		timeline.push_event(dot_timer.time);
 		timeline.push_event(lucid_timer.time);
+		mp_wait = 0;
 
 		skip_lucid_tick = false;
 
@@ -104,11 +105,12 @@ namespace StrikingDummy
 		transpose_count = 0;
 		lucid_count = 0;
 		pot_count = 0;
+		total_dot_time = 0;
 
 		// precast
 		gauge.reset(GAUGE_DURATION, 3);
-		sharp.reset(SHARP_DURATION - 1000, 1);
-		sharp_cd.reset(SHARP_CD - 1000, false);
+		sharp.reset(SHARP_DURATION - 1100, 1);
+		sharp_cd.reset(SHARP_CD - 1100, false);
 		timeline.push_event(gauge.time);
 		timeline.push_event(sharp.time);
 		timeline.push_event(sharp_cd.time);
@@ -121,6 +123,14 @@ namespace StrikingDummy
 	void BlackMage::update(int elapsed)
 	{
 		DBG(assert(elapsed > 0));
+
+		if (dot.time > 0)
+			total_dot_time += elapsed;
+
+		if (element != Element::AF && mp != MAX_MP)
+			mp_wait += elapsed;
+
+		assert(mp_wait <= TICK_TIMER);
 
 		// server ticks
 		mp_timer.update(elapsed);
@@ -182,6 +192,8 @@ namespace StrikingDummy
 		}
 		if (cast_timer.ready)
 			end_action();
+		if (element == Element::AF || mp == MAX_MP)
+			mp_wait = 0;
 		
 		update_history();
 	}
@@ -236,6 +248,7 @@ namespace StrikingDummy
 		}
 		mp_timer.reset(TICK_TIMER, false);
 		push_event(TICK_TIMER);
+		mp_wait = 0;
 	}
 
 	void BlackMage::update_dot()
@@ -638,7 +651,6 @@ namespace StrikingDummy
 			xeno_procs--;
 			break;
 		case DESPAIR:
-			//umbral_hearts = 0;
 			element = AF;
 			gauge.reset(GAUGE_DURATION, 3);
 			push_event(GAUGE_DURATION);
@@ -947,6 +959,7 @@ namespace StrikingDummy
 		state[53] = pot.time / (float)POT_DURATION;
 		state[54] = pot_cd.ready;
 		state[55] = pot_cd.time / (float)POT_CD;
+		state[56] = mp_wait / (float)TICK_TIMER;
 	}
 
 	std::string BlackMage::get_info()
