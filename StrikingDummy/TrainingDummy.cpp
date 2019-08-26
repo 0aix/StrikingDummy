@@ -35,8 +35,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 165.0f;
-		const float OUTPUT_UPPER = 171.0f;
+		const float OUTPUT_LOWER = 165.5f;
+		const float OUTPUT_UPPER = 171.5f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -209,10 +209,10 @@ namespace StrikingDummy
 		while (blm.timeline.time < 7 * 24 * 360000)
 			rotation.step();
 
-		std::stringstream zz;
-		zz << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n";
-		zz << "T3 uptime: " << 100.0f / blm.timeline.time * blm.total_dot_time << "%\n=============" << std::endl;
-		Logger::log(zz.str().c_str());
+		std::stringstream ss;
+		ss << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n";
+		ss << "T3 uptime: " << 100.0f / blm.timeline.time * blm.total_dot_time << "%\n=============";
+		Logger::log(ss.str().c_str());
 		
 		int length = blm.history.size() - 1;
 		if (length > 10000)
@@ -262,6 +262,37 @@ namespace StrikingDummy
 			Logger::log(ss.str().c_str());
 			time += t.dt;
 		}
+		Logger::close();
+	}
+
+	void TrainingDummy::metrics()
+	{
+		Logger::open();
+
+		std::cout.precision(2);
+
+		BlackMage& blm = (BlackMage&)job;
+		blm.reset();
+		blm.metrics_enabled = true;
+
+		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
+		model.load("Weights\\weights");
+
+		rotation.eps = 0.0f;
+
+		//while (blm.timeline.time < 7 * 24 * 360000)
+		while (blm.timeline.time < 24 * 360000)
+			rotation.step();
+
+		std::vector<int>* dists[] = { &blm.t3_dist, &blm.t3p_dist, &blm.swift_dist, &blm.triple_dist, &blm.sharp_dist, &blm.ll_dist, &blm.mf_dist };
+		std::stringstream ss;
+		for (int i = 0; i < 7; i++)
+		{
+			for (int t : *dists[i])
+				ss << 0.01 * t << ",";
+			ss << std::endl;
+		}
+		Logger::log(ss.str().c_str());
 		Logger::close();
 	}
 }

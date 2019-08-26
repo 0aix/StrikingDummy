@@ -94,6 +94,14 @@ namespace StrikingDummy
 		casting = Action::NONE;
 		casting_mp_cost = 0;
 
+		// precast
+		gauge.reset(GAUGE_DURATION, 3);
+		sharp.reset(SHARP_DURATION - 1100, 1);
+		sharp_cd.reset(SHARP_CD - 1100, false);
+		timeline.push_event(gauge.time);
+		timeline.push_event(sharp.time);
+		timeline.push_event(sharp_cd.time);
+
 		// metrics
 		total_damage = 0;
 		xeno_count = 0;
@@ -107,13 +115,7 @@ namespace StrikingDummy
 		pot_count = 0;
 		total_dot_time = 0;
 
-		// precast
-		gauge.reset(GAUGE_DURATION, 3);
-		sharp.reset(SHARP_DURATION - 1100, 1);
-		sharp_cd.reset(SHARP_CD - 1100, false);
-		timeline.push_event(gauge.time);
-		timeline.push_event(sharp.time);
-		timeline.push_event(sharp_cd.time);
+		sharp_last = -1100 + SHARP_CD;
 		
 		history.clear();
 
@@ -124,6 +126,7 @@ namespace StrikingDummy
 	{
 		DBG(assert(elapsed > 0));
 
+		// time metrics
 		if (dot.time > 0)
 			total_dot_time += elapsed;
 
@@ -287,6 +290,42 @@ namespace StrikingDummy
 		push_event(TICK_TIMER);
 	}
 
+	void BlackMage::update_metric(int action)
+	{
+		if (!metrics_enabled)
+			return;
+		switch (action)
+		{
+		case T3:
+			if (tc_proc.count > 0)
+				t3p_dist.push_back(timeline.time - t3_last);
+			else
+				t3_dist.push_back(timeline.time - t3_last);
+			t3_last = timeline.time + DOT_DURATION;
+			break;
+		case SWIFT:
+			swift_dist.push_back(timeline.time - swift_last);
+			swift_last = timeline.time + SWIFT_CD;
+			break;
+		case TRIPLE:
+			triple_dist.push_back(timeline.time - triple_last);
+			triple_last = timeline.time + TRIPLE_CD;
+			break;
+		case SHARP:
+			sharp_dist.push_back(timeline.time - sharp_last);
+			sharp_last = timeline.time + SHARP_CD;
+			break;
+		case LEYLINES:
+			ll_dist.push_back(timeline.time - ll_last);
+			ll_last = timeline.time + LL_CD;
+			break;
+		case MANAFONT:
+			mf_dist.push_back(timeline.time - mf_last);
+			mf_last = timeline.time + MANAFONT_CD;
+			break;
+		}
+	}
+
 	bool BlackMage::is_instant_cast(int action) const
 	{
 		// for gcds
@@ -395,10 +434,13 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
+			//return false;
 			return transpose_cd.ready && element != Element::NE;
 		case LUCID:
+			//return false;
 			return lucid_cd.ready;
 		case WAIT_FOR_MP:
+			//return false;
 			return gcd_timer.ready && element != Element::AF;
 		case POT:
 			return pot_cd.ready;
@@ -532,6 +574,7 @@ namespace StrikingDummy
 		// ogcd only
 		action_timer.reset(ANIMATION_LOCK + ACTION_TAX, false);
 		push_event(action_timer.time);
+		update_metric(action);
 	}
 
 	void BlackMage::end_action()
@@ -540,6 +583,8 @@ namespace StrikingDummy
 		assert(cast_timer.time == 0);
 		assert(cast_timer.ready || is_instant_cast(casting));
 		assert(mp >= casting_mp_cost);
+
+		update_metric(casting);
 
 		if (casting == DESPAIR)
 			mp = 0;

@@ -173,7 +173,7 @@ namespace StrikingDummy
 		int casting = Action::NONE;
 		int casting_mp_cost = 0;
 
-		// metrics
+		// count metrics
 		int xeno_count = 0;
 		int f1_count = 0;
 		int f4_count = 0;
@@ -185,6 +185,22 @@ namespace StrikingDummy
 		int pot_count = 0;
 		int total_dot_time = 0;
 
+		// distribution metrics
+		bool metrics_enabled = false;
+		std::vector<int> t3_dist;
+		std::vector<int> t3p_dist;
+		std::vector<int> swift_dist;
+		std::vector<int> triple_dist;
+		std::vector<int> sharp_dist;
+		std::vector<int> ll_dist;
+		std::vector<int> mf_dist;
+		int t3_last = 0;
+		int swift_last = 0;
+		int triple_last = 0;
+		int sharp_last = 0;
+		int ll_last = 0;
+		int mf_last = 0;
+
 		BlackMage(Stats& stats);
 
 		void reset();
@@ -194,6 +210,8 @@ namespace StrikingDummy
 		void update_mp();
 		void update_dot();
 		void update_lucid();
+
+		void update_metric(int action);
 
 		bool is_instant_cast(int action) const;
 		int get_ll_cast_time(int ll_cast_time, int cast_time) const;
