@@ -1,29 +1,28 @@
 #include "StrikingDummy.h"
 #include "TrainingDummy.h"
-#include "BlackMage.h"
+#include "Samurai.h"
 #include "Logger.h"
 #include <iostream>
-
-#define BLACKMAGE
 
 int main()
 {
 	StrikingDummy::Stats stats;
 
-	// min crit set
-	stats.weapon_damage = 164;
-	stats.main_stat = 4448; // 4237
+	// samurai
+	stats.weapon_damage = 122;
+	stats.main_stat = 4441; // 4230
 	stats.pot_stat = stats.main_stat + 312;
-	stats.critical_hit = 578;
-	stats.direct_hit = 3129;
-	stats.determination = 2021;
-	stats.skill_speed = 3057;
+	stats.critical_hit = 3124;
+	stats.direct_hit = 2938;
+	stats.determination = 1893;
+	stats.skill_speed = 814;
+	stats.auto_attack = 107.36;
+	stats.auto_delay = 2.64;
 
-	StrikingDummy::BlackMage blm(stats);
-	StrikingDummy::TrainingDummy dummy(blm);
-	StrikingDummy::StrikingDummy practice(blm);
-	dummy.train();
-	//dummy.trace();
-	//dummy.metrics();
+	StrikingDummy::Samurai sam(stats);
+	StrikingDummy::TrainingDummy dummy(sam);
+	StrikingDummy::StrikingDummy practice(sam);
+	//dummy.train();
+	dummy.trace();
 	//practice.start();
 }

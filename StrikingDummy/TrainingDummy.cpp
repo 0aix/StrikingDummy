@@ -1,5 +1,5 @@
 #include "TrainingDummy.h"
-#include "BlackMage.h"
+#include "Samurai.h"
 #include "Logger.h"
 #include <chrono>
 #include <iostream>
@@ -35,8 +35,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 165.5f;
-		const float OUTPUT_UPPER = 171.5f;
+		const float OUTPUT_LOWER = 157.5f;
+		const float OUTPUT_UPPER = 162.5f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -61,7 +61,7 @@ namespace StrikingDummy
 		model.init(state_size, num_actions, BATCH_SIZE, false);
 		model.load("Weights\\weights");
 
-		BlackMage& blm = (BlackMage&)job;
+		Samurai& sam = (Samurai&)job;
 
 		float nu = 0.001f;
 		float eps = EPS_START;
@@ -155,7 +155,7 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", midares: " << sam.midare_count << ", kaitens: " << sam.kaiten_count << ", shintens: " << sam.shinten_count << ", seneis: " << sam.senei_count << ", hagakures: " << sam.hagakure_count << ", pots: " << sam.pot_count << std::endl;
 
 				beta *= 0.9f;
 
@@ -196,38 +196,37 @@ namespace StrikingDummy
 
 		std::cout.precision(4);
 
-		BlackMage& blm = (BlackMage&)job;
-		blm.reset();
+		Samurai& sam = (Samurai&)job;
+		sam.reset();
 
 		Logger::log("=============\n");
 
-		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
+		model.init(sam.get_state_size(), sam.get_num_actions(), 1, false);
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
 
-		while (blm.timeline.time < 7 * 24 * 360000)
+		while (sam.timeline.time < 7 * 24 * 360000)
 			rotation.step();
 
 		std::stringstream ss;
-		ss << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n";
-		ss << "T3 uptime: " << 100.0f / blm.timeline.time * blm.total_dot_time << "%\n=============";
+		ss << "DPS: " << 100.0f / sam.timeline.time * sam.total_damage << "\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 		
-		int length = blm.history.size() - 1;
+		int length = sam.history.size() - 1;
 		if (length > 10000)
 			length = 10000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
-			Transition& t = blm.history[i];
+			Transition& t = sam.history[i];
 			int hours = time / 360000;
 			int minutes = (time / 6000) % 60;
 			int seconds = (time / 100) % 60;
 			int centiseconds = time % 100;
-			std::stringstream ss;
 			if (t.action != 0)
 			{
+				std::stringstream ss;
 				ss << "[";
 				if (hours < 10)
 					ss << "0";
@@ -241,58 +240,11 @@ namespace StrikingDummy
 				if (centiseconds < 10)
 					ss << "0";
 				ss << centiseconds << "] ";
+				ss << sam.get_action_name(t.action) << " " << t.t0[0] * 100.0f << std::endl;
+				Logger::log(ss.str().c_str());
 			}
-			if (t.action == 5 && t.t0[21] == 1.0f)
-				ss << t.t0[0] * 10000.0f << " F3p";
-			else if (t.action == 7)
-			{
-				if (t.t0[23] == 1.0f)
-					ss << t.t0[0] * 10000.0f << " T3p at " << t.t0[26] * 24 << "s left on dot";
-				else
-					ss << t.t0[0] * 10000.0f << " T3 at " << t.t0[26] * 24 << "s left on dot";
-			}
-			else if (t.action != 0)
-				ss << t.t0[0] * 10000.0f << " " << blm.get_action_name(t.action);
-			if (t.action != 0)
-			{
-				if (t.t0[23] == 1.0f)
-					ss << " (T3p w/ " << t.t0[24] * 18 << "s)";
-				ss << std::endl;
-			}
-			Logger::log(ss.str().c_str());
 			time += t.dt;
 		}
-		Logger::close();
-	}
-
-	void TrainingDummy::metrics()
-	{
-		Logger::open();
-
-		std::cout.precision(2);
-
-		BlackMage& blm = (BlackMage&)job;
-		blm.reset();
-		blm.metrics_enabled = true;
-
-		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
-		model.load("Weights\\weights");
-
-		rotation.eps = 0.0f;
-
-		//while (blm.timeline.time < 7 * 24 * 360000)
-		while (blm.timeline.time < 24 * 360000)
-			rotation.step();
-
-		std::vector<int>* dists[] = { &blm.t3_dist, &blm.t3p_dist, &blm.swift_dist, &blm.triple_dist, &blm.sharp_dist, &blm.ll_dist, &blm.mf_dist };
-		std::stringstream ss;
-		for (int i = 0; i < 7; i++)
-		{
-			for (int t : *dists[i])
-				ss << 0.01 * t << ",";
-			ss << std::endl;
-		}
-		Logger::log(ss.str().c_str());
 		Logger::close();
 	}
 }
