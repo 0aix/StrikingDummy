@@ -35,9 +35,15 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 165.5f;
-		const float OUTPUT_UPPER = 171.5f;
+		const float OUTPUT_LOWER = 162.0f;
+		const float OUTPUT_UPPER = 167.0f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
+
+		std::stringstream zz;
+		zz << "lower: " << OUTPUT_LOWER << ", upper: " << OUTPUT_UPPER << std::endl;
+
+		Logger::log(zz.str().c_str());
+		std::cout << zz.str();
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -207,11 +213,14 @@ namespace StrikingDummy
 		rotation.eps = 0.0f;
 
 		while (blm.timeline.time < 7 * 24 * 360000)
+		//while (blm.timeline.time < 45000)
 			rotation.step();
 
 		std::stringstream ss;
 		ss << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n";
-		ss << "T3 uptime: " << 100.0f / blm.timeline.time * blm.total_dot_time << "%\n=============";
+		ss << "T3 uptime: " << 100.0f / blm.timeline.time * blm.total_dot_time << "%\n";
+		ss << "F4 % damage: " << 100.0f / blm.total_damage * blm.total_f4_damage << "%\n";
+		ss << "Desp % damage: " << 100.0f / blm.total_damage * blm.total_desp_damage << "%\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 		
 		int length = blm.history.size() - 1;
@@ -280,7 +289,6 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		//while (blm.timeline.time < 7 * 24 * 360000)
 		while (blm.timeline.time < 24 * 360000)
 			rotation.step();
 
@@ -292,6 +300,35 @@ namespace StrikingDummy
 				ss << 0.01 * t << ",";
 			ss << std::endl;
 		}
+		Logger::log(ss.str().c_str());
+		Logger::close();
+	}
+
+	void TrainingDummy::dist(int seconds, int times)
+	{
+		Logger::open();
+
+		std::cout.precision(2);
+
+		BlackMage& blm = (BlackMage&)job;
+
+		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
+		model.load("Weights\\weights");
+
+		rotation.eps = 0.0f;
+
+		int time = seconds * 100;
+
+		std::stringstream ss;
+
+		for (int i = 0; i < times; i++)
+		{
+			blm.reset();
+			while (blm.timeline.time < time)
+				rotation.step();
+			ss << 100.0f / blm.timeline.time * blm.total_damage << "\n";
+		}
+
 		Logger::log(ss.str().c_str());
 		Logger::close();
 	}

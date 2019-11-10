@@ -48,6 +48,7 @@ namespace StrikingDummy
 		element = Element::UI;
 		umbral_hearts = 0;
 		enochian = false;
+		t3p = false;
 
 		// server ticks
 		mp_timer.reset(tick(rng), false);
@@ -101,6 +102,33 @@ namespace StrikingDummy
 		timeline.push_event(gauge.time);
 		timeline.push_event(sharp.time);
 		timeline.push_event(sharp_cd.time);
+
+		/*
+		element = Element::UI;
+		umbral_hearts = 3;
+		enochian = true;
+		gauge.reset(1100, 3);
+		sharp.reset(SHARP_DURATION - 300, 1);
+		sharp_cd.reset(SHARP_CD - 300, false);
+		timeline.push_event(gauge.time);
+		timeline.push_event(sharp.time);
+		timeline.push_event(sharp_cd.time);
+		pot_cd.reset(17000, false);
+		swift_cd.reset(1600, false);
+		triple_cd.reset(2300, false);
+		leylines.reset(2900, 1);
+		leylines_cd.reset(8900, false);
+		manafont_cd.reset(9400, false);
+		xeno_procs = 2;
+		xeno_timer.reset(1500, false);
+		timeline.push_event(pot_cd.time);
+		timeline.push_event(swift_cd.time);
+		timeline.push_event(triple_cd.time);
+		timeline.push_event(leylines_cd.time);
+		timeline.push_event(leylines.time);
+		timeline.push_event(manafont_cd.time);
+		timeline.push_event(xeno_timer.time);
+		*/
 
 		// metrics
 		total_damage = 0;
@@ -401,18 +429,20 @@ namespace StrikingDummy
 		case NONE:
 			return !gcd_timer.ready;
 		case B1:
-			return gcd_timer.ready && get_mp_cost(B1) <= mp;
+			return false;
+			//return gcd_timer.ready && get_mp_cost(B1) <= mp;
 		case B3:
 			return gcd_timer.ready && get_mp_cost(B3) <= mp;
 		case B4:
 			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;
 		case FREEZE:
-			//return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
-			return false;
+			return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
+			//return false;
 		case F1:
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
-			return gcd_timer.ready && get_mp_cost(F3) <= mp;
+			return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != UI || umbral_hearts > 0);
+			//return gcd_timer.ready && get_mp_cost(F3) <= mp;
 		case F4:
 			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp;
 		case T3:
@@ -434,11 +464,11 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
-			//return false;
-			return transpose_cd.ready && element != Element::NE;
+			return false;
+			//return transpose_cd.ready && element != Element::NE;
 		case LUCID:
-			//return false;
-			return lucid_cd.ready;
+			return false;
+			//return lucid_cd.ready;
 		case WAIT_FOR_MP:
 			//return false;
 			return gcd_timer.ready && element != Element::AF;
@@ -499,6 +529,8 @@ namespace StrikingDummy
 			casting = action;
 			casting_mp_cost = get_mp_cost(action);
 			assert(casting_mp_cost <= mp);
+			if (casting == T3)
+				t3p = tc_proc.count > 0;
 			if (cast_timer.time == 0)
 				end_action();
 			push_event(gcd_timer.time);
@@ -678,9 +710,10 @@ namespace StrikingDummy
 		case F4:
 			if (umbral_hearts > 0)
 				umbral_hearts--;
+			total_f4_damage += damage;
 			break;
 		case T3:
-			if (tc_proc.count > 0)
+			if (t3p > 0)
 				tc_proc.reset(0, 0);
 			dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0)));
 			push_event(DOT_DURATION);
@@ -699,6 +732,7 @@ namespace StrikingDummy
 			element = AF;
 			gauge.reset(GAUGE_DURATION, 3);
 			push_event(GAUGE_DURATION);
+			total_desp_damage += damage;
 			break;
 		case UMBRAL_SOUL:
 			assert(element == UI);
@@ -814,7 +848,7 @@ namespace StrikingDummy
 		return 99999;
 	}
 
-	float BlackMage::get_damage(int action) const
+	float BlackMage::get_damage(int action)
 	{
 		float potency = 0.0f;
 		switch (action)
@@ -917,7 +951,7 @@ namespace StrikingDummy
 			}
 			break;
 		case T3:
-			potency = tc_proc.count > 0 ? TC_POTENCY : T3_POTENCY;
+			potency = t3p ? TC_POTENCY : T3_POTENCY;
 			break;
 		case XENO:
 			potency = XENO_POTENCY;
@@ -936,14 +970,19 @@ namespace StrikingDummy
 		case UMBRAL_SOUL:
 			potency = 0.0f;
 		}
+
 		// floor(ptc * wd * ap * det * traits) * chr | * dhr | * rand(.95, 1.05) | ...
 		return potency * stats.potency_multiplier * stats.expected_multiplier * (enochian ? ENO_MULTIPLIER : 1.0f) * (pot.count > 0 ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
+		//float rng_multiplier = damage_range(rng) * (prob(rng) < stats.crit_rate ? stats.crit_multiplier : 1.0f) * (prob(rng) < stats.dhit_rate ? 1.25f : 1.0f);
+		//return potency * stats.potency_multiplier * rng_multiplier * (enochian ? ENO_MULTIPLIER : 1.0f) * (pot.count > 0 ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
 	}
 	
-	float BlackMage::get_dot_damage() const
+	float BlackMage::get_dot_damage()
 	{
 		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
 		return T3_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * stats.expected_multiplier * ((dot.count & 2) ? ENO_MULTIPLIER : 1.0f) * ((dot.count & 4) ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
+		//float rng_multiplier = damage_range(rng) * (prob(rng) < stats.crit_rate ? stats.crit_multiplier : 1.0f) * (prob(rng) < stats.dhit_rate ? 1.25f : 1.0f);
+		//return T3_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * rng_multiplier * ((dot.count & 2) ? ENO_MULTIPLIER : 1.0f) * ((dot.count & 4) ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
 	}
 
 	void BlackMage::get_state(float* state)

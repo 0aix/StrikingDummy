@@ -129,6 +129,7 @@ namespace StrikingDummy
 		Element element = Element::NE;
 		int umbral_hearts = 0;
 		bool enochian = false;
+		bool t3p = false;
 
 		// ticks
 		Timer mp_timer;
@@ -201,6 +202,9 @@ namespace StrikingDummy
 		int ll_last = 0;
 		int mf_last = 0;
 
+		float total_f4_damage = 0.0f;
+		float total_desp_damage = 0.0f;
+
 		BlackMage(Stats& stats);
 
 		void reset();
@@ -225,8 +229,8 @@ namespace StrikingDummy
 		void end_action();
 
 		int get_mp_cost(int action) const;
-		float get_damage(int action) const;
-		float get_dot_damage() const;
+		float get_damage(int action);
+		float get_dot_damage();
 
 		void get_state(float* state);
 		int get_state_size() { return 57; }

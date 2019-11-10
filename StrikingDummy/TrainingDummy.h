@@ -19,5 +19,6 @@ namespace StrikingDummy
 		void test();
 		void trace();
 		void metrics();
+		void dist(int seconds, int times);
 	};
 }
