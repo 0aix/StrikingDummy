@@ -39,15 +39,12 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BlackMage.cpp">
+    <ClCompile Include="Summoner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BlackMage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Job.h">
@@ -66,6 +63,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CUDA.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Summoner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -31,6 +31,10 @@ namespace StrikingDummy
 		float potency_multiplier;
 		float expected_multiplier;
 
+		float pet_wep_multiplier;
+		float pet_attk_multiplier;
+		float pet_potency_multiplier;
+
 		void calculate_stats(float job_attr);
 	};
 

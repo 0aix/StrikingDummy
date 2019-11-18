@@ -1,5 +1,5 @@
 #include "TrainingDummy.h"
-#include "BlackMage.h"
+#include "Summoner.h"
 #include "Logger.h"
 #include <chrono>
 #include <iostream>
@@ -26,17 +26,17 @@ namespace StrikingDummy
 		long long start_time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
 		const int NUM_EPOCHS = 1000000;
-		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE = 2000;
+		const int NUM_STEPS_PER_EPOCH = 20000;
+		const int NUM_STEPS_PER_EPISODE = 4000;
 		const int NUM_BATCHES_PER_EPOCH = 50;
-		const int CAPACITY = 1000000;
+		const int CAPACITY = 2000000;
 		const int BATCH_SIZE = 10000;
 		const float WINDOW = 60000.0f;
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
-		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 162.0f;
-		const float OUTPUT_UPPER = 167.0f;
+		const float EPS_MIN = 0.18f;
+		const float OUTPUT_LOWER = 157.5f;
+		const float OUTPUT_UPPER = 162.5f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
@@ -67,7 +67,7 @@ namespace StrikingDummy
 		model.init(state_size, num_actions, BATCH_SIZE, false);
 		model.load("Weights\\weights");
 
-		BlackMage& blm = (BlackMage&)job;
+		Summoner& smn = (Summoner&)job;
 
 		float nu = 0.001f;
 		float eps = EPS_START;
@@ -161,7 +161,7 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", time: " << 0.01f * job.timeline.time << "s" << std::endl;
 
 				beta *= 0.9f;
 
@@ -192,7 +192,8 @@ namespace StrikingDummy
 	{
 		rotation.reset(0.0f, 0.0f);
 		job.reset();
-		while (job.timeline.time < 60000)
+		//while (job.timeline.time < 60000)
+		for (int i = 0; i < 2000; i++)
 			rotation.step();
 	}
 
@@ -202,41 +203,39 @@ namespace StrikingDummy
 
 		std::cout.precision(4);
 
-		BlackMage& blm = (BlackMage&)job;
-		blm.reset();
+		Summoner& smn = (Summoner&)job;
+		smn.reset();
 
 		Logger::log("=============\n");
 
-		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
+		model.init(smn.get_state_size(), smn.get_num_actions(), 1, false);
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
 
-		while (blm.timeline.time < 7 * 24 * 360000)
-		//while (blm.timeline.time < 45000)
+		while (smn.timeline.time < 7 * 24 * 360000)
+		//while (smn.timeline.time < 120000)
 			rotation.step();
 
 		std::stringstream ss;
-		ss << "DPS: " << 100.0f / blm.timeline.time * blm.total_damage << "\n";
-		ss << "T3 uptime: " << 100.0f / blm.timeline.time * blm.total_dot_time << "%\n";
-		ss << "F4 % damage: " << 100.0f / blm.total_damage * blm.total_f4_damage << "%\n";
-		ss << "Desp % damage: " << 100.0f / blm.total_damage * blm.total_desp_damage << "%\n=============" << std::endl;
+		ss << "DPS: " << 100.0f / smn.timeline.time * smn.total_damage << "\n";
+		ss << "Dot uptime: " << 100.0f / smn.timeline.time * smn.total_dot_time << "%\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 		
-		int length = blm.history.size() - 1;
+		int length = smn.history.size() - 1;
 		if (length > 10000)
 			length = 10000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
-			Transition& t = blm.history[i];
-			int hours = time / 360000;
-			int minutes = (time / 6000) % 60;
-			int seconds = (time / 100) % 60;
-			int centiseconds = time % 100;
-			std::stringstream ss;
+			Transition& t = smn.history[i];
 			if (t.action != 0)
 			{
+				int hours = time / 360000;
+				int minutes = (time / 6000) % 60;
+				int seconds = (time / 100) % 60;
+				int centiseconds = time % 100;
+				std::stringstream ss;
 				ss << "[";
 				if (hours < 10)
 					ss << "0";
@@ -249,31 +248,14 @@ namespace StrikingDummy
 				ss << seconds << ".";
 				if (centiseconds < 10)
 					ss << "0";
-				ss << centiseconds << "] ";
+				ss << centiseconds << "] " << smn.get_action_name(t.action) << std::endl;;
+				Logger::log(ss.str().c_str());
 			}
-			if (t.action == 5 && t.t0[21] == 1.0f)
-				ss << t.t0[0] * 10000.0f << " F3p";
-			else if (t.action == 7)
-			{
-				if (t.t0[23] == 1.0f)
-					ss << t.t0[0] * 10000.0f << " T3p at " << t.t0[26] * 24 << "s left on dot";
-				else
-					ss << t.t0[0] * 10000.0f << " T3 at " << t.t0[26] * 24 << "s left on dot";
-			}
-			else if (t.action != 0)
-				ss << t.t0[0] * 10000.0f << " " << blm.get_action_name(t.action);
-			if (t.action != 0)
-			{
-				if (t.t0[23] == 1.0f)
-					ss << " (T3p w/ " << t.t0[24] * 18 << "s)";
-				ss << std::endl;
-			}
-			Logger::log(ss.str().c_str());
 			time += t.dt;
 		}
 		Logger::close();
 	}
-
+	/*
 	void TrainingDummy::metrics()
 	{
 		Logger::open();
@@ -332,4 +314,5 @@ namespace StrikingDummy
 		Logger::log(ss.str().c_str());
 		Logger::close();
 	}
+	*/
 }

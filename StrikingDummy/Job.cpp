@@ -70,6 +70,10 @@ namespace StrikingDummy
 		potency_multiplier = wep_multiplier * attk_multiplier * det_multiplier / 100.0f;
 		float dcrit_rate = crit_rate * dhit_rate;
 		expected_multiplier = (1.0f - crit_rate + dcrit_rate - dhit_rate) + crit_multiplier * (crit_rate - dcrit_rate) + crit_multiplier * 1.25f * dcrit_rate + 1.25f * (dhit_rate - dcrit_rate);
+
+		pet_wep_multiplier = floor(LV_MAIN * 100.0f / 1000.0f + weapon_damage);
+		pet_attk_multiplier = floor(180.0f * (main_stat - LV_MAIN) / LV_MAIN + 100.0f) / 100.0f;
+		pet_potency_multiplier = pet_wep_multiplier * pet_attk_multiplier * det_multiplier / 100.0f;
 	}
 
 	// ============================================ Timeline ============================================

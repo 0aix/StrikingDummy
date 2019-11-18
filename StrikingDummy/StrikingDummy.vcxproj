@@ -135,7 +135,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BlackMage.cpp" />
+    <ClCompile Include="Summoner.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -148,7 +148,7 @@
     <ClCompile Include="TrainingDummy.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BlackMage.h" />
+    <ClInclude Include="Summoner.h" />
     <ClInclude Include="CUDA.cuh" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="Logger.h" />
