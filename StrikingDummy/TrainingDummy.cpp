@@ -34,9 +34,9 @@ namespace StrikingDummy
 		const float WINDOW = 60000.0f;
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
-		const float EPS_MIN = 0.18f;
-		const float OUTPUT_LOWER = 157.5f;
-		const float OUTPUT_UPPER = 162.5f;
+		const float EPS_MIN = 0.15f;
+		const float OUTPUT_LOWER = 157.75f;
+		const float OUTPUT_UPPER = 162.75f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;

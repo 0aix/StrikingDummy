@@ -20,8 +20,8 @@ int main()
 	StrikingDummy::Summoner smn(stats);
 	StrikingDummy::TrainingDummy dummy(smn);
 	StrikingDummy::StrikingDummy practice(smn);
-	//dummy.train();
-	dummy.trace();
+	dummy.train();
+	//dummy.trace();
 	//dummy.metrics();
 	//practice.start();
 	//dummy.dist(510, 30);

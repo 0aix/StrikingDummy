@@ -73,8 +73,8 @@ namespace StrikingDummy
 		casting = Action::NONE;
 
 		// precast
-		timeline.push_event(pot.time);
-		timeline.push_event(pot_cd.time);
+		//timeline.push_event(pot.time);
+		//timeline.push_event(pot_cd.time);
 
 		// metrics
 		total_damage = 0;
@@ -91,7 +91,7 @@ namespace StrikingDummy
 		DBG(assert(elapsed > 0));
 
 		// time metrics
-		if (dot_miasma.time > 0 && dot_bio.time > 0)
+		if (dot_miasma.count > 0 && dot_bio.count > 0)
 			total_dot_time += elapsed;
 
 		// server ticks
@@ -268,7 +268,7 @@ namespace StrikingDummy
 		case NONE:
 			return !gcd_timer.ready;
 		case R2:
-			return gcd_timer.ready && r4_procs == 0 && phoenix.count == 0;
+			return gcd_timer.ready && r4_procs == 0 && dwt.count == 0 && phoenix.count == 0;
 		case R3:
 			return gcd_timer.ready && phoenix.count == 0;
 		case R4:
