@@ -6,9 +6,7 @@
 #include <chrono>
 #include <random>
 #include <iostream>
-#include <Eigen/Core>
 #include <fstream>
-using namespace Eigen;
 
 #ifdef _DEBUG 
 #define DBG(x) x
@@ -102,33 +100,6 @@ namespace StrikingDummy
 		timeline.push_event(gauge.time);
 		timeline.push_event(sharp.time);
 		timeline.push_event(sharp_cd.time);
-
-		/*
-		element = Element::UI;
-		umbral_hearts = 3;
-		enochian = true;
-		gauge.reset(1100, 3);
-		sharp.reset(SHARP_DURATION - 300, 1);
-		sharp_cd.reset(SHARP_CD - 300, false);
-		timeline.push_event(gauge.time);
-		timeline.push_event(sharp.time);
-		timeline.push_event(sharp_cd.time);
-		pot_cd.reset(17000, false);
-		swift_cd.reset(1600, false);
-		triple_cd.reset(2300, false);
-		leylines.reset(2900, 1);
-		leylines_cd.reset(8900, false);
-		manafont_cd.reset(9400, false);
-		xeno_procs = 2;
-		xeno_timer.reset(1500, false);
-		timeline.push_event(pot_cd.time);
-		timeline.push_event(swift_cd.time);
-		timeline.push_event(triple_cd.time);
-		timeline.push_event(leylines_cd.time);
-		timeline.push_event(leylines.time);
-		timeline.push_event(manafont_cd.time);
-		timeline.push_event(xeno_timer.time);
-		*/
 
 		// metrics
 		total_damage = 0;
@@ -436,13 +407,13 @@ namespace StrikingDummy
 		case B4:
 			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;
 		case FREEZE:
-			return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
-			//return false;
+			//return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
+			return false;
 		case F1:
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
-			return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != UI || umbral_hearts > 0);
-			//return gcd_timer.ready && get_mp_cost(F3) <= mp;
+			//return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != UI || umbral_hearts > 0);
+			return gcd_timer.ready && get_mp_cost(F3) <= mp;
 		case F4:
 			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp;
 		case T3:
@@ -464,11 +435,11 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
-			return false;
-			//return transpose_cd.ready && element != Element::NE;
+			//return false;
+			return transpose_cd.ready && element != Element::NE;
 		case LUCID:
-			return false;
-			//return lucid_cd.ready;
+			//return false;
+			return lucid_cd.ready;
 		case WAIT_FOR_MP:
 			//return false;
 			return gcd_timer.ready && element != Element::AF;

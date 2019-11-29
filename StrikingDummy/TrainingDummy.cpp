@@ -27,7 +27,7 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE = 2000;
+		const int NUM_STEPS_PER_EPISODE = 2500;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
@@ -56,7 +56,7 @@ namespace StrikingDummy
 		int m_index = 0;
 		int m_size = 0;
 
-		auto indices_gen = [&]() 
+		auto indices_gen = [&]()
 		{
 			return range(rng);
 		};
@@ -65,7 +65,7 @@ namespace StrikingDummy
 		int state_size = job.get_state_size();
 		int num_actions = job.get_num_actions();
 		model.init(state_size, num_actions, BATCH_SIZE, false);
-		model.load("Weights\\weights");
+		//model.load("Weights\\weights");
 
 		BlackMage& blm = (BlackMage&)job;
 
@@ -150,29 +150,30 @@ namespace StrikingDummy
 				if (eps < EPS_MIN)
 					eps = EPS_MIN;
 
-				// test model
-				test();
-
-				float dps = 0.1f * job.total_damage / job.timeline.time;
-
-				avg_dps = 0.9f * avg_dps + 0.1f * dps;
-				est_dps = avg_dps / (1.0f - beta);
-
 				int _epoch = epoch - epoch_offset;
 
-				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
-
-				beta *= 0.9f;
-
-				Logger::log(ss.str().c_str());
-				std::cout << ss.str();
-
-				if (_epoch % 1000 == 0)
+				// test model
+				//if (_epoch % 100 == 0)
 				{
-					std::stringstream filename;
-					filename << "Weights\\weights-" << _epoch << std::flush;
-					model.save(filename.str().c_str());
+					test();
+
+					float dps = 0.1f * job.total_damage / job.timeline.time;
+					//avg_dps = 0.9f * avg_dps + 0.1f * (0.1f * job.total_damage / job.timeline.time);
+					//est_dps = avg_dps / (1.0f - beta);
+					//beta *= 0.9f;
+
+					std::stringstream ss;
+					//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+					ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+					//Logger::log(ss.str().c_str());
+					std::cout << ss.str();
+
+					if (_epoch % 1000 == 0)
+					{
+						std::stringstream filename;
+						filename << "Weights\\weights-" << _epoch << std::flush;
+						model.save(filename.str().c_str());
+					}
 				}
 			}
 			else

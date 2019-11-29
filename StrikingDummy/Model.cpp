@@ -378,20 +378,23 @@ namespace StrikingDummy
 	{
 		std::fstream fs;
 		fs.open(filename, std::fstream::in | std::fstream::binary);
-		fs.read((char*)m_W1.data(), INNER_1 * input_size * sizeof(float));
-		fs.read((char*)m_W2.data(), INNER_2 * INNER_1 * sizeof(float));
-		fs.read((char*)m_W3.data(), output_size * INNER_2 * sizeof(float));
-		fs.read((char*)m_b1.data(), INNER_1 * sizeof(float));
-		fs.read((char*)m_b2.data(), INNER_2 * sizeof(float));
-		fs.read((char*)m_b3.data(), output_size * sizeof(float));
-		fs.close();
+		if (fs.is_open())
+		{
+			fs.read((char*)m_W1.data(), INNER_1 * input_size * sizeof(float));
+			fs.read((char*)m_W2.data(), INNER_2 * INNER_1 * sizeof(float));
+			fs.read((char*)m_W3.data(), output_size * INNER_2 * sizeof(float));
+			fs.read((char*)m_b1.data(), INNER_1 * sizeof(float));
+			fs.read((char*)m_b2.data(), INNER_2 * sizeof(float));
+			fs.read((char*)m_b3.data(), output_size * sizeof(float));
+			fs.close();
 
-		arrayCopyToDevice(_W1, m_W1.data(), INNER_1 * input_size);
-		arrayCopyToDevice(_W2, m_W2.data(), INNER_2 * INNER_1);
-		arrayCopyToDevice(_W3, m_W3.data(), output_size * INNER_2);
-		arrayCopyToDevice(_b1, m_b1.data(), INNER_1);
-		arrayCopyToDevice(_b2, m_b2.data(), INNER_2);
-		arrayCopyToDevice(_b3, m_b3.data(), output_size);
+			arrayCopyToDevice(_W1, m_W1.data(), INNER_1 * input_size);
+			arrayCopyToDevice(_W2, m_W2.data(), INNER_2 * INNER_1);
+			arrayCopyToDevice(_W3, m_W3.data(), output_size * INNER_2);
+			arrayCopyToDevice(_b1, m_b1.data(), INNER_1);
+			arrayCopyToDevice(_b2, m_b2.data(), INNER_2);
+			arrayCopyToDevice(_b3, m_b3.data(), output_size);
+		}
 	}
 
 	void Model::save(const char* filename)
