@@ -11,13 +11,13 @@ int main()
 	StrikingDummy::Stats stats;
 
 	// min crit set
-	//stats.weapon_damage = 164;
-	//stats.main_stat = 4448; // 4237
-	//stats.pot_stat = stats.main_stat + 339;
-	//stats.critical_hit = 578;
-	//stats.direct_hit = 3129;
-	//stats.determination = 2021;
-	//stats.skill_speed = 3057;
+	stats.weapon_damage = 164;
+	stats.main_stat = 4448; // 4237
+	stats.pot_stat = stats.main_stat + 339;
+	stats.critical_hit = 578;
+	stats.direct_hit = 3129;
+	stats.determination = 2021;
+	stats.skill_speed = 3057;
 
 	// max crit set
 	//stats.weapon_damage = 164;
@@ -29,13 +29,13 @@ int main()
 	//stats.skill_speed = 2241;
 
 	// high crit set
-	stats.weapon_damage = 164;
-	stats.main_stat = 4448; // 4237
-	stats.pot_stat = stats.main_stat + 339;
-	stats.critical_hit = 3078;
-	stats.direct_hit = 2485;
-	stats.determination = 803;
-	stats.skill_speed = 2421;
+	//stats.weapon_damage = 164;
+	//stats.main_stat = 4448; // 4237
+	//stats.pot_stat = stats.main_stat + 339;
+	//stats.critical_hit = 3078;
+	//stats.direct_hit = 2485;
+	//stats.determination = 803;
+	//stats.skill_speed = 2421;
 
 	StrikingDummy::BlackMage blm(stats);
 	StrikingDummy::TrainingDummy dummy(blm);

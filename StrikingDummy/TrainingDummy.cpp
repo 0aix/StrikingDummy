@@ -19,7 +19,7 @@ namespace StrikingDummy
 	
 	void TrainingDummy::train()
 	{
-		Logger::open();
+		//Logger::open();
 
 		std::cout.precision(4);
 
@@ -35,15 +35,15 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 162.0f;
-		const float OUTPUT_UPPER = 167.0f;
+		const float OUTPUT_LOWER = 166.0f;
+		const float OUTPUT_UPPER = 171.0f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
-		zz << "lower: " << OUTPUT_LOWER << ", upper: " << OUTPUT_UPPER << std::endl;
+		//zz << "lower: " << OUTPUT_LOWER << ", upper: " << OUTPUT_UPPER << std::endl;
 
-		Logger::log(zz.str().c_str());
-		std::cout << zz.str();
+		//Logger::log(zz.str().c_str());
+		//std::cout << zz.str();
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -65,7 +65,10 @@ namespace StrikingDummy
 		int state_size = job.get_state_size();
 		int num_actions = job.get_num_actions();
 		model.init(state_size, num_actions, BATCH_SIZE, false);
-		//model.load("Weights\\weights");
+		model.load("Weights\\weights");
+
+		zz << model.m_W1.data()[0] << " " << model.m_W1.data()[1] << std::endl;
+		std::cout << zz.str();
 
 		BlackMage& blm = (BlackMage&)job;
 
@@ -143,6 +146,7 @@ namespace StrikingDummy
 					// train
 					model.train(nu);
 				}
+
 				model.copyToHost();
 
 				// adjust parameters
@@ -164,9 +168,9 @@ namespace StrikingDummy
 
 					std::stringstream ss;
 					//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
-					ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+					//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
 					//Logger::log(ss.str().c_str());
-					std::cout << ss.str();
+					//std::cout << ss.str();
 
 					if (_epoch % 1000 == 0)
 					{
