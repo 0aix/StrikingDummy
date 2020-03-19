@@ -18,18 +18,18 @@ namespace StrikingDummy
 {
 	BlackMage::BlackMage(Stats& stats) : 
 		Job(stats, BLM_ATTR),
-		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD)))),
-		iii_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * III_GCD)))),
-		iv_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * IV_GCD)))),
-		despair_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * DESPAIR_GCD)))),
-		fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * BASE_GCD))))),
-		fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * III_GCD))))),
-		ll_base_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD))))),
-		ll_iii_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD))))),
-		ll_iv_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * IV_GCD))))),
-		ll_despair_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * DESPAIR_GCD))))),
-		ll_fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD)))))),
-		ll_fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD))))))
+		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD))) * 10),
+		iii_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * III_GCD))) * 10),
+		iv_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * IV_GCD))) * 10),
+		despair_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * DESPAIR_GCD))) * 10),
+		fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * BASE_GCD)))) * 10),
+		fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * III_GCD)))) * 10),
+		ll_base_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD)))) * 10),
+		ll_iii_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD)))) * 10),
+		ll_iv_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * IV_GCD)))) * 10),
+		ll_despair_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * DESPAIR_GCD)))) * 10),
+		ll_fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD))))) * 10),
+		ll_fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD))))) * 10)
 	{
 		actions.reserve(NUM_ACTIONS);
 		reset();
@@ -40,10 +40,12 @@ namespace StrikingDummy
 		timeline = {};
 
 		//mp = MAX_MP;
-		mp = MAX_MP - B3_MP_COST;
+		//mp = MAX_MP - B3_MP_COST;
+		mp = MAX_MP - F3_MP_COST;
 
 		//element = Element::NE;
-		element = Element::UI;
+		//element = Element::UI;
+		element = Element::AF;
 		umbral_hearts = 0;
 		enochian = false;
 		t3p = false;
@@ -94,15 +96,19 @@ namespace StrikingDummy
 		casting_mp_cost = 0;
 
 		// precast
-		gauge.reset(GAUGE_DURATION, 3);
-		sharp.reset(SHARP_DURATION - 1100, 1);
-		sharp_cd.reset(SHARP_CD - 1100, false);
+		gauge.reset(GAUGE_DURATION - CAST_LOCK, 3);
+		sharp.reset(SHARP_DURATION - 12000, 1);
+		sharp_cd.reset(SHARP_CD - 12000, false);
+		leylines.reset(LL_DURATION - 4000, 1);
+		leylines_cd.reset(LL_CD - 4000, false);
 		timeline.push_event(gauge.time);
 		timeline.push_event(sharp.time);
 		timeline.push_event(sharp_cd.time);
+		timeline.push_event(leylines.time);
+		timeline.push_event(leylines_cd.time);
 
 		// metrics
-		total_damage = 0;
+		total_damage = 0.0f;
 		xeno_count = 0;
 		f1_count = 0;
 		f4_count = 0;
@@ -114,7 +120,13 @@ namespace StrikingDummy
 		pot_count = 0;
 		total_dot_time = 0;
 
-		sharp_last = -1100 + SHARP_CD;
+		total_f4_damage = 0.0f;
+		total_desp_damage = 0.0f;
+		total_xeno_damage = 0.0f;
+		total_t3_damage = 0.0f;
+		total_dot_damage = 0.0f;
+
+		sharp_last = -12000 + SHARP_CD;
 		
 		history.clear();
 
@@ -259,6 +271,7 @@ namespace StrikingDummy
 		{
 			float damage = get_dot_damage();
 			total_damage += damage;
+			total_dot_damage += damage;
 			history.back().reward += damage;
 			if (prob(rng) < TC_PROC_RATE)
 			{
@@ -346,34 +359,34 @@ namespace StrikingDummy
 		{
 		case B1:
 			if (element == AF && gauge.count == 3)
-				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd);
-			return get_ll_cast_time(ll_base_gcd, base_gcd);
+				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
 		case B3:
 			if (element == AF && gauge.count == 3)
-				return get_ll_cast_time(ll_fast_iii_gcd, fast_iii_gcd);
-			return get_ll_cast_time(ll_iii_gcd, iii_gcd);
+				return get_ll_cast_time(ll_fast_iii_gcd, fast_iii_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_iii_gcd, iii_gcd) - CAST_LOCK;
 		case B4:
-			return get_ll_cast_time(ll_iv_gcd, iv_gcd);
+			return get_ll_cast_time(ll_iv_gcd, iv_gcd) - CAST_LOCK;
 		case FREEZE:
 			if (element == AF && gauge.count == 3)
-				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd);
-			return get_ll_cast_time(ll_despair_gcd, despair_gcd);
+				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_despair_gcd, despair_gcd) - CAST_LOCK;
 		case F1:
 			if (element == UI && gauge.count == 3)
-				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd);
-			return get_ll_cast_time(ll_base_gcd, base_gcd);
+				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
 		case F3:
 			if (element == UI && gauge.count == 3)
-				return get_ll_cast_time(ll_fast_iii_gcd, fast_iii_gcd);
-			return get_ll_cast_time(ll_iii_gcd, iii_gcd);
+				return get_ll_cast_time(ll_fast_iii_gcd, fast_iii_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_iii_gcd, iii_gcd) - CAST_LOCK;
 		case F4:
-			return get_ll_cast_time(ll_iv_gcd, iv_gcd);
+			return get_ll_cast_time(ll_iv_gcd, iv_gcd) - CAST_LOCK;
 		case T3:
 		case XENO:
 		case UMBRAL_SOUL:
-			return get_ll_cast_time(ll_base_gcd, base_gcd);
+			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
 		case DESPAIR:
-			return get_ll_cast_time(ll_despair_gcd, despair_gcd);
+			return get_ll_cast_time(ll_despair_gcd, despair_gcd) - CAST_LOCK;
 		}
 		return 99999;
 	}
@@ -382,7 +395,7 @@ namespace StrikingDummy
 	{
 		if (is_instant_cast(action))
 			return ANIMATION_LOCK + ACTION_TAX;
-		return get_cast_time(action) + ACTION_TAX;
+		return get_cast_time(action) + CAST_LOCK + ACTION_TAX;
 	}
 
 	int BlackMage::get_gcd_time(int action) const
@@ -407,8 +420,8 @@ namespace StrikingDummy
 		case B4:
 			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;
 		case FREEZE:
-			//return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
-			return false;
+			return gcd_timer.ready && get_mp_cost(FREEZE) <= mp;
+			//return false;
 		case F1:
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
@@ -694,10 +707,12 @@ namespace StrikingDummy
 				sharp.reset(0, 0);
 				push_event(TC_DURATION);
 			}
+			total_t3_damage += damage;
 			break;
 		case XENO:
 			assert(xeno_procs > 0);
 			xeno_procs--;
+			total_xeno_damage += damage;
 			break;
 		case DESPAIR:
 			element = AF;
@@ -1004,7 +1019,7 @@ namespace StrikingDummy
 		state[43] = lucid_cd.ready;
 		state[44] = lucid_cd.time / (float)LUCID_CD;
 		state[45] = gcd_timer.ready;
-		state[46] = gcd_timer.time / 1000.0f;
+		state[46] = gcd_timer.time / (BASE_GCD * 1000.0f);
 		state[47] = umbral_hearts == 1;
 		state[48] = umbral_hearts == 2;
 		state[49] = umbral_hearts == 3;

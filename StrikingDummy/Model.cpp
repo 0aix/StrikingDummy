@@ -5,17 +5,14 @@
 
 namespace StrikingDummy
 {
-	//const int input_size = 46;
-	//const int output_size = 15;
-	const int INNER_1 = 64;
-	const int INNER_2 = 64;
+	const int INNER_1 = 128;
+	const int INNER_2 = 128;
 
 	float sigmoid(float x)
 	{
 		return 1.0f / (1.0f + expf(-x));
 	}
 
-	//Model::Model(ModelParams& params)
 	void Model::init(int input_size, int output_size, int batch_size, bool adam)
 	{
 		cudaInitialize();
@@ -58,8 +55,6 @@ namespace StrikingDummy
 		matrixInitialize(&_ones, batch_size, 1);
 		arrayAdd(_ones, _ones, 1.0f, batch_size);
 
-
-
 		matrixInitialize(&_dLdW1m, INNER_1, input_size, 0.0f);
 		matrixInitialize(&_dLdW2m, INNER_2, INNER_1, 0.0f);
 		matrixInitialize(&_dLdW3m, output_size, INNER_2, 0.0f);
@@ -73,8 +68,6 @@ namespace StrikingDummy
 		matrixInitialize(&_dLdb2v, INNER_2, 1, 0.0f);
 		matrixInitialize(&_dLdb3v, output_size, 1, 0.0f);
 		matrixInitialize(&_temp, INNER_1, INNER_2);
-
-
 
 		matrixInitialize(&__X0, batch_size, input_size);
 		matrixInitialize(&__X1, batch_size, INNER_1);

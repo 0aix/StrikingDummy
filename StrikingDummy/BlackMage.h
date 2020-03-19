@@ -33,9 +33,10 @@ namespace StrikingDummy
 
 		static constexpr int NUM_ACTIONS = 20;
 
-		static constexpr int ACTION_TAX = 10;
-		static constexpr int ANIMATION_LOCK = 60;
-		static constexpr int POTION_LOCK = 110;
+		static constexpr int ACTION_TAX = 117;
+		static constexpr int CAST_LOCK = 500;
+		static constexpr int ANIMATION_LOCK = 600;
+		static constexpr int POTION_LOCK = 1100;
 
 		// Assume only in UI3 and AF3
 		static constexpr int MAX_MP = 10000;
@@ -54,28 +55,28 @@ namespace StrikingDummy
 		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
 
-		static constexpr int TICK_TIMER = 300;
-		static constexpr int XENO_TIMER = 3000;
-		static constexpr int GAUGE_DURATION = 1500;
-		static constexpr int SWIFT_DURATION = 1000;
-		static constexpr int TRIPLE_DURATION = 1500;
-		static constexpr int SHARP_DURATION = 1500;
-		static constexpr int FS_DURATION = 1800;
-		static constexpr int TC_DURATION = 1800;
-		static constexpr int LL_DURATION = 3000;
-		static constexpr int DOT_DURATION = 2400;
-		static constexpr int LUCID_DURATION = 2100;
-		static constexpr int POT_DURATION = 3000;
+		static constexpr int TICK_TIMER = 3000;
+		static constexpr int XENO_TIMER = 30000;
+		static constexpr int GAUGE_DURATION = 15000;
+		static constexpr int SWIFT_DURATION = 10000;
+		static constexpr int TRIPLE_DURATION = 15000;
+		static constexpr int SHARP_DURATION = 15000;
+		static constexpr int FS_DURATION = 18000;
+		static constexpr int TC_DURATION = 18000;
+		static constexpr int LL_DURATION = 30000;
+		static constexpr int DOT_DURATION = 24000;
+		static constexpr int LUCID_DURATION = 21000;
+		static constexpr int POT_DURATION = 30000;
 
-		static constexpr int SWIFT_CD = 6000;
-		static constexpr int TRIPLE_CD = 6000;
-		static constexpr int SHARP_CD = 3000;
-		static constexpr int LL_CD = 9000;
-		static constexpr int MANAFONT_CD = 18000;
-		static constexpr int ENO_CD = 3000;
-		static constexpr int TRANSPOSE_CD = 500;
-		static constexpr int LUCID_CD = 6000;
-		static constexpr int POT_CD = 27000;
+		static constexpr int SWIFT_CD = 60000;
+		static constexpr int TRIPLE_CD = 60000;
+		static constexpr int SHARP_CD = 30000;
+		static constexpr int LL_CD = 90000;
+		static constexpr int MANAFONT_CD = 180000;
+		static constexpr int ENO_CD = 30000;
+		static constexpr int TRANSPOSE_CD = 5000;
+		static constexpr int LUCID_CD = 60000;
+		static constexpr int POT_CD = 270000;
 
 		// Assume not using Flare
 		static constexpr float F1_POTENCY = 180.0f;
@@ -204,6 +205,9 @@ namespace StrikingDummy
 
 		float total_f4_damage = 0.0f;
 		float total_desp_damage = 0.0f;
+		float total_xeno_damage = 0.0f;
+		float total_t3_damage = 0.0f;
+		float total_dot_damage = 0.0f;
 
 		BlackMage(Stats& stats);
 
