@@ -33,8 +33,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 20.050f;
-		const float OUTPUT_UPPER = 20.600f;
+		const float OUTPUT_LOWER = 20.075f;
+		const float OUTPUT_UPPER = 20.625f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
@@ -152,7 +152,7 @@ namespace StrikingDummy
 				int _epoch = epoch - epoch_offset;
 
 				// test model
-				if (_epoch % 10 == 0)
+				if (_epoch % 50 == 0)
 				{
 					test();
 
