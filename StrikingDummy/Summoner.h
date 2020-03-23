@@ -19,45 +19,45 @@ namespace StrikingDummy
 			"NONE",
 			"R2", "R3", "R4", "MIASMA", "BIO", "ED", "TRI-DISASTER", "FESTER",
 			"EA1", "EA2", "ENKINDLE", "DWT", "DEATHFLARE", "BAHAMUT", "AKH MORN", "FBT", "FOUNTAIN OF FIRE", "BRAND OF PURGATORY", "REVELATION",
-			"SWIFT", "DEVOTION", "HQ_GRADE_2_TINCTURE_OF_INTELLIGENCE"
+			"SWIFT", "DEVOTION", "HQ_GRADE_3_TINCTURE_OF_INTELLIGENCE"
 		};
 
 		static constexpr float SMN_ATTR = 115.0f;
 
 		static constexpr int NUM_ACTIONS = 23;
 
-		static constexpr int ACTION_TAX = 10;
-		static constexpr int ANIMATION_LOCK = 60;
-		static constexpr int POTION_LOCK = 110;
+		static constexpr int ACTION_TAX = 117;
+		static constexpr int ANIMATION_LOCK = 600;
+		static constexpr int POTION_LOCK = 1100;
 
 		static constexpr float BASE_GCD = 2.50f;
 		static constexpr float EA_CD = 30.0f;
 
-		static constexpr int TICK_TIMER = 300;
-		static constexpr int DWT_DURATION = 1500;
-		static constexpr int BAHAMUT_DURATION = 2000;
-		static constexpr int FBT_DURATION = 2000;
-		static constexpr int SWIFT_DURATION = 1000;
-		static constexpr int DEVOTION_DURATION = 1500;
-		static constexpr int POT_DURATION = 3000;
-		static constexpr int DOT_DURATION = 3000;
+		static constexpr int TICK_TIMER = 3000;
+		static constexpr int DWT_DURATION = 15000;
+		static constexpr int BAHAMUT_DURATION = 20000;
+		static constexpr int FBT_DURATION = 20000;
+		static constexpr int SWIFT_DURATION = 10000;
+		static constexpr int DEVOTION_DURATION = 15000;
+		static constexpr int POT_DURATION = 30000;
+		static constexpr int DOT_DURATION = 30000;
 		
-		static constexpr int ED_CD = 3000;
-		static constexpr int TRI_CD = 5000;
-		static constexpr int FESTER_CD = 500;
-		static constexpr int ENKINDLE_CD = 12000;
-		static constexpr int TRANCE_CD = 5500;
-		static constexpr int AKHMORN_CD = 1000;
-		static constexpr int SWIFT_CD = 6000;
-		static constexpr int DEVOTION_CD = 18000;
-		static constexpr int POT_CD = 27000;
-		static constexpr int PHOENIX_DUMB_CD = 130;
+		static constexpr int ED_CD = 30000;
+		static constexpr int TRI_CD = 50000;
+		static constexpr int FESTER_CD = 5000;
+		static constexpr int ENKINDLE_CD = 120000;
+		static constexpr int TRANCE_CD = 55000;
+		static constexpr int AKHMORN_CD = 10000;
+		static constexpr int SWIFT_CD = 60000;
+		static constexpr int DEVOTION_CD = 180000;
+		static constexpr int POT_CD = 270000;
+		static constexpr int PHOENIX_DUMB_CD = 1300;
 
 		static constexpr float R2_POTENCY = 160.0f;
 		static constexpr float R3_POTENCY = 200.0f;
 		static constexpr float R4_POTENCY = 300.0f;
-		static constexpr float MIASMA_POTENCY = 50.0f;
-		static constexpr float DOT_POTENCY = 50.0f;
+		static constexpr float MIASMA_POTENCY = 45.0f;
+		static constexpr float DOT_POTENCY = 45.0f;
 		static constexpr float ED_POTENCY = 100.0f;
 		static constexpr float TRI_POTENCY = 300.0f;
 		static constexpr float FESTER_POTENCY = 300.0f;

@@ -31,12 +31,12 @@ namespace StrikingDummy
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 2000000;
 		const int BATCH_SIZE = 10000;
-		const float WINDOW = 60000.0f;
+		const float WINDOW = 600000.0f;
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
-		const float EPS_MIN = 0.15f;
-		const float OUTPUT_LOWER = 157.75f;
-		const float OUTPUT_UPPER = 162.75f;
+		const float EPS_MIN = 0.12f;
+		const float OUTPUT_LOWER = 18.300f;
+		const float OUTPUT_UPPER = 18.900f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
@@ -150,29 +150,30 @@ namespace StrikingDummy
 				if (eps < EPS_MIN)
 					eps = EPS_MIN;
 
-				// test model
-				test();
-
-				float dps = 0.1f * job.total_damage / job.timeline.time;
-
-				avg_dps = 0.9f * avg_dps + 0.1f * dps;
-				est_dps = avg_dps / (1.0f - beta);
-
 				int _epoch = epoch - epoch_offset;
 
-				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", time: " << 0.01f * job.timeline.time << "s" << std::endl;
-
-				beta *= 0.9f;
-
-				Logger::log(ss.str().c_str());
-				std::cout << ss.str();
-
-				if (_epoch % 1000 == 0)
+				// test model
+				if (_epoch % 50 == 0)
 				{
-					std::stringstream filename;
-					filename << "Weights\\weights-" << _epoch << std::flush;
-					model.save(filename.str().c_str());
+					test();
+
+					float dps = job.total_damage / job.timeline.time;
+					//avg_dps = 0.9f * avg_dps + 0.1f * dps;
+					//est_dps = avg_dps / (1.0f - beta);
+					//beta *= 0.9f;
+
+					std::stringstream ss;
+					ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", dps: " << dps << std::endl;
+
+					Logger::log(ss.str().c_str());
+					std::cout << ss.str();
+
+					if (_epoch % 500 == 0)
+					{
+						std::stringstream filename;
+						filename << "Weights\\weights-" << _epoch << std::flush;
+						model.save(filename.str().c_str());
+					}
 				}
 			}
 			else
@@ -213,12 +214,12 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		while (smn.timeline.time < 7 * 24 * 360000)
+		while (smn.timeline.time < 7 * 24 * 3600000)
 		//while (smn.timeline.time < 120000)
 			rotation.step();
 
 		std::stringstream ss;
-		ss << "DPS: " << 100.0f / smn.timeline.time * smn.total_damage << "\n";
+		ss << "DPS: " << 1000.0f / smn.timeline.time * smn.total_damage << "\n";
 		ss << "Dot uptime: " << 100.0f / smn.timeline.time * smn.total_dot_time << "%\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 		
@@ -231,10 +232,10 @@ namespace StrikingDummy
 			Transition& t = smn.history[i];
 			if (t.action != 0)
 			{
-				int hours = time / 360000;
-				int minutes = (time / 6000) % 60;
-				int seconds = (time / 100) % 60;
-				int centiseconds = time % 100;
+				int hours = time / 3600000;
+				int minutes = (time / 60000) % 60;
+				int seconds = (time / 1000) % 60;
+				int centiseconds = lround(time % 1000) / 10;
 				std::stringstream ss;
 				ss << "[";
 				if (hours < 10)

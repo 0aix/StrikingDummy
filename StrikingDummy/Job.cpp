@@ -25,7 +25,7 @@ namespace StrikingDummy
 		rng = std::mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		prob = std::uniform_real_distribution<float>(0.0f, 1.0f);
 		damage_range = std::uniform_real_distribution<float>(0.95f, 1.05f);
-		tick = std::uniform_int_distribution<int>(1, 300);
+		tick = std::uniform_int_distribution<int>(1, 3000);
 	}
 
 	void Job::step()

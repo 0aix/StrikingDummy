@@ -17,8 +17,8 @@ namespace StrikingDummy
 {
 	Summoner::Summoner(Stats& stats) :
 		Job(stats, SMN_ATTR),
-		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD)))),
-		ea_cd(lround(floor(0.1f * floor(this->stats.ss_multiplier * EA_CD))))
+		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD))) * 10),
+		ea_cd(lround(floor(0.1f * floor(this->stats.ss_multiplier * EA_CD))) * 10)
 	{
 		actions.reserve(NUM_ACTIONS);
 		reset();
@@ -38,7 +38,7 @@ namespace StrikingDummy
 
 		// server ticks
 		dot_timer.reset(tick(rng), false);
-		auto_timer.reset(10, false);
+		auto_timer.reset(100, false);
 		timeline.push_event(dot_timer.time);
 		timeline.push_event(auto_timer.time);
 
@@ -73,8 +73,10 @@ namespace StrikingDummy
 		casting = Action::NONE;
 
 		// precast
-		//timeline.push_event(pot.time);
-		//timeline.push_event(pot_cd.time);
+		pot.reset(POT_DURATION - 3500, 1);
+		pot_cd.reset(POT_CD - 3500, false);
+		timeline.push_event(pot.time);
+		timeline.push_event(pot_cd.time);
 
 		// metrics
 		total_damage = 0;
@@ -153,7 +155,7 @@ namespace StrikingDummy
 		if (summon && bahamut.count == 0 && phoenix.count == 0)
 		{
 			can_use_brand = false;
-			auto_timer.reset(10, false);
+			auto_timer.reset(100, false);
 			push_event(auto_timer.time);
 		}
 		if (cast_timer.ready)
@@ -268,14 +270,16 @@ namespace StrikingDummy
 		case NONE:
 			return !gcd_timer.ready;
 		case R2:
-			return gcd_timer.ready && r4_procs == 0 && dwt.count == 0 && phoenix.count == 0;
+			return false;
+			//return gcd_timer.ready && r4_procs == 0 && dwt.count == 0 && phoenix.count == 0;
 		case R3:
 			return gcd_timer.ready && phoenix.count == 0;
 		case R4:
 			return gcd_timer.ready && r4_procs > 0 && phoenix.count == 0;
 		case MIASMA:
+			return gcd_timer.ready && phoenix.count == 0 && dot_miasma.time < DOT_DURATION / 2;
 		case BIO:
-			return gcd_timer.ready && phoenix.count == 0;
+			return gcd_timer.ready && phoenix.count == 0 && dot_bio.time < DOT_DURATION / 2;
 		case ED:
 			return ed_cd.ready;
 		case TRI:

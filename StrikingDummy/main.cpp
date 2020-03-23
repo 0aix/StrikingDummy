@@ -8,14 +8,14 @@ int main()
 {
 	StrikingDummy::Stats stats;
 
-	// 2.48s gcd
-	stats.weapon_damage = 164;
-	stats.main_stat = 4448; // 4237
-	stats.pot_stat = stats.main_stat + 339;
-	stats.critical_hit = 3516;
-	stats.direct_hit = 2752;
-	stats.determination = 1954;
-	stats.skill_speed = 565;
+	// max speed
+	stats.weapon_damage = 172;
+	stats.main_stat = 5110; // 4867
+	stats.pot_stat = stats.main_stat + 398;
+	stats.critical_hit = 1026;
+	stats.direct_hit = 2734;
+	stats.determination = 1915;
+	stats.skill_speed = 3503;
 
 	StrikingDummy::Summoner smn(stats);
 	StrikingDummy::TrainingDummy dummy(smn);
