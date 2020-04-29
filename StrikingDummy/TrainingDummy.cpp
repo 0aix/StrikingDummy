@@ -33,8 +33,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 20.075f;
-		const float OUTPUT_UPPER = 20.625f;
+		const float OUTPUT_LOWER = 19.950f;
+		const float OUTPUT_UPPER = 20.500f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
@@ -262,6 +262,13 @@ namespace StrikingDummy
 					ss << t.t0[0] * 10000.0f << " T3p at " << lround(t.t0[26] * 2400.0f) / 100.0f << "s left on dot";
 				else
 					ss << t.t0[0] * 10000.0f << " T3 at " << lround(t.t0[26] * 2400.0f) / 100.0f << "s left on dot";
+			}
+			else if (t.action == 8)
+			{
+				if (t.t0[11] == 1.0f)
+					ss << t.t0[0] * 10000.0f << " XENO**";
+				else
+					ss << t.t0[0] * 10000.0f << " XENO*";
 			}
 			else if (t.action != 0)
 				ss << t.t0[0] * 10000.0f << " " << blm.get_action_name(t.action);
