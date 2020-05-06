@@ -33,8 +33,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 19.950f;
-		const float OUTPUT_UPPER = 20.500f;
+		const float OUTPUT_LOWER = 20.100f;
+		const float OUTPUT_UPPER = 20.650f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
@@ -213,7 +213,6 @@ namespace StrikingDummy
 		rotation.eps = 0.0f;
 
 		while (blm.timeline.time < 7 * 24 * 3600000)
-		//while (blm.timeline.time < 45000)
 			rotation.step();
 
 		std::stringstream ss;
@@ -340,6 +339,128 @@ namespace StrikingDummy
 		}
 
 		Logger::log(ss.str().c_str());
+		Logger::close();
+	}
+
+	void TrainingDummy::study()
+	{
+		Logger::open();
+
+		std::cout.precision(4);
+
+		BlackMage& blm = (BlackMage&)job;
+		blm.reset();
+
+		model.init(blm.get_state_size(), blm.get_num_actions(), 1, false);
+		model.load("Weights\\weights");
+
+		rotation.eps = 0.0f;
+
+		std::unordered_map<std::string, int> lines_map;
+		int total_rotations = 0;
+		const int TOTAL_ROTATIONS = 1000000;
+
+		std::cout << "Running until " << TOTAL_ROTATIONS << " total rotations\n=============" << std::endl;
+
+		while (total_rotations < TOTAL_ROTATIONS)
+		{
+			while (blm.timeline.time < 7 * 24 * 3600000)
+				rotation.step();
+
+			std::vector<int> points;
+
+			int length = blm.history.size() - 1;
+			for (int i = 0; i < length - 1; i++)
+			{
+				Transition& t = blm.history[i];
+				if (t.t0[2] == 1.0f && t.t1[1] == 1.0f)
+					points.push_back(i);
+			}
+
+			length = points.size() - 1;
+			for (int i = 0; i < length; i++)
+			{
+				std::stringstream ss;
+				for (int j = points[i]; j <= points[i + 1]; j++)
+				{
+					Transition& t = blm.history[j];
+					if (t.action == 5 && t.t0[21] == 1.0f)
+						ss << "F3p ";
+					else if (t.action == 7)
+					{
+						ss << "T3/p ";
+						//if (t.t0[23] == 1.0f)
+						//	ss << "T3p ";
+						//else
+						//	ss << "T3 ";
+					}
+					else if (t.action != 0 && t.action != 10 && t.action != 11 && t.action != 12 && t.action != 13 && t.action < 17)
+					{
+						// Not NONE, SWIFT, TRIPLE, SHARP, LEYLINES, LUCID, WAIT_FOR_MP, or TINCTURE
+						if (t.action != 8 && t.action != 14 && t.action != 16 && (t.t0[13] > 0.0f || t.t0[17] > 0.0f))
+							ss << blm.get_action_name(t.action) << "* ";
+						else
+							ss << blm.get_action_name(t.action) << " ";
+					}
+				}
+				lines_map[ss.str()]++;
+			}
+			blm.reset();
+
+			total_rotations += length;
+			std::cout << "Total rotations: " << total_rotations << std::endl;
+		}
+
+		std::vector<std::pair<std::string, int>> lines(lines_map.begin(), lines_map.end());
+		std::sort(lines.begin(), lines.end(), [](std::pair<std::string, int>& a, std::pair<std::string, int>& b) { return a.second > b.second; });
+
+		//int length;// = lines.size();
+		//for (length = 0; length < lines.size(); length++)
+		//	if (100.0f * lines[length].second / total_rotations < 0.01f)
+		//		break;
+		//if (length > 200)
+		//	length = 200;
+
+		int sum = 0;
+		int length = 0;
+		//for (int i = 0; i < length; i++)
+		for (int i = 0; i < lines.size(); i++)
+		{
+			sum += lines[i].second;
+			length++;
+			if ((float)sum / total_rotations > 0.95f)
+				break;
+		}
+
+		Logger::log("=============\n");
+
+		std::stringstream ss;
+		ss << "Total rotation count: " << total_rotations << std::endl;
+		ss << "Unique rotation count: " << lines.size() << std::endl;
+		ss << "=============" << std::endl;
+		ss << length << " unique rotations listed below account for " << 100.0f * sum / total_rotations << "% of rotations logged.\n";
+		
+		Logger::log(ss.str().c_str());
+
+		for (int i = 0; i < length; i++)
+		//for (int i = 0; i < lines.size(); i++)
+		{
+			std::stringstream ss;
+			//float percent = 100.0f * lines[i].second / total_rotations;
+			//if (percent < 0.01f)
+			//	break;
+			ss << i + 1 << ") " << 100.0f * lines[i].second / total_rotations << "%: " << lines[i].first << std::endl;
+			//ss << i + 1 << ") " << percent << "%: " << lines[i].first << std::endl;
+			Logger::log(ss.str().c_str());
+		}
+
+		for (int i = lines.size() - 100; i < lines.size(); i++)
+		{
+			std::stringstream ss;
+			ss << i + 1 << ") " << 100.0f * lines[i].second / total_rotations << "%: " << lines[i].first << std::endl;
+			Logger::log(ss.str().c_str());
+		}
+
 		Logger::close();
 	}
 }
