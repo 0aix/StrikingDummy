@@ -5,17 +5,14 @@
 
 namespace StrikingDummy
 {
-	//const int input_size = 46;
-	//const int output_size = 15;
-	const int INNER_1 = 64;
-	const int INNER_2 = 64;
+	const int INNER_1 = 128;
+	const int INNER_2 = 128;
 
 	float sigmoid(float x)
 	{
 		return 1.0f / (1.0f + expf(-x));
 	}
 
-	//Model::Model(ModelParams& params)
 	void Model::init(int input_size, int output_size, int batch_size, bool adam)
 	{
 		cudaInitialize();

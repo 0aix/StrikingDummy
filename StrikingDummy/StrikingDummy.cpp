@@ -1,5 +1,4 @@
 #include "StrikingDummy.h"
-#include "BlackMage.h"
 #include "Logger.h"
 #include <chrono>
 #include <iostream>
@@ -25,8 +24,8 @@ namespace StrikingDummy
 			rotation.step();
 
 			// DPS
-			std::cout << "DPS: " << 100.0f / job.timeline.time * job.total_damage << std::endl;
-			std::cout << "Time (seconds): " << job.timeline.time / 100.0f << std::endl;
+			std::cout << "DPS: " << 1000.0f / job.timeline.time * job.total_damage << std::endl;
+			std::cout << "Time (seconds): " << job.timeline.time / 1000.0f << std::endl;
 		}
 	}
 }

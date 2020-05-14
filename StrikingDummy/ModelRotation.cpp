@@ -1,7 +1,6 @@
 #include "Rotation.h"
 #include "Job.h"
 #include "Model.h"
-#include "BlackMage.h"
 #include <chrono>
 #include <random>
 #include <iostream>
@@ -13,6 +12,7 @@ namespace StrikingDummy
 	
 	ModelRotation::ModelRotation(Job& job, Model& model) : Rotation(job), model(model)
 	{
+		random_action.push_back(-1);
 		random_action.push_back(-1);
 		eps = 0.0f;
 		exp = 0.0f;
@@ -33,6 +33,7 @@ namespace StrikingDummy
 		else
 		{
 			int action;
+			/*
 			if (unif(model_rotation_rng) < (exploring ? std::max(eps, exp) : eps))
 			{
 				std::sample(job.actions.begin(), job.actions.end(), random_action.begin(), 1, model_rotation_rng);
@@ -57,6 +58,30 @@ namespace StrikingDummy
 				}
 				action = max_action;
 				exploring = false;
+			}
+			*/
+			memcpy(model.m_x0.data(), job.get_state(), sizeof(float)* job.get_state_size());
+			float* output = model.compute();
+			int max_action = job.actions[0];
+			float max_weight = output[max_action];
+			auto cend = job.actions.cend();
+			for (auto iter = job.actions.cbegin() + 1; iter != cend; iter++)
+			{
+				int index = *iter;
+				if (output[index] > max_weight)
+				{
+					max_weight = output[index];
+					max_action = index;
+				}
+			}
+			action = max_action;
+			if (unif(model_rotation_rng) < eps)
+			{
+				std::sample(job.actions.begin(), job.actions.end(), random_action.begin(), 2, model_rotation_rng);
+				if (action == random_action.front())
+					action = random_action.back();
+				else
+					action = random_action.front();
 			}
 			job.use_action(action);
 		}

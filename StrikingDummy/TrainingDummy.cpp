@@ -27,7 +27,7 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE = 2000;
+		const int NUM_STEPS_PER_EPISODE = 10000;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
@@ -35,9 +35,15 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 157.5f;
-		const float OUTPUT_UPPER = 162.5f;
+		const float OUTPUT_LOWER = 18.000f;
+		const float OUTPUT_UPPER = 21.000f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
+
+		std::stringstream zz;
+		zz << "lower: " << OUTPUT_LOWER << ", upper: " << OUTPUT_UPPER << std::endl;
+
+		Logger::log(zz.str().c_str());
+		std::cout << zz.str();
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -154,19 +160,27 @@ namespace StrikingDummy
 
 				int _epoch = epoch - epoch_offset;
 
-				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", midares: " << sam.midare_count << ", kaitens: " << sam.kaiten_count << ", shintens: " << sam.shinten_count << ", seneis: " << sam.senei_count << ", hagakures: " << sam.hagakure_count << ", pots: " << sam.pot_count << std::endl;
-
-				beta *= 0.9f;
-
-				Logger::log(ss.str().c_str());
-				std::cout << ss.str();
-
-				if (_epoch % 1000 == 0)
+				// test model
+				if (_epoch % 50 == 0)
 				{
-					std::stringstream filename;
-					filename << "Weights\\weights-" << _epoch << std::flush;
-					model.save(filename.str().c_str());
+					test();
+
+					float dps = job.total_damage / job.timeline.time;
+					//avg_dps = 0.9f * avg_dps + 0.1f * (0.1f * job.total_damage / job.timeline.time);
+					//est_dps = avg_dps / (1.0f - beta);
+					//beta *= 0.9f;
+
+					std::stringstream ss;
+					ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", dps: " << dps << ", midares: " << sam.midare_count << ", tsubames: " << sam.tsubame_count << ", higanbanas: " << sam.higanbana_count << ", kaitens: " << sam.kaiten_count << ", shintens: " << sam.shinten_count << ", seneis: " << sam.senei_count << ", hagakures: " << sam.hagakure_count << ", shohas: " << sam.shoha_count << ", pots: " << sam.pot_count << std::endl;
+					Logger::log(ss.str().c_str());
+					std::cout << ss.str();
+
+					if (_epoch % 500 == 0)
+					{
+						std::stringstream filename;
+						filename << "Weights\\weights-" << _epoch << std::flush;
+						model.save(filename.str().c_str());
+					}
 				}
 			}
 			else
@@ -186,7 +200,7 @@ namespace StrikingDummy
 	{
 		rotation.reset(0.0f, 0.0f);
 		job.reset();
-		while (job.timeline.time < 60000)
+		while (job.timeline.time < 600000)
 			rotation.step();
 	}
 
@@ -206,11 +220,12 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		while (sam.timeline.time < 7 * 24 * 360000)
+		while (sam.timeline.time < 7 * 24 * 3600000)
+		//while (sam.timeline.time < 600000)
 			rotation.step();
 
 		std::stringstream ss;
-		ss << "DPS: " << 100.0f / sam.timeline.time * sam.total_damage << "\n=============" << std::endl;
+		ss << "DPS: " << 1000.0f / sam.timeline.time * sam.total_damage << "\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 		
 		int length = sam.history.size() - 1;
@@ -220,10 +235,10 @@ namespace StrikingDummy
 		for (int i = 0; i < length; i++)
 		{
 			Transition& t = sam.history[i];
-			int hours = time / 360000;
-			int minutes = (time / 6000) % 60;
-			int seconds = (time / 100) % 60;
-			int centiseconds = time % 100;
+			int hours = time / 3600000;
+			int minutes = (time / 60000) % 60;
+			int seconds = (time / 1000) % 60;
+			int centiseconds = lround(time % 1000) / 10;
 			if (t.action != 0)
 			{
 				std::stringstream ss;
@@ -241,6 +256,7 @@ namespace StrikingDummy
 					ss << "0";
 				ss << centiseconds << "] ";
 				ss << sam.get_action_name(t.action) << " " << t.t0[0] * 100.0f << std::endl;
+				//ss << t.t0[0] * 100.0f << " " << sam.get_action_name(t.action) << std::endl;
 				Logger::log(ss.str().c_str());
 			}
 			time += t.dt;
