@@ -3,6 +3,7 @@
 #include "Job.h"
 #include "Model.h"
 #include "Rotation.h"
+#include "Solver.h"
 
 namespace StrikingDummy
 {
@@ -11,15 +12,13 @@ namespace StrikingDummy
 		Job& job;
 		Model model;
 		ModelRotation rotation;
+		Solver solver;
 
 		TrainingDummy(Job& job);
 		~TrainingDummy();
 
 		void train();
-		void test();
+		int test();
 		void trace();
-		void metrics();
-		void dist(int seconds, int times);
-		void study();
 	};
 }

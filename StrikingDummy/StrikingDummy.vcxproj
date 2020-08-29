@@ -135,7 +135,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BlackMage.cpp" />
+    <ClCompile Include="Cube.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -144,16 +144,18 @@
     </ClCompile>
     <ClCompile Include="ModelRotation.cpp" />
     <ClCompile Include="MyRotation.cpp" />
+    <ClCompile Include="Solver.cpp" />
     <ClCompile Include="StrikingDummy.cpp" />
     <ClCompile Include="TrainingDummy.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BlackMage.h" />
+    <ClInclude Include="Cube.h" />
     <ClInclude Include="CUDA.cuh" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Rotation.h" />
+    <ClInclude Include="Solver.h" />
     <ClInclude Include="StrikingDummy.h" />
     <ClInclude Include="TrainingDummy.h" />
   </ItemGroup>
