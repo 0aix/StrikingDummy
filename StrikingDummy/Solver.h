@@ -36,7 +36,7 @@ namespace StrikingDummy
 	struct Solver
 	{
 		static constexpr int MAX_STEPS = 30;
-		static constexpr int MAX_BREADTH = 100;
+		static constexpr int MAX_BREADTH = 10000;
 		static constexpr int STATE_SIZE = 288;
 
 		Model& model;
