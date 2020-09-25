@@ -1,4 +1,12 @@
+# FFXIV Rotation Simulator and AI based on Q-learning and Neural Networks created by Lady Yuna'lesca of Exodus
+
+Shadowbringers BLM logs: https://drive.google.com/drive/folders/1bduP1IPUHhTlXDbwFBXJtyTG6pBBnrbw
+
+Simulator details 
+
 - Caster tax is applied to the end of casts. 
+
+- Cast confirmation happens 0.5s before the end of a cast. 
 
 - DoTs and buffs apply immediately.
 
