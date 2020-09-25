@@ -1,8 +1,10 @@
-# FFXIV Rotation Simulator and AI based on Q-learning and Neural Networks created by Lady Yuna'lesca of Exodus
+# FFXIV Rotation Simulator and AI using Q-learning and Neural Networks
 
-Shadowbringers BLM logs: https://drive.google.com/drive/folders/1bduP1IPUHhTlXDbwFBXJtyTG6pBBnrbw
+**Created by Lady Yuna'lesca of Exodus**
 
-Simulator details 
+Shadowbringers BLM AI logs: https://drive.google.com/drive/folders/1bduP1IPUHhTlXDbwFBXJtyTG6pBBnrbw
+
+#### Simulator details 
 
 - Caster tax is applied to the end of casts. 
 
