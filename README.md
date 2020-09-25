@@ -2,7 +2,11 @@
 
 **Created by Lady Yuna'lesca (Fang0r#1047)**
 
-Shadowbringers BLM AI logs: https://drive.google.com/drive/folders/1bduP1IPUHhTlXDbwFBXJtyTG6pBBnrbw
+**Shadowbringers BLM AI logs 5.2:** https://drive.google.com/drive/folders/1bduP1IPUHhTlXDbwFBXJtyTG6pBBnrbw
+
+**Shadowbringers BLM AI logs 5.0:** https://drive.google.com/drive/folders/1xDV_06LRahb4lgCszoOrpr0bkAZo6UTA
+
+**Stormlood BLM AI logs 4.5:** https://drive.google.com/drive/folders/1L-nuJQdjRamiJU2Sp-73dLyWna5WAYND
 
 #### Simulator details 
 
