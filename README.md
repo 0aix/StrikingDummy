@@ -1,6 +1,6 @@
 # FFXIV Rotation Simulator and AI using Q-learning and Neural Networks
 
-**Created by Lady Yuna'lesca**
+**Created by Lady Yuna'lesca (Fang0r#1047)**
 
 Shadowbringers BLM AI logs: https://drive.google.com/drive/folders/1bduP1IPUHhTlXDbwFBXJtyTG6pBBnrbw
 
