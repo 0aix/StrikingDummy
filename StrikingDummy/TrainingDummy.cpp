@@ -33,8 +33,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 20.100f;
-		const float OUTPUT_UPPER = 20.650f;
+		const float OUTPUT_LOWER = 20.140f;
+		const float OUTPUT_UPPER = 20.690f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
@@ -298,9 +298,10 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		while (blm.timeline.time < 24 * 3600000)
+		//while (blm.timeline.time < 24 * 3600000)
+		while (blm.timeline.time < 7 * 24 * 3600000)
 			rotation.step();
-
+		/*
 		std::vector<int>* dists[] = { &blm.t3_dist, &blm.t3p_dist, &blm.swift_dist, &blm.triple_dist, &blm.sharp_dist, &blm.ll_dist, &blm.mf_dist };
 		std::stringstream ss;
 		for (int i = 0; i < 7; i++)
@@ -309,6 +310,13 @@ namespace StrikingDummy
 				ss << 0.001 * t << ",";
 			ss << std::endl;
 		}
+		*/
+		// get Avg # of refreshes and Average HRC for t3
+		std::stringstream ss;
+		ss << "# of T3Ps: " << blm.t3p_dist.size() << "\n" << "# of hardcast T3s: " << blm.t3_dist.size() << "\n";
+		ss << "Average # of refreshes: " << (float)blm.t3p_dist.size() / blm.t3_dist.size() << "\n";
+		ss << "Average HRC: " << 0.001f * blm.total_dot_time / blm.t3_dist.size() << std::endl;
+
 		Logger::log(ss.str().c_str());
 		Logger::close();
 	}

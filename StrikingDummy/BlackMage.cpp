@@ -40,12 +40,12 @@ namespace StrikingDummy
 		timeline = {};
 
 		//mp = MAX_MP;
-		//mp = MAX_MP - B3_MP_COST;
-		mp = MAX_MP - F3_MP_COST;
+		mp = MAX_MP - B3_MP_COST;
+		//mp = MAX_MP - F3_MP_COST;
 
 		//element = Element::NE;
-		//element = Element::UI;
-		element = Element::AF;
+		element = Element::UI;
+		//element = Element::AF;
 		umbral_hearts = 0;
 		enochian = false;
 		t3p = false;
