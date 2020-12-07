@@ -11,7 +11,7 @@ StrikingDummy::Stats max_crit(172, 5110, 398, 3570, 2477, 1192, 1939);
 
 int main()
 {
-	StrikingDummy::BlackMage blm(max_crit, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
+	StrikingDummy::BlackMage blm(max_crit, StrikingDummy::BlackMage::Opener::PRE_B3, StrikingDummy::BlackMage::ActionSet::NO_B4);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
 	//dummy.train();

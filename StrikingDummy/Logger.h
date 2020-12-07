@@ -3,7 +3,7 @@
 
 namespace Logger
 {
-	void open();
+	void open(std::string suffix);
 	void log(const char* message);
 	void close();
 }

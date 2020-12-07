@@ -198,7 +198,7 @@ namespace StrikingDummy
 
 	void TrainingDummy::trace()
 	{
-		Logger::open();
+		Logger::open("trace");
 
 		std::cout.precision(4);
 
@@ -285,7 +285,7 @@ namespace StrikingDummy
 
 	void TrainingDummy::metrics()
 	{
-		Logger::open();
+		Logger::open("metrics");
 
 		std::cout.precision(2);
 
@@ -323,7 +323,7 @@ namespace StrikingDummy
 
 	void TrainingDummy::dist(int seconds, int samples)
 	{
-		Logger::open();
+		Logger::open("dist");
 
 		std::cout.precision(2);
 
@@ -369,7 +369,7 @@ namespace StrikingDummy
 
 	void TrainingDummy::study()
 	{
-		Logger::open();
+		Logger::open("study");
 
 		std::cout.precision(4);
 

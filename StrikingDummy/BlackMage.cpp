@@ -49,7 +49,7 @@ namespace StrikingDummy
 		else if (opener == Opener::PRE_F3 || opener == Opener::PRE_LL_F3)
 		{
 			mp = MAX_MP - F3_MP_COST;
-			element == Element::AF;
+			element = Element::AF;
 		}
 		else
 		{
@@ -722,7 +722,7 @@ namespace StrikingDummy
 			total_f4_damage += damage;
 			break;
 		case T3:
-			if (t3p > 0)
+			if (t3p)
 				tc_proc.reset(0, 0);
 			dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0)));
 			push_event(DOT_DURATION);
