@@ -321,7 +321,7 @@ namespace StrikingDummy
 		Logger::close();
 	}
 
-	void TrainingDummy::dist(int seconds, int times)
+	void TrainingDummy::dist(int seconds, int samples)
 	{
 		Logger::open();
 
@@ -338,12 +338,29 @@ namespace StrikingDummy
 
 		std::stringstream ss;
 
-		for (int i = 0; i < times; i++)
+		for (int i = 0; i < samples; i++)
 		{
 			blm.reset();
 			while (blm.timeline.time < time)
 				rotation.step();
-			ss << 1000.0f / blm.timeline.time * blm.total_damage << "\n";
+			int j = blm.history.size() - 2;
+			assert(j >= 0);
+			// additional minute to "end" rotation
+			while (blm.timeline.time < time + 60000)
+			{
+				Transition& t = blm.history[j];
+				if (t.t0[2] == 1.0f && t.t1[1] == 1.0f)
+				{
+					blm.timeline.time -= t.dt;
+					blm.total_damage -= t.reward;
+					break;
+				}
+				rotation.step();
+				j++;
+			}
+			// time and dps
+			// still slightly off if for example, instant -> ogcd vs instant -> nothing
+			ss << 0.001f * blm.timeline.time << "\t" << 1000.0f / blm.timeline.time * blm.total_damage << "\n";
 		}
 
 		Logger::log(ss.str().c_str());

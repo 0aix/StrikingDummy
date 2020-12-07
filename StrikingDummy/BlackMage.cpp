@@ -16,8 +16,10 @@
 
 namespace StrikingDummy
 {
-	BlackMage::BlackMage(Stats& stats) : 
+	BlackMage::BlackMage(Stats& stats, Opener opener, ActionSet action_set) : 
 		Job(stats, BLM_ATTR),
+		opener(opener),
+		action_set(action_set),
 		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD))) * 10),
 		iii_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * III_GCD))) * 10),
 		iv_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * IV_GCD))) * 10),
@@ -39,13 +41,22 @@ namespace StrikingDummy
 	{
 		timeline = {};
 
-		//mp = MAX_MP;
-		mp = MAX_MP - B3_MP_COST;
-		//mp = MAX_MP - F3_MP_COST;
+		if (opener == Opener::PRE_B3 || opener == Opener::PRE_LL_B3)
+		{
+			mp = MAX_MP - B3_MP_COST;
+			element = Element::UI;
+		}
+		else if (opener == Opener::PRE_F3 || opener == Opener::PRE_LL_F3)
+		{
+			mp = MAX_MP - F3_MP_COST;
+			element == Element::AF;
+		}
+		else
+		{
+			mp = MAX_MP;
+			element = Element::NE;
+		}
 
-		//element = Element::NE;
-		element = Element::UI;
-		//element = Element::AF;
 		umbral_hearts = 0;
 		enochian = false;
 		t3p = false;
@@ -96,16 +107,24 @@ namespace StrikingDummy
 		casting_mp_cost = 0;
 
 		// precast
-		gauge.reset(GAUGE_DURATION - CAST_LOCK, 3);
-		sharp.reset(SHARP_DURATION - 12000, 1);
-		sharp_cd.reset(SHARP_CD - 12000, false);
-		leylines.reset(LL_DURATION - 3500, 1);
-		leylines_cd.reset(LL_CD - 3500, false);
-		timeline.push_event(gauge.time);
-		timeline.push_event(sharp.time);
-		timeline.push_event(sharp_cd.time);
-		timeline.push_event(leylines.time);
-		timeline.push_event(leylines_cd.time);
+		if (opener == Opener::PRE_F3 || opener == Opener::PRE_B3 || opener == Opener::PRE_LL_F3 || opener == Opener::PRE_LL_B3)
+		{
+			sharp.reset(SHARP_DURATION - 12000, 1);
+			sharp_cd.reset(SHARP_CD - 12000, false);
+			gauge.reset(GAUGE_DURATION - CAST_LOCK, 3);
+			timeline.push_event(gauge.time);
+			timeline.push_event(sharp.time);
+			timeline.push_event(sharp_cd.time);
+
+			sharp_last = -12000 + SHARP_CD;
+		}
+		if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
+		{
+			leylines.reset(LL_DURATION - 3500, 1);
+			leylines_cd.reset(LL_CD - 3500, false);
+			timeline.push_event(leylines.time);
+			timeline.push_event(leylines_cd.time);
+		}
 
 		// metrics
 		total_damage = 0.0f;
@@ -125,8 +144,6 @@ namespace StrikingDummy
 		total_xeno_damage = 0.0f;
 		total_t3_damage = 0.0f;
 		total_dot_damage = 0.0f;
-
-		sharp_last = -12000 + SHARP_CD;
 		
 		history.clear();
 
@@ -425,8 +442,10 @@ namespace StrikingDummy
 		case F1:
 			return gcd_timer.ready && get_mp_cost(F1) <= mp;
 		case F3:
-			//return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != UI || umbral_hearts == 3);
-			return gcd_timer.ready && get_mp_cost(F3) <= mp;
+			if (action_set == ActionSet::STANDARD)
+				return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != UI || umbral_hearts == 3);
+			else
+				return gcd_timer.ready && get_mp_cost(F3) <= mp;
 		case F4:
 			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp;
 		case T3:
@@ -448,14 +467,20 @@ namespace StrikingDummy
 		case ENOCHIAN:
 			return !enochian && eno_cd.ready && element != Element::NE;
 		case TRANSPOSE:
-			return false;
-			//return transpose_cd.ready && element != Element::NE;
+			if (action_set == ActionSet::FULL)
+				return transpose_cd.ready && element != Element::NE;
+			else
+				return false;
 		case LUCID:
-			//return false;
-			return lucid_cd.ready;
+			if (action_set == ActionSet::STANDARD)
+				return false;
+			else
+				return lucid_cd.ready;
 		case WAIT_FOR_MP:
-			return false;
-			//return gcd_timer.ready && element != Element::AF;
+			if (action_set == ActionSet::FULL)
+				return gcd_timer.ready && element != Element::AF;
+			else
+				return false;
 		case POT:
 			return pot_cd.ready;
 		case UMBRAL_SOUL:

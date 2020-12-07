@@ -20,6 +20,16 @@ namespace StrikingDummy
 			NE, UI, AF
 		};
 
+		enum Opener
+		{
+			NO_OPENER, PRE_F3, PRE_B3, PRE_LL_F3, PRE_LL_B3
+		};
+
+		enum ActionSet
+		{
+			FULL, NO_B4, STANDARD
+		};
+
 		std::string blm_actions[22] =
 		{
 			"NONE",
@@ -125,6 +135,9 @@ namespace StrikingDummy
 		const int ll_fast_base_gcd;
 		const int ll_fast_iii_gcd;
 
+		Opener opener;
+		ActionSet action_set;
+
 		int mp = MAX_MP;
 
 		Element element = Element::NE;
@@ -209,7 +222,7 @@ namespace StrikingDummy
 		float total_t3_damage = 0.0f;
 		float total_dot_damage = 0.0f;
 
-		BlackMage(Stats& stats);
+		BlackMage(Stats& stats, Opener opener, ActionSet action_set);
 
 		void reset();
 		void update(int elapsed);

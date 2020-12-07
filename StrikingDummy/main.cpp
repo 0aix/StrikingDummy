@@ -6,35 +6,18 @@
 
 #define BLACKMAGE
 
+StrikingDummy::Stats max_speed(172, 5110, 398, 528, 2854, 1915, 3881);
+StrikingDummy::Stats max_crit(172, 5110, 398, 3570, 2477, 1192, 1939);
+
 int main()
 {
-	StrikingDummy::Stats stats;
-
-	// max speed set
-	//stats.weapon_damage = 172;
-	//stats.main_stat = 5110; // 4867
-	//stats.pot_stat = stats.main_stat + 398;
-	//stats.critical_hit = 528;
-	//stats.direct_hit = 2854;
-	//stats.determination = 1915;
-	//stats.skill_speed = 3881;
-
-	// max crit set
-	stats.weapon_damage = 172;
-	stats.main_stat = 5110; // 4867
-	stats.pot_stat = stats.main_stat + 398;
-	stats.critical_hit = 3570;
-	stats.direct_hit = 2477;
-	stats.determination = 1192;
-	stats.skill_speed = 1939;
-
-	StrikingDummy::BlackMage blm(stats);
+	StrikingDummy::BlackMage blm(max_crit, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
 	//dummy.train();
 	//dummy.trace();
-	dummy.metrics();
-	//dummy.dist(510, 10000);
+	//dummy.metrics();
+	dummy.dist(450, 10000);
 	//dummy.study();
 	//practice.start();
 }
