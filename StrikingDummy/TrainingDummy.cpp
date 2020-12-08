@@ -19,7 +19,7 @@ namespace StrikingDummy
 	
 	void TrainingDummy::train()
 	{
-		Logger::open();
+		Logger::open("train");
 
 		std::cout.precision(4);
 
@@ -27,16 +27,23 @@ namespace StrikingDummy
 
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
-		const int NUM_STEPS_PER_EPISODE = 2500;
+		const int NUM_STEPS_PER_EPISODE = 2000;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
-		const float WINDOW = 60000.0f;
+		const float WINDOW = 600000.0f;
 		const float EPS_DECAY = 0.999f;
-		const float EPS_MIN = 0.08f;
-		const float OUTPUT_LOWER = 85.5f;
-		const float OUTPUT_UPPER = 87.5f;
+		const float EPS_START = 1.0f;
+		const float EPS_MIN = 0.10f;
+		const float OUTPUT_LOWER = 18.300f;
+		const float OUTPUT_UPPER = 18.700f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
+
+		std::stringstream zz;
+		zz << "lower: " << OUTPUT_LOWER << ", upper: " << OUTPUT_UPPER << std::endl;
+
+		Logger::log(zz.str().c_str());
+		std::cout << zz.str();
 
 		std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> range(0, CAPACITY - 1);
@@ -49,7 +56,7 @@ namespace StrikingDummy
 		int m_index = 0;
 		int m_size = 0;
 
-		auto indices_gen = [&]() 
+		auto indices_gen = [&]()
 		{
 			return range(rng);
 		};
@@ -63,7 +70,7 @@ namespace StrikingDummy
 		Monk& mnk = (Monk&)job;
 
 		float nu = 0.001f;
-		float eps = 1.0f;
+		float eps = EPS_START;
 		float exp = 0.0f;
 		float steps_per_episode = NUM_STEPS_PER_EPISODE;
 		float avg_dps = 0.0f;
@@ -136,6 +143,7 @@ namespace StrikingDummy
 					// train
 					model.train(nu);
 				}
+
 				model.copyToHost();
 
 				// adjust parameters
@@ -143,29 +151,26 @@ namespace StrikingDummy
 				if (eps < EPS_MIN)
 					eps = EPS_MIN;
 
-				// test model
-				test();
-
-				float dps = 0.1f * job.total_damage / job.timeline.time;
-
-				avg_dps = 0.9f * avg_dps + 0.1f * dps;
-				est_dps = avg_dps / (1.0f - beta);
-
 				int _epoch = epoch - epoch_offset;
 
-				std::stringstream ss;
-				ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", tks: " << mnk.tk_count << ", sss: " << mnk.sss_count << ", anatmans: " << mnk.anatman_count << std::endl;
-
-				beta *= 0.9f;
-
-				Logger::log(ss.str().c_str());
-				std::cout << ss.str();
-
-				if (_epoch % 1000 == 0)
+				// test model
+				if (_epoch % 50 == 0)
 				{
-					std::stringstream filename;
-					filename << "Weights\\weights-" << _epoch << std::flush;
-					model.save(filename.str().c_str());
+					test();
+
+					float dps = job.total_damage / job.timeline.time;
+
+					std::stringstream ss;
+					ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", ssss: " << mnk.sss_count << std::endl;
+					Logger::log(ss.str().c_str());
+					std::cout << ss.str();
+
+					if (_epoch % 500 == 0)
+					{
+						std::stringstream filename;
+						filename << "Weights\\weights-" << _epoch << std::flush;
+						model.save(filename.str().c_str());
+					}
 				}
 			}
 			else
@@ -185,13 +190,13 @@ namespace StrikingDummy
 	{
 		rotation.reset(0.0f, 0.0f);
 		job.reset();
-		while (job.timeline.time < 60000)
+		while (job.timeline.time < 600000)
 			rotation.step();
 	}
 
 	void TrainingDummy::trace()
 	{
-		Logger::open();
+		Logger::open("trace");
 
 		std::cout.precision(4);
 
@@ -205,24 +210,24 @@ namespace StrikingDummy
 
 		rotation.eps = 0.0f;
 
-		while (mnk.timeline.time < 7 * 24 * 360000)
+		while (mnk.timeline.time < 7 * 24 * 3600000)
 			rotation.step();
 
 		std::stringstream zz;
-		zz << "DPS: " << 100.0f / mnk.timeline.time * mnk.total_damage << "\n=============" << std::endl;
+		zz << "DPS: " << 1000.0f / mnk.timeline.time * mnk.total_damage << "\n=============" << std::endl;
 		Logger::log(zz.str().c_str());
 
 		int length = mnk.history.size() - 1;
-		if (length > 1000)
-			length = 1000;
+		if (length > 10000)
+			length = 10000;
 		int time = 0;
 		for (int i = 0; i < length; i++)
 		{
 			Transition& t = mnk.history[i];
-			int hours = time / 360000;
-			int minutes = (time / 6000) % 60;
-			int seconds = (time / 100) % 60;
-			int centiseconds = time % 100;
+			int hours = time / 3600000;
+			int minutes = (time / 60000) % 60;
+			int seconds = (time / 1000) % 60;
+			int centiseconds = lround(time % 1000) / 10;
 			std::stringstream ss;
 			if (t.action != 0 && t.action != 18)
 			{
@@ -239,26 +244,7 @@ namespace StrikingDummy
 				if (centiseconds < 10)
 					ss << "0";
 				ss << centiseconds << "] ";
-				ss << mnk.get_action_name(t.action) << " (";
-
-				if (t.t0[9] == 1.0f)
-					ss << "1";
-				else if (t.t0[10] == 1.0f)
-					ss << "2";
-				else if (t.t0[11] == 1.0f)
-					ss << "3";
-				else if (t.t0[12] == 1.0f)
-					ss << "4";
-				else
-					ss << "0";
-				ss << "/";
-				if (t.t0[0] == 1.0f)
-					ss << "4";
-				else if (t.t0[1] == 1.0f)
-					ss << "3";
-				else
-					ss << "0";
-				ss << ")" << std::endl;
+				ss << mnk.get_action_name(t.action) << std::endl;
 				Logger::log(ss.str().c_str());
 			}
 			time += t.dt;

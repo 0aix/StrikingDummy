@@ -5,10 +5,8 @@
 
 namespace StrikingDummy
 {
-	//const int input_size = 46;
-	//const int output_size = 15;
-	const int INNER_1 = 64;
-	const int INNER_2 = 64;
+	const int INNER_1 = 128;
+	const int INNER_2 = 128;
 
 	float sigmoid(float x)
 	{
@@ -58,8 +56,6 @@ namespace StrikingDummy
 		matrixInitialize(&_ones, batch_size, 1);
 		arrayAdd(_ones, _ones, 1.0f, batch_size);
 
-
-
 		matrixInitialize(&_dLdW1m, INNER_1, input_size, 0.0f);
 		matrixInitialize(&_dLdW2m, INNER_2, INNER_1, 0.0f);
 		matrixInitialize(&_dLdW3m, output_size, INNER_2, 0.0f);
@@ -73,8 +69,6 @@ namespace StrikingDummy
 		matrixInitialize(&_dLdb2v, INNER_2, 1, 0.0f);
 		matrixInitialize(&_dLdb3v, output_size, 1, 0.0f);
 		matrixInitialize(&_temp, INNER_1, INNER_2);
-
-
 
 		matrixInitialize(&__X0, batch_size, input_size);
 		matrixInitialize(&__X1, batch_size, INNER_1);
@@ -378,20 +372,23 @@ namespace StrikingDummy
 	{
 		std::fstream fs;
 		fs.open(filename, std::fstream::in | std::fstream::binary);
-		fs.read((char*)m_W1.data(), INNER_1 * input_size * sizeof(float));
-		fs.read((char*)m_W2.data(), INNER_2 * INNER_1 * sizeof(float));
-		fs.read((char*)m_W3.data(), output_size * INNER_2 * sizeof(float));
-		fs.read((char*)m_b1.data(), INNER_1 * sizeof(float));
-		fs.read((char*)m_b2.data(), INNER_2 * sizeof(float));
-		fs.read((char*)m_b3.data(), output_size * sizeof(float));
-		fs.close();
+		if (fs.is_open())
+		{
+			fs.read((char*)m_W1.data(), INNER_1 * input_size * sizeof(float));
+			fs.read((char*)m_W2.data(), INNER_2 * INNER_1 * sizeof(float));
+			fs.read((char*)m_W3.data(), output_size * INNER_2 * sizeof(float));
+			fs.read((char*)m_b1.data(), INNER_1 * sizeof(float));
+			fs.read((char*)m_b2.data(), INNER_2 * sizeof(float));
+			fs.read((char*)m_b3.data(), output_size * sizeof(float));
+			fs.close();
 
-		arrayCopyToDevice(_W1, m_W1.data(), INNER_1 * input_size);
-		arrayCopyToDevice(_W2, m_W2.data(), INNER_2 * INNER_1);
-		arrayCopyToDevice(_W3, m_W3.data(), output_size * INNER_2);
-		arrayCopyToDevice(_b1, m_b1.data(), INNER_1);
-		arrayCopyToDevice(_b2, m_b2.data(), INNER_2);
-		arrayCopyToDevice(_b3, m_b3.data(), output_size);
+			arrayCopyToDevice(_W1, m_W1.data(), INNER_1 * input_size);
+			arrayCopyToDevice(_W2, m_W2.data(), INNER_2 * INNER_1);
+			arrayCopyToDevice(_W3, m_W3.data(), output_size * INNER_2);
+			arrayCopyToDevice(_b1, m_b1.data(), INNER_1);
+			arrayCopyToDevice(_b2, m_b2.data(), INNER_2);
+			arrayCopyToDevice(_b3, m_b3.data(), output_size);
+		}
 	}
 
 	void Model::save(const char* filename)

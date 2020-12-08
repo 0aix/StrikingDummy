@@ -7,11 +7,14 @@ namespace Logger
 	std::fstream fs;
 	bool is_open = false;
 
-	void open()
+	void open(std::string suffix)
 	{
 		long long seconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		std::stringstream ss;
-		ss << "log-" << seconds << ".txt";
+		if (suffix.empty())
+			ss << "log-" << seconds << ".txt";
+		else
+			ss << "log-" << seconds << "-" << suffix << ".txt";
 		fs.open(ss.str(), std::fstream::out | std::fstream::app);
 		is_open = true;
 	}

@@ -1,7 +1,6 @@
 #include "Rotation.h"
 #include "Job.h"
 #include "Model.h"
-#include "BlackMage.h"
 #include <chrono>
 #include <random>
 #include <iostream>

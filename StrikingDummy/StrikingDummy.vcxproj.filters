@@ -39,18 +39,12 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BlackMageV2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Monk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BlackMage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Job.h">

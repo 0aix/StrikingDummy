@@ -1,5 +1,4 @@
 #include "StrikingDummy.h"
-#include "BlackMage.h"
 #include "Logger.h"
 #include <chrono>
 #include <iostream>

@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}</ProjectGuid>
     <RootNamespace>StrikingDummy</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <CudaToolkitCustomDir>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0</CudaToolkitCustomDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -135,7 +135,6 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BlackMageV2.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -149,7 +148,6 @@
     <ClCompile Include="TrainingDummy.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BlackMage.h" />
     <ClInclude Include="CUDA.cuh" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="Logger.h" />

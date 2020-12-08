@@ -31,6 +31,12 @@ namespace StrikingDummy
 		float potency_multiplier;
 		float expected_multiplier;
 
+		Stats() {}
+		Stats(float wd, float stat, float pot, float crit, float dh, float det, float sks) :
+			weapon_damage(wd), main_stat(stat), pot_stat(stat + pot), critical_hit(crit), direct_hit(dh), determination(det), skill_speed(sks) {}
+		Stats(float wd, float stat, float pot, float crit, float dh, float det, float sks, float aa, float aa_delay) :
+			weapon_damage(wd), main_stat(stat), pot_stat(stat + pot), critical_hit(crit), direct_hit(dh), determination(det), skill_speed(sks), auto_attack(aa), auto_delay(aa_delay) {}
+
 		void calculate_stats(float job_attr);
 	};
 
