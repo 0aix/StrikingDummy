@@ -33,8 +33,8 @@ namespace StrikingDummy
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 20.140f;
-		const float OUTPUT_UPPER = 20.690f;
+		const float OUTPUT_LOWER = 24.400f;
+		const float OUTPUT_UPPER = 25.070f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
