@@ -8,9 +8,59 @@ namespace StrikingDummy
 	const int INNER_1 = 128;
 	const int INNER_2 = 128;
 
-	float sigmoid(float x)
+	Model::~Model()
 	{
-		return 1.0f / (1.0f + expf(-x));
+		delete[] x0;
+		delete[] x3;
+		delete[] X0;
+		delete[] X3;
+		delete[] target;
+
+		matrixFree(&_x0);
+		matrixFree(&_x1);
+		matrixFree(&_x2);
+		matrixFree(&_x3);
+		matrixFree(&_X0);
+		matrixFree(&_X1);
+		matrixFree(&_X2);
+		matrixFree(&_X3);
+		matrixFree(&_target);
+		matrixFree(&_W1);
+		matrixFree(&_W2);
+		matrixFree(&_W3);
+		matrixFree(&_b1);
+		matrixFree(&_b2);
+		matrixFree(&_b3);
+		matrixFree(&_d1);
+		matrixFree(&_d2);
+		matrixFree(&_d3);
+		matrixFree(&_dLdW1);
+		matrixFree(&_dLdW2);
+		matrixFree(&_dLdW3);
+		matrixFree(&_dLdb1);
+		matrixFree(&_dLdb2);
+		matrixFree(&_dLdb3);
+		matrixFree(&_ones);
+
+		matrixFree(&_dLdW1m);
+		matrixFree(&_dLdW2m);
+		matrixFree(&_dLdW3m);
+		matrixFree(&_dLdb1m);
+		matrixFree(&_dLdb2m);
+		matrixFree(&_dLdb3m);
+		matrixFree(&_dLdW1v);
+		matrixFree(&_dLdW2v);
+		matrixFree(&_dLdW3v);
+		matrixFree(&_dLdb1v);
+		matrixFree(&_dLdb2v);
+		matrixFree(&_dLdb3v);
+		matrixFree(&_temp);
+
+		matrixFree(&__X0);
+		matrixFree(&__X1);
+		matrixFree(&__X2);
+		matrixFree(&__W2);
+		matrixFree(&__W3);
 	}
 
 	void Model::init(int input_size, int output_size, int batch_size, bool adam)
@@ -91,59 +141,19 @@ namespace StrikingDummy
 		arrayCopyToHost(m_W3.data(), _W3, output_size * INNER_2);
 	}
 
-	Model::~Model()
+	ModelComputeInput Model::getModelComputeInput() {
+		return
+		{
+			MatrixXf(input_size, 1),
+			MatrixXf(INNER_1, 1),
+			MatrixXf(INNER_2, 1),
+			MatrixXf(output_size, 1)
+		};
+	}
+
+	float sigmoid(float x)
 	{
-		delete[] x0;
-		delete[] x3;
-		delete[] X0;
-		delete[] X3;
-		delete[] target;
-
-		matrixFree(&_x0);
-		matrixFree(&_x1);
-		matrixFree(&_x2);
-		matrixFree(&_x3);
-		matrixFree(&_X0);
-		matrixFree(&_X1);
-		matrixFree(&_X2);
-		matrixFree(&_X3);
-		matrixFree(&_target);
-		matrixFree(&_W1);
-		matrixFree(&_W2);
-		matrixFree(&_W3);
-		matrixFree(&_b1);
-		matrixFree(&_b2);
-		matrixFree(&_b3);
-		matrixFree(&_d1);
-		matrixFree(&_d2);
-		matrixFree(&_d3);
-		matrixFree(&_dLdW1);
-		matrixFree(&_dLdW2);
-		matrixFree(&_dLdW3);
-		matrixFree(&_dLdb1);
-		matrixFree(&_dLdb2);
-		matrixFree(&_dLdb3);
-		matrixFree(&_ones);
-
-		matrixFree(&_dLdW1m);
-		matrixFree(&_dLdW2m);
-		matrixFree(&_dLdW3m);
-		matrixFree(&_dLdb1m);
-		matrixFree(&_dLdb2m);
-		matrixFree(&_dLdb3m);
-		matrixFree(&_dLdW1v);
-		matrixFree(&_dLdW2v);
-		matrixFree(&_dLdW3v);
-		matrixFree(&_dLdb1v);
-		matrixFree(&_dLdb2v);
-		matrixFree(&_dLdb3v);
-		matrixFree(&_temp);
-
-		matrixFree(&__X0);
-		matrixFree(&__X1);
-		matrixFree(&__X2);
-		matrixFree(&__W2);
-		matrixFree(&__W3);
+		return 1.0f / (1.0f + expf(-x));
 	}
 
 	float* Model::compute()
@@ -152,6 +162,14 @@ namespace StrikingDummy
 		m_x2 = (m_W2 * m_x1 + m_b2).unaryExpr(&sigmoid);
 		m_x3 = (m_W3 * m_x2 + m_b3);
 		return m_x3.data();
+	}
+
+	float* Model::compute(ModelComputeInput& input)
+	{
+		input.m_x1 = (m_W1 * input.m_x0 + m_b1).unaryExpr(&sigmoid);
+		input.m_x2 = (m_W2 * input.m_x1 + m_b2).unaryExpr(&sigmoid);
+		input.m_x3 = (m_W3 * input.m_x2 + m_b3);
+		return input.m_x3.data();
 	}
 
 	float* Model::batch_compute()
@@ -193,7 +211,7 @@ namespace StrikingDummy
 		matrixMultiplyTranspose(_dLdW3, _d3, output_size, batch_size, _X2, batch_size, INNER_2);
 
 		matrixMultiply(_dLdb3, _d3, output_size, batch_size, _ones, batch_size, 1);
-
+		
 		//
 		matrixTranspose(__W3, _W3, output_size, INNER_2);
 
@@ -229,6 +247,7 @@ namespace StrikingDummy
 		//
 
 		// ADAM
+		/*
 		if (adam)
 		{
 			// W3
@@ -330,6 +349,7 @@ namespace StrikingDummy
 			beta1 *= BETA1;
 			beta2 *= BETA2;
 		}
+		*/
 
 		//
 		arrayMultiply(_dLdW3, _dLdW3, nu, output_size * INNER_2);

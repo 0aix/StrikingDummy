@@ -18,6 +18,14 @@ namespace StrikingDummy
 		int batch_size;
 	};
 
+	struct ModelComputeInput
+	{
+		MatrixXf m_x0;
+		MatrixXf m_x1;
+		MatrixXf m_x2;
+		MatrixXf m_x3;
+	};
+
 	struct Model
 	{
 		float* x0 = NULL;
@@ -99,7 +107,10 @@ namespace StrikingDummy
 
 		void init(int input_size, int output_size, int batch_size, bool adam);
 
+		ModelComputeInput getModelComputeInput();
+
 		float* compute();
+		float* compute(ModelComputeInput& input);
 		float* batch_compute();
 
 		void train(float nu);

@@ -2,6 +2,8 @@
 #include <cuda_runtime.h>
 #include "device_launch_parameters.h"
 
+void cudaSafeDeviceSynchronize();
+
 void cudaInitialize();
 
 void matrixInitialize(float** A, int n, int m);

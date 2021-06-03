@@ -52,7 +52,6 @@ __global__ void _matrixInitialize(float* A, int n, float r)
 
 __global__ void _matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
 {
-	
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -96,23 +95,10 @@ __global__ void _matrixMultiply(float* C, float* A, int n0, int m0, float* B, in
 	}
 	if (compute)
 		C[j * n0 + i] = sum;
-	
-	/*
-	int i = blockIdx.y * blockDim.y + threadIdx.y;
-	int j = blockIdx.x * blockDim.x + threadIdx.x;
-	if (i < n0 && j < m1)
-	{
-		float sum = 0.0f;
-		for (int k = 0; k < m0; k++)
-			sum += A[k * n0 + i] * B[j * n1 + k];
-		C[j * n0 + i] = sum;
-	}
-	*/
 }
 
 __global__ void _matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
 {
-
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -156,26 +142,29 @@ __global__ void _matrixMultiplyTranspose(float* C, float* A, int n0, int m0, flo
 	}
 	if (compute)
 		C[j * n0 + i] = sum;
-
-	/*
-	int i = blockIdx.y * blockDim.y + threadIdx.y;
-	int j = blockIdx.x * blockDim.x + threadIdx.x;
-	if (i < n0 && j < m1)
-	{
-		float sum = 0.0f;
-		for (int k = 0; k < m0; k++)
-			sum += A[k * n0 + i] * B[j * n1 + k];
-		C[j * n0 + i] = sum;
-	}
-	*/
 }
 
 __global__ void _matrixTranspose(float* B, float* A, int n, int m)
 {
+	__shared__ float tile[32][33];
+
+	int i = blockIdx.y * 32 + threadIdx.y;
+	int j = blockIdx.x * 32 + threadIdx.x;
+	if (i < n && j < m)
+		tile[threadIdx.y][threadIdx.x] = A[i * m + j];
+
+	__syncthreads();
+
+	i = blockIdx.x * 32 + threadIdx.y;
+	j = blockIdx.y * 32 + threadIdx.x;
+	if (i < m && j < n)
+		B[i * n + j] = tile[threadIdx.x][threadIdx.y];
+	/*
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < n && j < m)
 		B[i * m + j] = A[j * n + i];
+	*/
 }
 
 void matrixInitialize(float** A, int n, int m)
@@ -231,7 +220,7 @@ void matrixInitialize(float** A, int n, int m, float r)
 		std::cerr << "_matrixInitialize failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void matrixFree(float** A)
@@ -259,7 +248,7 @@ void matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1
 		std::cerr << "_matrixMultiply failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
@@ -278,7 +267,7 @@ void matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n
 		std::cerr << "_matrixMultiply failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void matrixTranspose(float* B, float* A, int n, int m)
@@ -294,7 +283,7 @@ void matrixTranspose(float* B, float* A, int n, int m)
 		std::cerr << "_matrixTranspose failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 __global__ void _arrayAdd(float* C, float* A, float* B, int n)
@@ -412,7 +401,7 @@ void arrayAdd(float* C, float* A, float* B, int n)
 		std::cerr << "_arrayAdd failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayAdd(float* C, float* A, float b, int n)
@@ -426,7 +415,7 @@ void arrayAdd(float* C, float* A, float b, int n)
 		std::cerr << "_arrayAddScalar failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayAddRep(float* C, float* A, float* B, int n, int m)
@@ -440,7 +429,7 @@ void arrayAddRep(float* C, float* A, float* B, int n, int m)
 		std::cerr << "_arrayAddRep failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arraySubtract(float* C, float* A, float* B, int n)
@@ -454,7 +443,7 @@ void arraySubtract(float* C, float* A, float* B, int n)
 		std::cerr << "_arraySubtract failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayMultiply(float* C, float* A, float* B, int n)
@@ -468,7 +457,7 @@ void arrayMultiply(float* C, float* A, float* B, int n)
 		std::cerr << "_arrayMultiply failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayMultiply(float* C, float* A, float b, int n)
@@ -482,7 +471,7 @@ void arrayMultiply(float* C, float* A, float b, int n)
 		std::cerr << "_arrayMultiplyScalar failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayDivide(float* C, float* A, float* B, int n)
@@ -496,7 +485,7 @@ void arrayDivide(float* C, float* A, float* B, int n)
 		std::cerr << "_arrayDivide failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arraySigmoid(float* B, float* A, int n)
@@ -510,7 +499,7 @@ void arraySigmoid(float* B, float* A, int n)
 		std::cerr << "_arraySigmoid failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayDerivSigmoid(float* B, float* A, int n)
@@ -524,7 +513,7 @@ void arrayDerivSigmoid(float* B, float* A, int n)
 		std::cerr << "_arrayDerivSigmoid failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayReLU(float* B, float* A, int n)
@@ -538,7 +527,7 @@ void arrayReLU(float* B, float* A, int n)
 		std::cerr << "_arrayReLU failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arrayDerivReLU(float* B, float* A, int n)
@@ -552,7 +541,7 @@ void arrayDerivReLU(float* B, float* A, int n)
 		std::cerr << "_arrayDerivReLU failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
 }
 
 void arraySqrt(float* B, float* A, int n)
@@ -566,5 +555,10 @@ void arraySqrt(float* B, float* A, int n)
 		std::cerr << "_arraySqrt failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
-	cudaSafeDeviceSynchronize();
+	//cudaSafeDeviceSynchronize();
+}
+
+void train()
+{
+
 }

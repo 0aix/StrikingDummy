@@ -4,12 +4,14 @@
 #include <chrono>
 #include <iostream>
 #include <random>
+#include <algorithm>
+#include <execution>
 
 namespace StrikingDummy
 {
 	TrainingDummy::TrainingDummy(Job& job) : job(job), rotation(job, model)
 	{
-
+		
 	}
 
 	TrainingDummy::~TrainingDummy()
@@ -26,6 +28,7 @@ namespace StrikingDummy
 		const int NUM_EPOCHS = 1000000;
 		const int NUM_STEPS_PER_EPOCH = 10000;
 		const int NUM_STEPS_PER_EPISODE = 2500;
+		const int NUM_EPISODES = NUM_STEPS_PER_EPOCH / NUM_STEPS_PER_EPISODE;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
 		const int BATCH_SIZE = 10000;
@@ -52,7 +55,6 @@ namespace StrikingDummy
 
 		Transition* memory = new Transition[CAPACITY];
 		int m_index = 0;
-		int m_size = 0;
 
 		auto indices_gen = [&]()
 		{
@@ -69,6 +71,7 @@ namespace StrikingDummy
 
 		float nu = 0.001f;
 		float eps = EPS_START;
+		//float eps = EPS_MIN;
 		float exp = 0.0f;
 		float steps_per_episode = NUM_STEPS_PER_EPISODE;
 		float avg_dps = 0.0f;
@@ -76,10 +79,59 @@ namespace StrikingDummy
 		float beta = 0.9f;
 		int epoch_offset = 0;
 
+		long long generate_time = 0;
+		long long copy_q1_time = 0;
+		long long compute_q1_time = 0;
+		long long calc_reward_time = 0;
+		long long copy_q0_time = 0;
+		long long compute_q0_time = 0;
+		long long calc_target_time = 0;
+		long long train_time = 0;
+		long long total_count = 0;
+
+		long long copy_time = 0;
+		long long copy_count = 0;
+
+		long long time_a;
+		long long time_b;
+		
+		std::vector<BlackMage> jobs(4, blm);
+		std::vector<ModelRotation> rotations =
+		{
+			{ jobs[0], model, 0 },
+			{ jobs[1], model, 1 },
+			{ jobs[2], model, 2 },
+			{ jobs[3], model, 3 }
+		};
+		std::vector<int> ints = { 0, 1, 2, 3 };
+
+		auto rotato = [&](int idx)
+		{
+			ModelRotation& r = rotations[idx];
+			r.reset(eps, exp);
+			r.job.reset();
+			for (int step = 0; step < NUM_STEPS_PER_EPISODE; step++)
+				r.step();
+			int c = (m_index * 4 + idx) * NUM_STEPS_PER_EPISODE;
+			for (int i = 0; i < NUM_STEPS_PER_EPISODE; i++)
+				memory[c + i] = std::move(r.job.history[i]);
+		};
+
+		for (m_index = 0; m_index < 99; m_index++)
+			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
+
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
 		{
-			rotation.reset(eps, exp);
+			time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
+			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
+
+			if (++m_index == 100)
+				m_index = 0;
+
+			/*
+			rotation.reset(eps, exp);
+			
 			int num_episodes = NUM_STEPS_PER_EPOCH / steps_per_episode;
 			for (int episode = 0; episode < num_episodes; episode++)
 			{
@@ -96,87 +148,131 @@ namespace StrikingDummy
 						m_size++;
 				}
 			}
-			if (m_size == CAPACITY)
+			*/
+
+			time_b = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+			generate_time += time_b - time_a;
+			total_count++;
+
+			time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+			//time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+			// batch train a bunch
+			for (int batch = 0; batch < NUM_BATCHES_PER_EPOCH; batch++)
 			{
-				// batch train a bunch
-				for (int batch = 0; batch < NUM_BATCHES_PER_EPOCH; batch++)
+				//long long time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+				std::generate(indices.begin(), indices.end(), indices_gen);
+
+				//long long time_b = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+				// compute Q1
+				for (int i = 0; i < BATCH_SIZE; i++)
+					memcpy(&model.X0[i * state_size], &memory[indices[i]].t1, sizeof(float) * state_size);
+
+				//long long time_c = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+				float* Q1 = model.batch_compute();
+
+				//long long time_d = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+					
+				// calculate rewards
+				for (int i = 0; i < BATCH_SIZE; i++)
 				{
-					std::generate(indices.begin(), indices.end(), indices_gen);
-
-					// compute Q1
-					for (int i = 0; i < BATCH_SIZE; i++)
-						memcpy(&model.X0[i * state_size], &memory[indices[i]].t1, sizeof(float) * state_size);
-
-					float* Q1 = model.batch_compute();
-
-					// calculate rewards
-					for (int i = 0; i < BATCH_SIZE; i++)
+					Transition& t = memory[indices[i]];
+					float* q = &Q1[i * num_actions];
+					float max_q = q[t.actions[0]];
+					auto cend = t.actions.cend();
+					for (auto iter = t.actions.cbegin() + 1; iter != cend; iter++)
 					{
-						Transition& t = memory[indices[i]];
-						float* q = &Q1[i * num_actions];
-						float max_q = q[t.actions[0]];
-						auto cend = t.actions.cend();
-						for (auto iter = t.actions.cbegin() + 1; iter != cend; iter++)
-						{
-							int index = *iter;
-							if (q[index] > max_q)
-								max_q = q[index];
-						}
-						max_q = OUTPUT_LOWER + OUTPUT_RANGE * max_q;
-						rewards[i] = (1.0f / OUTPUT_RANGE) * ((1.0f / WINDOW) * (t.reward + (WINDOW - t.dt) * max_q) - OUTPUT_LOWER);
-						actions[i] = t.action;
+						int index = *iter;
+						if (q[index] > max_q)
+							max_q = q[index];
 					}
-
-					// compute Q0
-					for (int i = 0; i < BATCH_SIZE; i++)
-						memcpy(&model.X0[i * state_size], &memory[indices[i]].t0, sizeof(float) * state_size);
-
-					model.batch_compute();
-
-					// calculate target
-					memcpy(model.target, model.X3, sizeof(float) * num_actions * BATCH_SIZE);
-					for (int i = 0; i < BATCH_SIZE; i++)
-						model.target[i * num_actions + actions[i]] = rewards[i];
-
-					// train
-					model.train(nu);
+					max_q = OUTPUT_LOWER + OUTPUT_RANGE * max_q;
+					rewards[i] = (1.0f / OUTPUT_RANGE) * ((1.0f / WINDOW) * (t.reward + (WINDOW - t.dt) * max_q) - OUTPUT_LOWER);
+					actions[i] = t.action;
 				}
+					
+				//long long time_e = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-				model.copyToHost();
+				// compute Q0
+				for (int i = 0; i < BATCH_SIZE; i++)
+					memcpy(&model.X0[i * state_size], &memory[indices[i]].t0, sizeof(float) * state_size);
 
-				// adjust parameters
-				eps *= EPS_DECAY;
-				if (eps < EPS_MIN)
-					eps = EPS_MIN;
+				//long long time_f = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-				int _epoch = epoch - epoch_offset;
+				model.batch_compute();
 
-				// test model
-				if (_epoch % 50 == 0)
+				//long long time_g = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+				// calculate target
+				memcpy(model.target, model.X3, sizeof(float) * num_actions * BATCH_SIZE);
+				for (int i = 0; i < BATCH_SIZE; i++)
+					model.target[i * num_actions + actions[i]] = rewards[i];
+
+				//long long time_h = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+				// train
+				model.train(nu);
+
+				//long long time_i = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+				//generate_time += time_b - time_a;
+				//copy_q1_time += time_c - time_b;
+				//compute_q1_time += time_d - time_c;
+				//calc_reward_time += time_e - time_d;
+				//copy_q0_time += time_f - time_e;
+				//compute_q0_time += time_g - time_f;
+				//calc_target_time += time_h - time_g;
+				//train_time += time_i - time_h;
+				//total_count++;
+			}
+
+			//time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+			model.copyToHost();
+
+			time_b = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+			copy_time += time_b - time_a;
+			copy_count++;
+
+			// adjust parameters
+			eps *= EPS_DECAY;
+			if (eps < EPS_MIN)
+				eps = EPS_MIN;
+
+			// test model
+			if (epoch % 50 == 0)
+			{
+				test();
+
+				float dps = job.total_damage / job.timeline.time;
+				//avg_dps = 0.9f * avg_dps + 0.1f * (0.1f * job.total_damage / job.timeline.time);
+				//est_dps = avg_dps / (1.0f - beta);
+				//beta *= 0.9f;
+
+				std::stringstream ss;
+				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "10000 rotation steps ms: " << generate_time / 1000000.0 / total_count << ", 50 batches ms: " << copy_time / 1000000.0 / copy_count << std::endl;
+				//ss << "generate: " << generate_time / 1000000.0 / total_count << ", copy_q1: " << copy_q1_time / 1000000.0 / total_count << ", compute_q1: " << compute_q1_time / 1000000.0 / total_count << ", calc_reward: " << calc_reward_time / 1000000.0 / total_count << ", copy_q0: " << copy_q0_time / 1000000.0 / total_count << ", compute_q0: " << compute_q0_time / 1000000.0 / total_count << ", calc_target: " << calc_target_time / 1000000.0 / total_count << ", train: " << train_time / 1000000.0 / total_count << ", copy: " << copy_time / 1000000.0 / copy_count << std::endl;
+
+				generate_time = 0; copy_q1_time = 0; compute_q1_time = 0; calc_reward_time = 0; copy_q0_time = 0; compute_q0_time = 0; calc_target_time = 0; train_time = 0; total_count = 0; copy_time = 0; copy_count = 0;
+
+				Logger::log(ss.str().c_str());
+				std::cout << ss.str();
+
+				if (epoch % 500 == 0)
 				{
-					test();
-
-					float dps = job.total_damage / job.timeline.time;
-					//avg_dps = 0.9f * avg_dps + 0.1f * (0.1f * job.total_damage / job.timeline.time);
-					//est_dps = avg_dps / (1.0f - beta);
-					//beta *= 0.9f;
-
-					std::stringstream ss;
-					//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
-					ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
-					Logger::log(ss.str().c_str());
-					std::cout << ss.str();
-
-					if (_epoch % 500 == 0)
-					{
-						std::stringstream filename;
-						filename << "Weights\\weights-" << _epoch << std::flush;
-						model.save(filename.str().c_str());
-					}
+					std::stringstream filename;
+					filename << "Weights\\weights-" << epoch << std::flush;
+					model.save(filename.str().c_str());
 				}
 			}
-			else
-				epoch_offset++;
 		}
 
 		delete[] memory;
