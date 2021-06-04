@@ -6,6 +6,12 @@ void cudaSafeDeviceSynchronize();
 
 void cudaInitialize();
 
+void cudaSafeMalloc(void** A, int n);
+
+void cudaSafeFree(void** A);
+
+void cudaCopyToDevice(void* _A, void* A, int n);
+
 void matrixInitialize(float** A, int n, int m);
 
 void matrixInitialize(float** A, int n, int m, float r);
@@ -45,3 +51,7 @@ void arrayReLU(float* B, float* A, int n);
 void arrayDerivReLU(float* B, float* A, int n);
 
 void arraySqrt(float* B, float* A, int n);
+
+void unpotato(float* A, int* B);
+
+void potato(float* A, float* B, bool* C, float* D, int* E);

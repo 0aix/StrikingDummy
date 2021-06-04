@@ -10,6 +10,13 @@ namespace StrikingDummy
 
 	Model::~Model()
 	{
+		cudaSafeFree((void**)&_state);
+		cudaSafeFree((void**)&_action);
+		cudaSafeFree((void**)&_reward);
+		cudaSafeFree((void**)&_move);
+
+
+
 		delete[] x0;
 		delete[] x3;
 		delete[] X0;
@@ -72,6 +79,20 @@ namespace StrikingDummy
 		this->batch_size = batch_size;
 		this->adam = adam;
 
+
+
+		cudaSafeMalloc((void**)&_state, 57 * 4 * 1000000);
+		cudaSafeMalloc((void**)&_action, 20 * 1000000);
+		cudaSafeMalloc((void**)&_reward, 2 * 4 * 1000000);
+		cudaSafeMalloc((void**)&_move, 4 * 1000000);
+
+
+
+
+
+
+
+
 		x0 = new float[input_size];
 		x3 = new float[output_size];
 		X0 = new float[input_size * batch_size];
@@ -95,7 +116,24 @@ namespace StrikingDummy
 		matrixInitialize(&_b3, output_size, 1, 0.0f);
 		matrixInitialize(&_d1, INNER_1, batch_size);
 		matrixInitialize(&_d2, INNER_2, batch_size);
-		matrixInitialize(&_d3, output_size, batch_size);
+
+
+
+
+
+
+		matrixInitialize(&_d3, output_size, batch_size, 0.0f);
+
+
+
+
+
+
+
+
+
+
+
 		matrixInitialize(&_dLdW1, INNER_1, input_size);
 		matrixInitialize(&_dLdW2, INNER_2, INNER_1);
 		matrixInitialize(&_dLdW3, output_size, INNER_2);
@@ -385,6 +423,126 @@ namespace StrikingDummy
 		arrayCopyToHost(m_b1.data(), _b1, INNER_1);
 		arrayCopyToHost(m_b2.data(), _b2, INNER_2);
 		arrayCopyToHost(m_b3.data(), _b3, output_size);
+	}
+
+	void Model::batch_train(float nu, int offset)
+	{
+		// compute Q0/Q1
+		matrixMultiply(_X1, _W1, INNER_1, input_size, _state + 57 * offset, input_size, batch_size);
+		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
+		arraySigmoid(_X1, _X1, INNER_1 * batch_size);
+
+		matrixMultiply(_X2, _W2, INNER_2, INNER_1, _X1, INNER_1, batch_size);
+		arrayAddRep(_X2, _X2, _b2, INNER_2, batch_size);
+		arraySigmoid(_X2, _X2, INNER_2 * batch_size);
+
+		matrixMultiply(_X3, _W3, output_size, INNER_2, _X2, INNER_2, batch_size);
+		arrayAddRep(_X3, _X3, _b3, output_size, batch_size);
+		arraySigmoid(_X3, _X3, output_size * batch_size);
+
+		// _X3 contains Q0/Q1
+
+		// create the target/loss matrix
+
+		//unpotato(_d3);
+
+		potato(_d3, _X3, _action + 20 * offset, _reward + 2 * offset, _move + offset);
+
+
+		// train off of it
+
+
+		/*
+		// d3 = (Xk - target).cwiseProduct(Xk.unaryExpr(&dsigmoid));
+		arraySubtract(_target, _X3, _target, output_size * batch_size);
+
+		// MULTIPLY
+
+		arrayDerivSigmoid(_X3, _X3, output_size * batch_size);
+
+		arrayMultiply(_d3, _target, _X3, output_size * batch_size);
+		*/
+
+
+		// 
+		//matrixTranspose(__X2, _X2, INNER_2, batch_size);
+		//matrixMultiply(_dLdW3, _d3, output_size, batch_size, __X2, batch_size, INNER_2);
+		matrixMultiplyTranspose(_dLdW3, _d3, output_size, batch_size, _X2, batch_size, INNER_2);
+
+		matrixMultiply(_dLdb3, _d3, output_size, batch_size, _ones, batch_size, 1);
+
+		//
+		matrixTranspose(__W3, _W3, output_size, INNER_2);
+
+		matrixMultiply(_d2, __W3, INNER_2, output_size, _d3, output_size, batch_size);
+
+
+
+
+		unpotato(_d3, _move + offset);
+
+
+
+
+		arrayDerivSigmoid(_X2, _X2, INNER_2 * batch_size);
+
+		arrayMultiply(_d2, _d2, _X2, INNER_2 * batch_size);
+
+		//
+		//matrixTranspose(__X1, _X1, INNER_1, batch_size);
+		//matrixMultiply(_dLdW2, _d2, INNER_2, batch_size, __X1, batch_size, INNER_1);
+		matrixMultiplyTranspose(_dLdW2, _d2, INNER_2, batch_size, _X1, batch_size, INNER_1);
+
+		matrixMultiply(_dLdb2, _d2, INNER_2, batch_size, _ones, batch_size, 1);
+
+		//
+		matrixTranspose(__W2, _W2, INNER_2, INNER_1);
+
+		matrixMultiply(_d1, __W2, INNER_1, INNER_2, _d2, INNER_2, batch_size);
+
+		arrayDerivSigmoid(_X1, _X1, INNER_1 * batch_size);
+
+		arrayMultiply(_d1, _d1, _X1, INNER_1 * batch_size);
+
+		//
+		//matrixTranspose(__X0, _X0, input_size, batch_size);
+		//matrixMultiply(_dLdW1, _d1, INNER_1, batch_size, __X0, batch_size, input_size);
+		matrixMultiplyTranspose(_dLdW1, _d1, INNER_1, batch_size, _X0, batch_size, input_size);
+
+		matrixMultiply(_dLdb1, _d1, INNER_1, batch_size, _ones, batch_size, 1);
+
+		//
+		arrayMultiply(_dLdW3, _dLdW3, nu, output_size * INNER_2);
+
+		arrayMultiply(_dLdb3, _dLdb3, nu, output_size);
+
+		arrayMultiply(_dLdW2, _dLdW2, nu, INNER_2 * INNER_1);
+
+		arrayMultiply(_dLdb2, _dLdb2, nu, INNER_2);
+
+		arrayMultiply(_dLdW1, _dLdW1, nu, INNER_1 * input_size);
+
+		arrayMultiply(_dLdb1, _dLdb1, nu, INNER_1);
+
+		arraySubtract(_W3, _W3, _dLdW3, output_size * INNER_2);
+
+		arraySubtract(_b3, _b3, _dLdb3, output_size);
+
+		arraySubtract(_W2, _W2, _dLdW2, INNER_2 * INNER_1);
+
+		arraySubtract(_b2, _b2, _dLdb2, INNER_2);
+
+		arraySubtract(_W1, _W1, _dLdW1, INNER_1 * input_size);
+
+		arraySubtract(_b1, _b1, _dLdb1, INNER_1);
+	}
+
+	void Model::copyMemory(int offset, float* state_memory, bool* action_memory, float* reward_memory, int* move_memory)
+	{
+		cudaCopyToDevice(_state + 57 * offset, state_memory, 57 * 4 * 10000);
+		cudaCopyToDevice(_action + 20 * offset, action_memory, 20 * 10000);
+		cudaCopyToDevice(_reward + 2 * offset, reward_memory, 2 * 4 * 10000);
+		cudaCopyToDevice(_move + offset, move_memory, 4 * 10000);
 	}
 
 	void Model::load(const char* filename)

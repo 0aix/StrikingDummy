@@ -39,7 +39,38 @@ void cudaInitialize()
 		if (blockSize != 1024)
 			throw 0;
 
+		//cudaMemset(actions, 0, sizeof(actions));
+
 		cuda_init = true;
+	}
+}
+
+void cudaSafeMalloc(void** A, int n)
+{
+	cudaError_t cudaStatus = cudaMalloc(A, n);
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "cudaMalloc failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+}
+
+void cudaSafeFree(void** A)
+{
+	if (A)
+	{
+		cudaFree(*A);
+		*A = NULL;
+	}
+}
+
+void cudaCopyToDevice(void* _A, void* A, int n)
+{
+	cudaError_t cudaStatus = cudaMemcpy(_A, A, n, cudaMemcpyHostToDevice);
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
 	}
 }
 
@@ -558,7 +589,55 @@ void arraySqrt(float* B, float* A, int n)
 	//cudaSafeDeviceSynchronize();
 }
 
-void train()
+__global__ void _unpotato(float* A, int* B)
 {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if ((i + 1) % 2500)
+		A[i * 20 + B[i]] = 0.0f;
+}
 
+__global__ void _potato(float* A, float* B, bool* C, float* D, int* E)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if ((i + 1) % 2500)
+	{
+		// _d3, _X3, _action + 20 * offset, _reward + 2 * offset
+		int j;
+		float q = 0.0f;
+#pragma unroll
+		for (int k = 0; k < 20; ++k)
+		{
+			if (C[i * 20 + k] && B[(i + 1) * 20 + k] > q)
+			{
+				j = k;
+				q = B[(i + 1) * 20 + k];
+			}
+		}
+		float x = B[i * 20 + E[i]];
+		A[i * 20 + E[i]] = (x - (D[i * 2] + D[i * 2 + 1] * q)) * x * (1.0f - x);
+	}
+}
+
+void unpotato(float* A, int* B)
+{
+	_unpotato<<<10000 / 1000, 1000>>>(A, B);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_unpotato failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+}
+
+void potato(float* A, float* B, bool* C, float* D, int* E)
+{
+	_potato<<<10000 / 1000, 1000>>>(A, B, C, D, E);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_potato failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
 }
