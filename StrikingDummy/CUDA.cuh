@@ -52,6 +52,12 @@ void arrayDerivReLU(float* B, float* A, int n);
 
 void arraySqrt(float* B, float* A, int n);
 
-void unpotato(float* A, int* B);
+//void unpotato(float* A, int* B);
+void unpotato(float* A, int* B, unsigned int* C);
 
-void potato(float* A, float* B, bool* C, float* D, int* E);
+//void potato(float* A, float* B, bool* C, float* D, int* E);
+void potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F);
+
+void repotato(float* A, float* B, unsigned int* C);
+
+void generate(unsigned int* A);

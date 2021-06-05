@@ -6,6 +6,7 @@
 
 int blockSize = 0;
 bool cuda_init = false;
+curandGenerator_t gen;
 
 void cudaSafeDeviceSynchronize()
 {
@@ -39,7 +40,19 @@ void cudaInitialize()
 		if (blockSize != 1024)
 			throw 0;
 
-		//cudaMemset(actions, 0, sizeof(actions));
+		curandStatus_t status = curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_MT19937);
+		if (status != CURAND_STATUS_SUCCESS)
+		{
+			std::cerr << "curandCreateGenerator failed" << std::endl;
+			throw 0;
+		}
+
+		status = curandSetPseudoRandomGeneratorSeed(gen, std::chrono::high_resolution_clock::now().time_since_epoch().count());
+		if (status != CURAND_STATUS_SUCCESS)
+		{
+			std::cerr << "curandSetPseudoRandomGeneratorSeed failed" << std::endl;
+			throw 0;
+		}
 
 		cuda_init = true;
 	}
@@ -211,7 +224,7 @@ void matrixInitialize(float** A, int n, int m)
 void matrixInitialize(float** A, int n, int m, float r)
 {
 	matrixInitialize(A, n, m);
-
+	/*
 	curandGenerator_t gen;
 	
 	curandStatus_t status = curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_MT19937);
@@ -227,21 +240,21 @@ void matrixInitialize(float** A, int n, int m, float r)
 		std::cerr << "curandSetPseudoRandomGeneratorSeed failed" << std::endl;
 		throw 0;
 	}
-
-	status = curandGenerateUniform(gen, *A, (size_t)n * (size_t)m);
+	*/
+	curandStatus_t status = curandGenerateUniform(gen, *A, (size_t)n * (size_t)m);
 	if (status != CURAND_STATUS_SUCCESS)
 	{
 		std::cerr << "curandGenerateUniform failed" << std::endl;
 		throw 0;
 	}
-
+	/*
 	status = curandDestroyGenerator(gen);
 	if (status != CURAND_STATUS_SUCCESS)
 	{
 		std::cerr << "curandDestroyGenerator failed" << std::endl;
 		throw 0;
 	}
-
+	*/
 	int numBlocks = (n * m + blockSize - 1) / blockSize;
 	_matrixInitialize<<<numBlocks, blockSize>>>(*A, n * m, r);
 
@@ -589,38 +602,63 @@ void arraySqrt(float* B, float* A, int n)
 	//cudaSafeDeviceSynchronize();
 }
 
-__global__ void _unpotato(float* A, int* B)
+__global__ void _unpotato(float* A, int* B, unsigned int* C)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if ((i + 1) % 2500)
-		A[i * 20 + B[i]] = 0.0f;
+	//if ((i + 1) % 2500)
+	//	A[i * 20 + B[i]] = 0.0f;
+	A[i * 20 + B[C[i]]] = 0.0f;
 }
 
-__global__ void _potato(float* A, float* B, bool* C, float* D, int* E)
+__global__ void _potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F)
 {
+//	int i = blockIdx.x * blockDim.x + threadIdx.x;
+//	if ((i + 1) % 2500)
+//	{
+//		// _d3, _X3, _action + 20 * offset, _reward + 2 * offset
+//		int j;
+//		float q = 0.0f;
+//#pragma unroll
+//		for (int k = 0; k < 20; ++k)
+//		{
+//			if (C[i * 20 + k] && B[(i + 1) * 20 + k] > q)
+//			{
+//				j = k;
+//				q = B[(i + 1) * 20 + k];
+//			}
+//		}
+//		float x = B[i * 20 + E[i]];
+//		A[i * 20 + E[i]] = (x - (D[i * 2] + D[i * 2 + 1] * q)) * x * (1.0f - x);
+//	}
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if ((i + 1) % 2500)
+	// A = _d3, B = _X3, C = _action + 20 * offset, D = _reward + 2 * offset
+	//unsigned int h = F[i];
+	float q = 0.0f;
+//#pragma unroll
+	for (int k = 0; k < 20; ++k)
 	{
-		// _d3, _X3, _action + 20 * offset, _reward + 2 * offset
-		int j;
-		float q = 0.0f;
-#pragma unroll
-		for (int k = 0; k < 20; ++k)
+		if (C[F[i] * 20 + k] && BB[i * 20 + k] > q)
 		{
-			if (C[i * 20 + k] && B[(i + 1) * 20 + k] > q)
-			{
-				j = k;
-				q = B[(i + 1) * 20 + k];
-			}
+			q = BB[i * 20 + k];
 		}
-		float x = B[i * 20 + E[i]];
-		A[i * 20 + E[i]] = (x - (D[i * 2] + D[i * 2 + 1] * q)) * x * (1.0f - x);
 	}
+	float x = B[i * 20 + E[F[i]]];
+	A[i * 20 + E[F[i]]] = (x - (D[F[i] * 2] + D[F[i] * 2 + 1] * q)) * x * (1.0f - x);
 }
 
-void unpotato(float* A, int* B)
+__global__ void _repotato(float* A, float* B, unsigned int* C)
 {
-	_unpotato<<<10000 / 1000, 1000>>>(A, B);
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	//int a = i * 57;
+	//int b = C[i] * 57;
+//#pragma unroll
+	for (int j = 0; j < 57; ++j)
+		A[i * 57 + j] = B[C[i] * 57 + j];
+}
+
+void unpotato(float* A, int* B, unsigned int* C)
+{
+	_unpotato<<<10000 / 1000, 1000>>>(A, B, C);
 
 	cudaError_t cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess)
@@ -630,9 +668,9 @@ void unpotato(float* A, int* B)
 	}
 }
 
-void potato(float* A, float* B, bool* C, float* D, int* E)
+void potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F)
 {
-	_potato<<<10000 / 1000, 1000>>>(A, B, C, D, E);
+	_potato<<<10000 / 1000, 1000>>>(A, B, BB, C, D, E, F);
 
 	cudaError_t cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess)
@@ -640,4 +678,42 @@ void potato(float* A, float* B, bool* C, float* D, int* E)
 		std::cerr << "_potato failed: " << cudaGetErrorString(cudaStatus) << std::endl;
 		throw 0;
 	}
+}
+
+void repotato(float* A, float* B, unsigned int* C)
+{
+	_repotato<<<10000 / 1000, 1000>>>(A, B, C);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_repotato failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+}
+
+__global__ void _generate(unsigned int* A)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	A[i] = A[i] % 1000000;
+}
+
+void generate(unsigned int* A)
+{
+	curandStatus_t status = curandGenerate(gen, A, 10000);
+	if (status != CURAND_STATUS_SUCCESS)
+	{
+		std::cerr << "curandGenerate failed" << std::endl;
+		throw 0;
+	}
+
+	_generate<<<10000 / 1000, 1000>>>(A);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_generate failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	//cudaSafeDeviceSynchronize();
 }

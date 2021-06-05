@@ -29,9 +29,12 @@ namespace StrikingDummy
 	struct Model
 	{
 		float* _state = NULL;
+		float* _state2 = NULL;
 		bool* _action = NULL;
 		float* _reward = NULL;
 		int* _move = NULL;
+		unsigned int* _indices = NULL;
+		float* _X4 = NULL;
 
 		float* x0 = NULL;
 		float* x3 = NULL;
@@ -123,7 +126,7 @@ namespace StrikingDummy
 
 		void batch_train(float nu, int offset);
 
-		void copyMemory(int offset, float* state_memory, bool* action_memory, float* reward_memory, int* move_memory);
+		void copyMemory(int offset, float* state_memory, float* state2_memory, bool* action_memory, float* reward_memory, int* move_memory);
 
 		void load(const char* filename);
 		void save(const char* filename);

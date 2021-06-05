@@ -71,7 +71,9 @@ namespace StrikingDummy
 
 
 
+		//float* state_memory = new float[state_size * NUM_STEPS_PER_EPOCH];
 		float* state_memory = new float[state_size * NUM_STEPS_PER_EPOCH];
+		float* state2_memory = new float[state_size * NUM_STEPS_PER_EPOCH];
 		bool* action_memory = new bool[num_actions * NUM_STEPS_PER_EPOCH];
 		float* reward_memory = new float[2 * NUM_STEPS_PER_EPOCH];
 		int* move_memory = new int[NUM_STEPS_PER_EPOCH];
@@ -132,7 +134,9 @@ namespace StrikingDummy
 			std::vector<Transition>& history = r.job.history;
 			for (int i = 0; i < NUM_STEPS_PER_EPISODE; i++) {
 				Transition& t = r.job.history[i];
+				//memcpy(&state_memory[(c + i) * 57], t.t0, 57 * sizeof(float));
 				memcpy(&state_memory[(c + i) * 57], t.t0, 57 * sizeof(float));
+				memcpy(&state2_memory[(c + i) * 57], t.t1, 57 * sizeof(float));
 				memset(&action_memory[(c + i) * 20], 0, sizeof(bool) * 20);
 				for (int a : t.actions)
 					action_memory[(c + i) * 20 + a] = true;
@@ -146,7 +150,7 @@ namespace StrikingDummy
 		for (m_index = 0; m_index < 99; m_index++) {
 			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
 			// copy memory over into large data reservoir hmm
-			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, action_memory, reward_memory, move_memory);
+			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
 		}
 
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
@@ -154,7 +158,7 @@ namespace StrikingDummy
 			time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
 			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
-			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, action_memory, reward_memory, move_memory);
+			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
 
 			if (++m_index == 100)
 				m_index = 0;
@@ -187,8 +191,11 @@ namespace StrikingDummy
 
 			time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-			for (int batch = 0; batch < 100; batch++)
-				model.batch_train(nu, batch * NUM_STEPS_PER_EPOCH);
+			//for (int batch = 0; batch < 100; batch++)
+			//	model.batch_train(nu, batch * NUM_STEPS_PER_EPOCH);
+
+			for (int batch = 0; batch < 50; batch++)
+				model.batch_train(nu, 0);
 
 			// batch train a bunch
 			/*
@@ -281,6 +288,7 @@ namespace StrikingDummy
 		//delete[] memory;
 
 		delete[] state_memory;
+		delete[] state2_memory;
 		delete[] action_memory;
 		delete[] reward_memory;
 		delete[] move_memory;
