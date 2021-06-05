@@ -501,13 +501,18 @@ namespace StrikingDummy
 
 		//potato(_d3, _X3, _action + 20 * offset, _reward + 2 * offset, _move + offset);
 
-		potato(_d3, _X3, _X4, _action, _reward, _move, _indices);
+
+		cudaMemcpy(_target, _X3, sizeof(float) * output_size * batch_size, cudaMemcpyDeviceToDevice);
+
+		//potato(_d3, _X3, _X4, _action, _reward, _move, _indices);
+
+		potato(_target, _X3, _X4, _action, _reward, _move, _indices);
 
 
 		// train off of it
 
 
-		/*
+		
 		// d3 = (Xk - target).cwiseProduct(Xk.unaryExpr(&dsigmoid));
 		arraySubtract(_target, _X3, _target, output_size * batch_size);
 
@@ -516,7 +521,7 @@ namespace StrikingDummy
 		arrayDerivSigmoid(_X3, _X3, output_size * batch_size);
 
 		arrayMultiply(_d3, _target, _X3, output_size * batch_size);
-		*/
+		
 
 
 		// 
@@ -535,7 +540,7 @@ namespace StrikingDummy
 
 
 		//unpotato(_d3, _move + offset);
-		unpotato(_d3, _move, _indices);
+		//unpotato(_d3, _move, _indices);
 
 
 

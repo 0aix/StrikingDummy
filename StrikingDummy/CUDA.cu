@@ -642,8 +642,9 @@ __global__ void _potato(float* A, float* B, float* BB, bool* C, float* D, int* E
 			q = BB[i * 20 + k];
 		}
 	}
-	float x = B[i * 20 + E[F[i]]];
-	A[i * 20 + E[F[i]]] = (x - (D[F[i] * 2] + D[F[i] * 2 + 1] * q)) * x * (1.0f - x);
+	//float x = B[i * 20 + E[F[i]]];
+	//A[i * 20 + E[F[i]]] = (x - (D[F[i] * 2] + D[F[i] * 2 + 1] * q)) * x * (1.0f - x);
+	A[i * 20 + E[F[i]]] = D[F[i] * 2] + D[F[i] * 2 + 1] * q;
 }
 
 __global__ void _repotato(float* A, float* B, unsigned int* C)

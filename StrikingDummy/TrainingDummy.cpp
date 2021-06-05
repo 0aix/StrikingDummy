@@ -111,7 +111,7 @@ namespace StrikingDummy
 
 		long long time_a;
 		long long time_b;
-		
+		/*
 		std::vector<BlackMage> jobs(4, blm);
 		std::vector<ModelRotation> rotations =
 		{
@@ -131,8 +131,8 @@ namespace StrikingDummy
 				r.step();
 			//int c = (m_index * 4 + idx) * NUM_STEPS_PER_EPISODE;
 			int c = idx * NUM_STEPS_PER_EPISODE;
-			std::vector<Transition>& history = r.job.history;
-			for (int i = 0; i < NUM_STEPS_PER_EPISODE; i++) {
+			for (int i = 0; i < NUM_STEPS_PER_EPISODE; i++)
+			{
 				Transition& t = r.job.history[i];
 				//memcpy(&state_memory[(c + i) * 57], t.t0, 57 * sizeof(float));
 				memcpy(&state_memory[(c + i) * 57], t.t0, 57 * sizeof(float));
@@ -146,10 +146,36 @@ namespace StrikingDummy
 				//memory[c + i] = std::move(r.job.history[i]);
 			}
 		};
-
-		for (m_index = 0; m_index < 99; m_index++) {
+		*/
+		/*
+		for (m_index = 0; m_index < 99; m_index++)
+		{
 			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
 			// copy memory over into large data reservoir hmm
+			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
+		}
+		*/
+		for (m_index = 0; m_index < 99; m_index++)
+		{
+			for (int offset = 0; offset < 10000; offset += 2500)
+			{
+				rotation.reset(eps, exp);
+				job.reset();
+				for (int step = 0; step < NUM_STEPS_PER_EPISODE; step++)
+					rotation.step();
+				for (int i = 0; i < NUM_STEPS_PER_EPISODE; i++)
+				{
+					Transition& t = job.history[i];
+					memcpy(&state_memory[(offset + i) * 57], t.t0, 57 * sizeof(float));
+					memcpy(&state2_memory[(offset + i) * 57], t.t1, 57 * sizeof(float));
+					memset(&action_memory[(offset + i) * 20], 0, sizeof(bool) * 20);
+					for (int a : t.actions)
+						action_memory[(offset + i) * 20 + a] = true;
+					reward_memory[(offset + i) * 2] = (t.reward - t.dt * OUTPUT_LOWER) / OUTPUT_RANGE / WINDOW;
+					reward_memory[(offset + i) * 2 + 1] = 1.0f - t.dt / WINDOW;
+					move_memory[offset + i] = t.action;
+				}
+			}
 			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
 		}
 
@@ -157,7 +183,28 @@ namespace StrikingDummy
 		{
 			time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
+			//std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
+			//model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
+
+			for (int offset = 0; offset < 10000; offset += 2500)
+			{
+				rotation.reset(eps, exp);
+				job.reset();
+				for (int step = 0; step < NUM_STEPS_PER_EPISODE; step++)
+					rotation.step();
+				for (int i = 0; i < NUM_STEPS_PER_EPISODE; i++)
+				{
+					Transition& t = job.history[i];
+					memcpy(&state_memory[(offset + i) * 57], t.t0, 57 * sizeof(float));
+					memcpy(&state2_memory[(offset + i) * 57], t.t1, 57 * sizeof(float));
+					memset(&action_memory[(offset + i) * 20], 0, sizeof(bool) * 20);
+					for (int a : t.actions)
+						action_memory[(offset + i) * 20 + a] = true;
+					reward_memory[(offset + i) * 2] = (t.reward - t.dt * OUTPUT_LOWER) / OUTPUT_RANGE / WINDOW;
+					reward_memory[(offset + i) * 2 + 1] = 1.0f - t.dt / WINDOW;
+					move_memory[offset + i] = t.action;
+				}
+			}
 			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
 
 			if (++m_index == 100)
