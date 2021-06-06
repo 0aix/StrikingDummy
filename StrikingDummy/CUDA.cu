@@ -190,19 +190,21 @@ __global__ void _matrixMultiplyTranspose(float* C, float* A, int n0, int m0, flo
 
 __global__ void _matrixTranspose(float* B, float* A, int n, int m)
 {
+
 	__shared__ float tile[32][33];
 
 	int i = blockIdx.y * 32 + threadIdx.y;
 	int j = blockIdx.x * 32 + threadIdx.x;
 	if (i < n && j < m)
-		tile[threadIdx.y][threadIdx.x] = A[i * m + j];
+		tile[threadIdx.y][threadIdx.x] = A[j * n + i];
 
 	__syncthreads();
 
 	i = blockIdx.x * 32 + threadIdx.y;
 	j = blockIdx.y * 32 + threadIdx.x;
 	if (i < m && j < n)
-		B[i * n + j] = tile[threadIdx.x][threadIdx.y];
+		B[j * m + i] = tile[threadIdx.x][threadIdx.y];
+
 	/*
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
