@@ -22,6 +22,8 @@ void matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1
 
 void matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n1, int m1);
 
+void matrixTransposeMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1);
+
 void matrixTranspose(float* B, float* A, int n, int m);
 
 void arrayCopyToDevice(float* _A, float* A, int n);
@@ -51,6 +53,8 @@ void arrayReLU(float* B, float* A, int n);
 void arrayDerivReLU(float* B, float* A, int n);
 
 void arraySqrt(float* B, float* A, int n);
+
+void arrayStep(float* B, float* A, float nu, int n);
 
 //void unpotato(float* A, int* B);
 void unpotato(float* A, int* B, unsigned int* C);

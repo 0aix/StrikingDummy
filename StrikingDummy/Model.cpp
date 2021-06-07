@@ -535,9 +535,9 @@ namespace StrikingDummy
 		matrixMultiply(_dLdb3, _d3, output_size, batch_size, _ones, batch_size, 1);
 
 		//
-		matrixTranspose(__W3, _W3, output_size, INNER_2);
-
-		matrixMultiply(_d2, __W3, INNER_2, output_size, _d3, output_size, batch_size);
+		//matrixTranspose(__W3, _W3, output_size, INNER_2);
+		//matrixMultiply(_d2, __W3, INNER_2, output_size, _d3, output_size, batch_size);
+		matrixTransposeMultiply(_d2, _W3, INNER_2, output_size, _d3, output_size, batch_size);
 
 
 
@@ -559,9 +559,9 @@ namespace StrikingDummy
 		matrixMultiply(_dLdb2, _d2, INNER_2, batch_size, _ones, batch_size, 1);
 
 		//
-		matrixTranspose(__W2, _W2, INNER_2, INNER_1);
-
-		matrixMultiply(_d1, __W2, INNER_1, INNER_2, _d2, INNER_2, batch_size);
+		//matrixTranspose(__W2, _W2, INNER_2, INNER_1);
+		//matrixMultiply(_d1, __W2, INNER_1, INNER_2, _d2, INNER_2, batch_size);
+		matrixTransposeMultiply(_d1, _W2, INNER_1, INNER_2, _d2, INNER_2, batch_size);
 
 		arrayDerivSigmoid(_X1, _X1, INNER_1 * batch_size);
 
@@ -575,6 +575,20 @@ namespace StrikingDummy
 		matrixMultiply(_dLdb1, _d1, INNER_1, batch_size, _ones, batch_size, 1);
 
 		//
+
+		arrayStep(_W3, _dLdW3, -nu, output_size * INNER_2);
+
+		arrayStep(_b3, _dLdb3, -nu, output_size);
+
+		arrayStep(_W2, _dLdW2, -nu, INNER_2 * INNER_1);
+
+		arrayStep(_b2, _dLdb2, -nu, INNER_2);
+
+		arrayStep(_W1, _dLdW1, -nu, INNER_1 * input_size);
+
+		arrayStep(_b1, _dLdb1, -nu, INNER_1);
+
+		/*
 		arrayMultiply(_dLdW3, _dLdW3, nu, output_size * INNER_2);
 
 		arrayMultiply(_dLdb3, _dLdb3, nu, output_size);
@@ -598,6 +612,7 @@ namespace StrikingDummy
 		arraySubtract(_W1, _W1, _dLdW1, INNER_1 * input_size);
 
 		arraySubtract(_b1, _b1, _dLdb1, INNER_1);
+		*/
 	}
 
 	void Model::copyMemory(int offset, float* state_memory, float* state2_memory, bool* action_memory, float* reward_memory, int* move_memory)

@@ -293,7 +293,7 @@ void matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1
 	if (m0 != n1)
 		throw 0;
 
-	dim3 numThreads(32, 32);
+	//dim3 numThreads(32, 32);
 	//dim3 numBlocks((m1 + 31) / 32, (n0 + 31) / 32);
 	//
 	//_matrixMultiply<<<numBlocks, numThreads>>>(C, A, n0, m0, B, n1, m1);
@@ -329,10 +329,34 @@ void matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n
 	if (m0 != n1)
 		throw 0;
 
-	dim3 numThreads(32, 32);
-	dim3 numBlocks((m1 + 31) / 32, (n0 + 31) / 32);
+	//dim3 numThreads(32, 32);
+	//dim3 numBlocks((m1 + 31) / 32, (n0 + 31) / 32);
+	//
+	//_matrixMultiplyTranspose<<<numBlocks, numThreads>>>(C, A, n0, m0, B, n1, m1);
 
-	_matrixMultiplyTranspose<<<numBlocks, numThreads>>>(C, A, n0, m0, B, n1, m1);
+	float a = 1.0f;
+	float b = 0.0f;
+
+	cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, n0, m1, m0, &a, A, n0, B, m1, &b, C, n0);
+
+	cudaError_t cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess)
+	{
+		std::cerr << "_matrixMultiply failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+		throw 0;
+	}
+	//cudaSafeDeviceSynchronize();
+}
+
+void matrixTransposeMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
+{
+	if (m0 != n1)
+		throw 0;
+
+	float a = 1.0f;
+	float b = 0.0f;
+
+	cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, n0, m1, m0, &a, A, m0, B, n1, &b, C, n0);
 
 	cudaError_t cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess)
@@ -545,6 +569,11 @@ void arrayMultiply(float* C, float* A, float b, int n)
 		throw 0;
 	}
 	//cudaSafeDeviceSynchronize();
+}
+
+void arrayStep(float* B, float* A, float nu, int n)
+{
+	cublasSaxpy(handle, n, &nu, A, 1, B, 1);
 }
 
 void arrayDivide(float* C, float* A, float* B, int n)
