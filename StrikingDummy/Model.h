@@ -110,7 +110,8 @@ namespace StrikingDummy
 		float beta2 = BETA2;
 		bool adam = false;
 
-		//Model(ModelParams& params);
+		Model() {}
+		Model(int input_size, int output_size) : input_size(input_size), output_size(output_size) {}
 		~Model();
 
 		void init(int input_size, int output_size, int batch_size, bool adam);

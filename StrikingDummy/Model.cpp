@@ -450,6 +450,7 @@ namespace StrikingDummy
 
 		repotato(_X0, _state2, _indices);
 
+		//matrixMultiply(_X1, _X0, batch_size, input_size, _W1, input_size, INNER_1);
 		matrixMultiply(_X1, _W1, INNER_1, input_size, _X0, input_size, batch_size);
 		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
 		arraySigmoid(_X1, _X1, INNER_1 * batch_size);
@@ -467,6 +468,8 @@ namespace StrikingDummy
 		// compute Q0/Q1
 
 		//matrixMultiply(_X1, _W1, INNER_1, input_size, _state + 57 * offset, input_size, batch_size);
+
+		//matrixMultiply(_X1, _X0, batch_size, input_size, _W1, input_size, INNER_1);
 		matrixMultiply(_X1, _W1, INNER_1, input_size, _X0, input_size, batch_size);
 		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
 		arraySigmoid(_X1, _X1, INNER_1 * batch_size);

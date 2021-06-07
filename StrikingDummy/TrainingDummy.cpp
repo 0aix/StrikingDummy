@@ -9,7 +9,7 @@
 
 namespace StrikingDummy
 {
-	TrainingDummy::TrainingDummy(Job& job) : job(job), rotation(job, model)
+	TrainingDummy::TrainingDummy(Job& job) : job(job), model(job.get_state_size(), job.get_num_actions()), rotation(job, model)
 	{
 		
 	}

@@ -3,10 +3,12 @@
 #include <chrono>
 #include <math.h>
 #include <curand.h>
+#include <cublas_v2.h>
 
 int blockSize = 0;
 bool cuda_init = false;
 curandGenerator_t gen;
+cublasHandle_t handle;
 
 void cudaSafeDeviceSynchronize()
 {
@@ -51,6 +53,13 @@ void cudaInitialize()
 		if (status != CURAND_STATUS_SUCCESS)
 		{
 			std::cerr << "curandSetPseudoRandomGeneratorSeed failed" << std::endl;
+			throw 0;
+		}
+
+		cublasStatus_t cublasStatus = cublasCreate(&handle);
+		if (cublasStatus != CUBLAS_STATUS_SUCCESS)
+		{
+			std::cerr << "cublasCreate failed" << std::endl;
 			throw 0;
 		}
 
@@ -114,9 +123,11 @@ __global__ void _matrixMultiply(float* C, float* A, int n0, int m0, float* B, in
 		int By = threadIdx.y + z * 32;
 		int Bx = j;
 		if (Ay < n0 && Ax < m0)
-			_A[threadIdx.y][threadIdx.x] = A[Ay + Ax * n0];
+			//_A[threadIdx.y][threadIdx.x] = A[Ay + Ax * n0];
+			_A[threadIdx.y][threadIdx.x] = A[Ay * m0 + Ax];
 		if (By < n1 && Bx < m1)
-			_B[threadIdx.y][threadIdx.x] = B[By + Bx * n1];
+			//_B[threadIdx.y][threadIdx.x] = B[By + Bx * n1];
+			_B[threadIdx.y][threadIdx.x] = B[By * m1 + Bx];
 
 		__syncthreads();
 
@@ -138,7 +149,8 @@ __global__ void _matrixMultiply(float* C, float* A, int n0, int m0, float* B, in
 		__syncthreads();
 	}
 	if (compute)
-		C[j * n0 + i] = sum;
+		//C[j * n0 + i] = sum;
+		C[j + i * m1] = sum;
 }
 
 __global__ void _matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n1, int m1)
@@ -190,27 +202,25 @@ __global__ void _matrixMultiplyTranspose(float* C, float* A, int n0, int m0, flo
 
 __global__ void _matrixTranspose(float* B, float* A, int n, int m)
 {
-
+/*
 	__shared__ float tile[32][33];
 
 	int i = blockIdx.y * 32 + threadIdx.y;
 	int j = blockIdx.x * 32 + threadIdx.x;
 	if (i < n && j < m)
 		tile[threadIdx.y][threadIdx.x] = A[j * n + i];
-
+	
 	__syncthreads();
-
+	
 	i = blockIdx.x * 32 + threadIdx.y;
 	j = blockIdx.y * 32 + threadIdx.x;
 	if (i < m && j < n)
 		B[j * m + i] = tile[threadIdx.x][threadIdx.y];
-
-	/*
+*/
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < n && j < m)
 		B[i * m + j] = A[j * n + i];
-	*/
 }
 
 void matrixInitialize(float** A, int n, int m)
@@ -284,9 +294,26 @@ void matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1
 		throw 0;
 
 	dim3 numThreads(32, 32);
-	dim3 numBlocks((m1 + 31) / 32, (n0 + 31) / 32);
+	//dim3 numBlocks((m1 + 31) / 32, (n0 + 31) / 32);
+	//
+	//_matrixMultiply<<<numBlocks, numThreads>>>(C, A, n0, m0, B, n1, m1);
 
-	_matrixMultiply<<<numBlocks, numThreads>>>(C, A, n0, m0, B, n1, m1);
+
+
+
+	//dim3 numBlocks((n0 + 31) / 32, (m1 + 31) / 32);
+	
+	//_matrixMultiply<<<numBlocks, numThreads>>>(C, B, m1, n1, A, m0, n0);
+
+
+
+	float a = 1.0f;
+	float b = 0.0f;
+
+	cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, n0, m1, m0, &a, A, n0, B, n1, &b, C, n0);
+
+
+
 
 	cudaError_t cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess)
