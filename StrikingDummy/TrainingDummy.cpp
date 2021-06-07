@@ -111,7 +111,7 @@ namespace StrikingDummy
 
 		long long time_a;
 		long long time_b;
-		/*
+		
 		std::vector<BlackMage> jobs(4, blm);
 		std::vector<ModelRotation> rotations =
 		{
@@ -146,15 +146,15 @@ namespace StrikingDummy
 				//memory[c + i] = std::move(r.job.history[i]);
 			}
 		};
-		*/
-		/*
+		
+		
 		for (m_index = 0; m_index < 99; m_index++)
 		{
 			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
 			// copy memory over into large data reservoir hmm
 			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
 		}
-		*/
+		/*
 		for (m_index = 0; m_index < 99; m_index++)
 		{
 			for (int offset = 0; offset < 10000; offset += 2500)
@@ -178,14 +178,14 @@ namespace StrikingDummy
 			}
 			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
 		}
-
+		*/
 		for (int epoch = 0; epoch < NUM_EPOCHS; epoch++)
 		{
 			time_a = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-			//std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
-			//model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
-
+			std::for_each(std::execution::par_unseq, ints.begin(), ints.end(), rotato);
+			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
+			/*
 			for (int offset = 0; offset < 10000; offset += 2500)
 			{
 				rotation.reset(eps, exp);
@@ -206,7 +206,7 @@ namespace StrikingDummy
 				}
 			}
 			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, state2_memory, action_memory, reward_memory, move_memory);
-
+			*/
 			if (++m_index == 100)
 				m_index = 0;
 
