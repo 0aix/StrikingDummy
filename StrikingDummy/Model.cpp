@@ -446,10 +446,11 @@ namespace StrikingDummy
 
 	void Model::batch_train(float nu, int offset)
 	{
+		/*
 		generate(_indices);
 
 		repotato(_X0, _state2, _indices);
-
+		
 		//matrixMultiply(_X1, _X0, batch_size, input_size, _W1, input_size, INNER_1);
 		matrixMultiply(_X1, _W1, INNER_1, input_size, _X0, input_size, batch_size);
 		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
@@ -464,13 +465,12 @@ namespace StrikingDummy
 		arraySigmoid(_X4, _X4, output_size * batch_size);
 
 		repotato(_X0, _state, _indices);
-
+		*/
 		// compute Q0/Q1
 
-		//matrixMultiply(_X1, _W1, INNER_1, input_size, _state + 57 * offset, input_size, batch_size);
+		matrixMultiply(_X1, _W1, INNER_1, input_size, _state + 57 * offset, input_size, batch_size);
 
-		//matrixMultiply(_X1, _X0, batch_size, input_size, _W1, input_size, INNER_1);
-		matrixMultiply(_X1, _W1, INNER_1, input_size, _X0, input_size, batch_size);
+		//matrixMultiply(_X1, _W1, INNER_1, input_size, _X0, input_size, batch_size);
 		arrayAddRep(_X1, _X1, _b1, INNER_1, batch_size);
 		arraySigmoid(_X1, _X1, INNER_1 * batch_size);
 
@@ -502,18 +502,15 @@ namespace StrikingDummy
 
 		//unpotato(_d3);
 
-		//potato(_d3, _X3, _action + 20 * offset, _reward + 2 * offset, _move + offset);
-
-
-		cudaMemcpy(_target, _X3, sizeof(float) * output_size * batch_size, cudaMemcpyDeviceToDevice);
+		potato(_d3, _X3, _action + 20 * offset, _reward + 2 * offset, _move + offset);
 
 		//potato(_d3, _X3, _X4, _action, _reward, _move, _indices);
 
-		potato(_target, _X3, _X4, _action, _reward, _move, _indices);
-
-
+		/*
 		// train off of it
+		cudaMemcpy(_target, _X3, sizeof(float) * output_size * batch_size, cudaMemcpyDeviceToDevice);
 
+		potato(_target, _X3, _X4, _action, _reward, _move, _indices);
 
 		
 		// d3 = (Xk - target).cwiseProduct(Xk.unaryExpr(&dsigmoid));
@@ -524,7 +521,7 @@ namespace StrikingDummy
 		arrayDerivSigmoid(_X3, _X3, output_size * batch_size);
 
 		arrayMultiply(_d3, _target, _X3, output_size * batch_size);
-		
+		*/
 
 
 		// 
@@ -542,7 +539,7 @@ namespace StrikingDummy
 
 
 
-		//unpotato(_d3, _move + offset);
+		unpotato(_d3, _move + offset);
 		//unpotato(_d3, _move, _indices);
 
 
@@ -617,9 +614,8 @@ namespace StrikingDummy
 
 	void Model::copyMemory(int offset, float* state_memory, float* state2_memory, bool* action_memory, float* reward_memory, int* move_memory)
 	{
-		//cudaCopyToDevice(_state + 57 * offset, state_memory, 57 * 4 * 10000);
 		cudaCopyToDevice(_state + 57 * offset, state_memory, 57 * 4 * 10000);
-		cudaCopyToDevice(_state2 + 57 * offset, state2_memory, 57 * 4 * 10000);
+		//cudaCopyToDevice(_state2 + 57 * offset, state2_memory, 57 * 4 * 10000);
 		cudaCopyToDevice(_action + 20 * offset, action_memory, 20 * 10000);
 		cudaCopyToDevice(_reward + 2 * offset, reward_memory, 2 * 4 * 10000);
 		cudaCopyToDevice(_move + offset, move_memory, 4 * 10000);

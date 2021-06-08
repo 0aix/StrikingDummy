@@ -660,64 +660,69 @@ void arraySqrt(float* B, float* A, int n)
 	//cudaSafeDeviceSynchronize();
 }
 
-__global__ void _unpotato(float* A, int* B, unsigned int* C)
+//__global__ void _unpotato(float* A, int* B, unsigned int* C)
+__global__ void _unpotato(float* A, int* B)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	//if ((i + 1) % 2500)
-	//	A[i * 20 + B[i]] = 0.0f;
-	A[i * 20 + B[C[i]]] = 0.0f;
+	if ((i + 1) % 2500)
+		A[i * 20 + B[i]] = 0.0f;
+	//A[i * 20 + B[C[i]]] = 0.0f;
 }
 
-__global__ void _potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F)
+//__global__ void _potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F)
+__global__ void _potato(float* A, float* B, bool* C, float* D, int* E)
 {
-//	int i = blockIdx.x * blockDim.x + threadIdx.x;
-//	if ((i + 1) % 2500)
-//	{
-//		// _d3, _X3, _action + 20 * offset, _reward + 2 * offset
-//		int j;
-//		float q = 0.0f;
-//#pragma unroll
-//		for (int k = 0; k < 20; ++k)
-//		{
-//			if (C[i * 20 + k] && B[(i + 1) * 20 + k] > q)
-//			{
-//				j = k;
-//				q = B[(i + 1) * 20 + k];
-//			}
-//		}
-//		float x = B[i * 20 + E[i]];
-//		A[i * 20 + E[i]] = (x - (D[i * 2] + D[i * 2 + 1] * q)) * x * (1.0f - x);
-//	}
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if ((i + 1) % 2500)
+	{
+		// _d3, _X3, _action + 20 * offset, _reward + 2 * offset
+		unsigned int m = i * 20;
+		unsigned int n = m + 20;
+		float q = 0.0f;
+		for (int k = 0; k < 20; ++k)
+		{
+			if (C[m + k] && B[n + k] > q)
+			{
+				q = B[n + k];
+			}
+		}
+		float x = B[m + E[i]];
+		A[m + E[i]] = (x - (D[i * 2] + D[i * 2 + 1] * q)) * x * (1.0f - x);
+	}
+/*
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	// A = _d3, B = _X3, C = _action + 20 * offset, D = _reward + 2 * offset
-	//unsigned int h = F[i];
+	unsigned int h = F[i];
+	unsigned int m = h * 20;
+	unsigned int n = i * 20;
 	float q = 0.0f;
-//#pragma unroll
 	for (int k = 0; k < 20; ++k)
 	{
-		if (C[F[i] * 20 + k] && BB[i * 20 + k] > q)
+		if (C[m + k] && BB[n + k] > q)
 		{
-			q = BB[i * 20 + k];
+			q = BB[n + k];
 		}
 	}
-	//float x = B[i * 20 + E[F[i]]];
-	//A[i * 20 + E[F[i]]] = (x - (D[F[i] * 2] + D[F[i] * 2 + 1] * q)) * x * (1.0f - x);
-	A[i * 20 + E[F[i]]] = D[F[i] * 2] + D[F[i] * 2 + 1] * q;
+	float x = B[n + E[h]];
+	A[n + E[h]] = (x - (D[h * 2] + D[h * 2 + 1] * q)) * x * (1.0f - x);
+	//A[i * 20 + E[F[i]]] = D[F[i] * 2] + D[F[i] * 2 + 1] * q;
+*/
 }
 
 __global__ void _repotato(float* A, float* B, unsigned int* C)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	//int a = i * 57;
-	//int b = C[i] * 57;
-//#pragma unroll
+	int a = i * 57;
+	int b = C[i] * 57;
 	for (int j = 0; j < 57; ++j)
-		A[i * 57 + j] = B[C[i] * 57 + j];
+		A[a + j] = B[b + j];
 }
 
-void unpotato(float* A, int* B, unsigned int* C)
+//void unpotato(float* A, int* B, unsigned int* C)
+void unpotato(float* A, int* B)
 {
-	_unpotato<<<10000 / 1000, 1000>>>(A, B, C);
+	//_unpotato<<<10000 / 1000, 1000>>>(A, B, C);
+	_unpotato<<<10000 / 1000, 1000>>>(A, B);
 
 	cudaError_t cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess)
@@ -727,9 +732,11 @@ void unpotato(float* A, int* B, unsigned int* C)
 	}
 }
 
-void potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F)
+//void potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F)
+void potato(float* A, float* B, bool* C, float* D, int* E)
 {
-	_potato<<<10000 / 1000, 1000>>>(A, B, BB, C, D, E, F);
+	//_potato<<<10000 / 1000, 1000>>>(A, B, BB, C, D, E, F);
+	_potato<<<10000 / 1000, 1000>>>(A, B, C, D, E);
 
 	cudaError_t cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess)
