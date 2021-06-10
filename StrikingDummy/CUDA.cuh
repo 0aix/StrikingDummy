@@ -16,6 +16,8 @@ void matrixInitialize(float** A, int n, int m);
 
 void matrixInitialize(float** A, int n, int m, float r);
 
+void matrixInitialize(float* A, int n, int m, float r);
+
 void matrixFree(float** A);
 
 void matrixMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1);
@@ -24,44 +26,18 @@ void matrixMultiplyTranspose(float* C, float* A, int n0, int m0, float* B, int n
 
 void matrixTransposeMultiply(float* C, float* A, int n0, int m0, float* B, int n1, int m1);
 
-void matrixTranspose(float* B, float* A, int n, int m);
+void arrayInitialize(float** A, int n, float r);
 
 void arrayCopyToDevice(float* _A, float* A, int n);
 
 void arrayCopyToHost(float* A, float* _A, int n);
 
-void arrayAdd(float* C, float* A, float* B, int n);
+void arrayAddRepSigmoid(float* C, float* A, float* B, int n, int m);
 
-void arrayAdd(float* C, float* A, float b, int n);
-
-void arrayAddRep(float* C, float* A, float* B, int n, int m);
-
-void arraySubtract(float* C, float* A, float* B, int n);
-
-void arrayMultiply(float* C, float* A, float* B, int n);
-
-void arrayMultiply(float* C, float* A, float b, int n);
-
-void arrayDivide(float* C, float* A, float* B, int n);
-
-void arraySigmoid(float* B, float* A, int n);
-
-void arrayDerivSigmoid(float* B, float* A, int n);
-
-void arrayReLU(float* B, float* A, int n);
-
-void arrayDerivReLU(float* B, float* A, int n);
-
-void arraySqrt(float* B, float* A, int n);
+void arrayMultiplyDerivSigmoid(float* C, float* A, float* B, int n);
 
 void arrayStep(float* B, float* A, float nu, int n);
 
-void unpotato(float* A, int* B);
-//void unpotato(float* A, int* B, unsigned int* C);
+void unpotato(float* A, int* B, int n);
 
-void potato(float* A, float* B, bool* C, float* D, int* E);
-//void potato(float* A, float* B, float* BB, bool* C, float* D, int* E, unsigned int* F);
-
-void repotato(float* A, float* B, unsigned int* C);
-
-void generate(unsigned int* A);
+void potato(float* A, float* B, unsigned char* C, float* D, int* E, int n);
