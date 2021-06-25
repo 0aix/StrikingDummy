@@ -478,7 +478,7 @@ namespace StrikingDummy
 				return lucid_cd.ready;
 		case WAIT_FOR_MP:
 			if (action_set == ActionSet::FULL)
-				return gcd_timer.ready && element != Element::AF;
+				return gcd_timer.ready && element != Element::AF && mp < MAX_MP;
 			else
 				return false;
 		case POT:
@@ -1054,7 +1054,8 @@ namespace StrikingDummy
 		state[53] = pot.time / (float)POT_DURATION;
 		state[54] = pot_cd.ready;
 		state[55] = pot_cd.time / (float)POT_CD;
-		state[56] = mp_wait / (float)TICK_TIMER;
+		//state[56] = mp_wait / (float)TICK_TIMER;
+		state[56] = mp_timer.time / (float)TICK_TIMER;
 	}
 
 	std::string BlackMage::get_info()

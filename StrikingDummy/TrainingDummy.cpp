@@ -31,14 +31,14 @@ namespace StrikingDummy
 		const int NUM_EPISODES = NUM_STEPS_PER_EPOCH / NUM_STEPS_PER_EPISODE;
 		const int NUM_BATCHES_PER_EPOCH = 50;
 		const int CAPACITY = 1000000;
-		const int BATCH_SIZE = 1000;
+		const int BATCH_SIZE = 10000;
 		const int NUM_BATCHES = CAPACITY / BATCH_SIZE;
 		const float WINDOW = 600000.0f;
 		const float EPS_DECAY = 0.999f;
 		const float EPS_START = 1.0f;
 		const float EPS_MIN = 0.10f;
-		const float OUTPUT_LOWER = 24.530f;
-		const float OUTPUT_UPPER = 25.200f;
+		const float OUTPUT_LOWER = 24.590f;
+		const float OUTPUT_UPPER = 25.270f;
 		const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 
 		std::stringstream zz;
@@ -63,9 +63,10 @@ namespace StrikingDummy
 
 		BlackMage& blm = (BlackMage&)job;
 
-		float nu = 0.0005f / 5.0f;
-		//float eps = EPS_START;
-		float eps = EPS_MIN;
+		float nu = 0.001f;
+		//float nu = 0.000002f;
+		float eps = EPS_START;
+		//float eps = EPS_MIN;
 		float exp = 0.0f;
 		float steps_per_episode = NUM_STEPS_PER_EPISODE;
 		float avg_dps = 0.0f;
@@ -178,7 +179,8 @@ namespace StrikingDummy
 			// test model
 			if (epoch % 50 == 0)
 			{
-				test();
+				float q = test();
+				q = OUTPUT_LOWER + (OUTPUT_UPPER - OUTPUT_LOWER) / (1.0f + expf(-q));
 
 				float dps = job.total_damage / job.timeline.time;
 				//avg_dps = 0.9f * avg_dps + 0.1f * (0.1f * job.total_damage / job.timeline.time);
@@ -187,8 +189,9 @@ namespace StrikingDummy
 
 				std::stringstream ss;
 				//ss << "epoch: " << _epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", avg dps: " << est_dps << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
-				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
-				ss << "10000 rotation steps ms: " << generate_time / 1000000.0 / total_count << ", 50 batches ms: " << copy_time / 1000000.0 / copy_count << std::endl;
+				//ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "10000 rotation steps ms: " << generate_time / 1000000.0 / total_count << ", epoch ms: " << copy_time / 1000000.0 / copy_count << std::endl;
 				//ss << "generate: " << generate_time / 1000000.0 / total_count << ", copy_q1: " << copy_q1_time / 1000000.0 / total_count << ", compute_q1: " << compute_q1_time / 1000000.0 / total_count << ", calc_reward: " << calc_reward_time / 1000000.0 / total_count << ", copy_q0: " << copy_q0_time / 1000000.0 / total_count << ", compute_q0: " << compute_q0_time / 1000000.0 / total_count << ", calc_target: " << calc_target_time / 1000000.0 / total_count << ", train: " << train_time / 1000000.0 / total_count << ", copy: " << copy_time / 1000000.0 / copy_count << std::endl;
 
 				generate_time = 0; copy_q1_time = 0; compute_q1_time = 0; calc_reward_time = 0; copy_q0_time = 0; compute_q0_time = 0; calc_target_time = 0; train_time = 0; total_count = 0; copy_time = 0; copy_count = 0;
@@ -219,12 +222,15 @@ namespace StrikingDummy
 		Logger::close();
 	}
 
-	void TrainingDummy::test()
+	float TrainingDummy::test()
 	{
 		rotation.reset(0.0f, 0.0f);
 		job.reset();
+		rotation.step();
+		float q = rotation.stored_max_weight;
 		while (job.timeline.time < 600000)
 			rotation.step();
+		return q;
 	}
 
 	void TrainingDummy::trace()
@@ -512,6 +518,38 @@ namespace StrikingDummy
 			ss << i + 1 << ") " << 100.0f * lines[i].second / total_rotations << "%: " << lines[i].first << std::endl;
 			Logger::log(ss.str().c_str());
 		}
+
+		Logger::close();
+	}
+
+	void TrainingDummy::mp_offset()
+	{
+		Logger::open("mp_offset");
+
+		BlackMage& blm = (BlackMage&)job;
+		blm.reset();
+
+		model.load("Weights\\weights");
+
+		memcpy(model.m_x0.data(), job.get_state(), sizeof(float) * job.get_state_size());
+		
+		std::vector<float> dps;
+
+		for (int i = 1; i <= 3000; i++)
+		{
+			model.m_x0.data()[56] = i / 3000.0f;
+			float q = model.compute()[BlackMage::ENOCHIAN];
+			q = 24.590f + (25.270f - 24.590f) / (1.0f + expf(-q));
+			dps.push_back(q);
+		}
+
+		std::stringstream ss;
+		ss.precision(12);
+
+		for (int i = 0; i < dps.size(); i++)
+			ss << i + 1 << "," << dps[i] << "\n";
+
+		Logger::log(ss.str().c_str());
 
 		Logger::close();
 	}

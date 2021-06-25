@@ -20,4 +20,5 @@ int main()
 	//dummy.dist(450, 10000);
 	//dummy.study();
 	//practice.start();
+	//dummy.mp_offset();
 }

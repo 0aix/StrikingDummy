@@ -56,6 +56,7 @@ namespace StrikingDummy
 						max_action = index;
 					}
 				}
+				stored_max_weight = max_weight;
 				action = max_action;
 				//exploring = false;
 			}

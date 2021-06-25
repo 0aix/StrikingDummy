@@ -26,6 +26,7 @@ namespace StrikingDummy
 		float eps;
 		float exp;
 		bool exploring;
+		float stored_max_weight;
 
 		std::mt19937 rng;
 		std::uniform_real_distribution<float> unif = std::uniform_real_distribution<float>(0.0f, 1.0f);
