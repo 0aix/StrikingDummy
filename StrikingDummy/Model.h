@@ -18,8 +18,21 @@ namespace StrikingDummy
 		int batch_size;
 	};
 
+	struct ModelComputeInput
+	{
+		MatrixXf m_x0;
+		MatrixXf m_x1;
+		MatrixXf m_x2;
+		MatrixXf m_x3;
+	};
+
 	struct Model
 	{
+		float* _state = NULL;
+		unsigned char* _action = NULL;
+		float* _reward = NULL;
+		int* _move = NULL;
+
 		float* x0 = NULL;
 		float* x3 = NULL;
 		float* X0 = NULL;
@@ -35,6 +48,7 @@ namespace StrikingDummy
 		float* _X2 = NULL;
 		float* _X3 = NULL;
 		float* _target = NULL;
+
 		float* _W1 = NULL;
 		float* _W2 = NULL;
 		float* _W3 = NULL;
@@ -52,26 +66,6 @@ namespace StrikingDummy
 		float* _dLdb3 = NULL;
 		float* _ones = NULL;
 
-		float* _dLdW1m = NULL;
-		float* _dLdW2m = NULL;
-		float* _dLdW3m = NULL;
-		float* _dLdb1m = NULL;
-		float* _dLdb2m = NULL;
-		float* _dLdb3m = NULL;
-		float* _dLdW1v = NULL;
-		float* _dLdW2v = NULL;
-		float* _dLdW3v = NULL;
-		float* _dLdb1v = NULL;
-		float* _dLdb2v = NULL;
-		float* _dLdb3v = NULL;
-		float* _temp = NULL;
-
-		float* __X0 = NULL;
-		float* __X1 = NULL;
-		float* __X2 = NULL;
-		float* __W2 = NULL;
-		float* __W3 = NULL;
-
 		MatrixXf m_x0;
 		MatrixXf m_x1;
 		MatrixXf m_x2;
@@ -82,28 +76,29 @@ namespace StrikingDummy
 		MatrixXf m_b1;
 		MatrixXf m_b2;
 		MatrixXf m_b3;
-
-		static constexpr float BETA1 = 0.85f;
-		static constexpr float BETA2 = 0.85f;
-		static constexpr float EPSILON = 0.00000001f;
 		
-		int input_size = 0;
-		int output_size = 0;
+		int input_size;
+		int output_size;
 		int batch_size = 0;
-		float beta1 = BETA1;
-		float beta2 = BETA2;
-		bool adam = false;
+		int total_size;
 
-		//Model(ModelParams& params);
+		Model(int input_size, int output_size);
 		~Model();
 
-		void init(int input_size, int output_size, int batch_size, bool adam);
+		void init(int batch_size);
+
+		ModelComputeInput getModelComputeInput();
 
 		float* compute();
+		float* compute(ModelComputeInput& input);
 		float* batch_compute();
 
 		void train(float nu);
 		void copyToHost();
+
+		void batch_train(float nu, int offset);
+
+		void copyMemory(int offset, float* state_memory, unsigned char* action_memory, float* reward_memory, int* move_memory, int size);
 
 		void load(const char* filename);
 		void save(const char* filename);

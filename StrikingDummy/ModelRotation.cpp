@@ -8,11 +8,10 @@
 
 namespace StrikingDummy
 {
-	std::mt19937 model_rotation_rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-	std::uniform_real_distribution<float> unif(0.0f, 1.0f);
-	
-	ModelRotation::ModelRotation(Job& job, Model& model) : Rotation(job), model(model)
+	ModelRotation::ModelRotation(Job& job, Model& model, long long offset) : Rotation(job), model(model)
 	{
+		rng = std::mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count() + offset);
+		input = model.getModelComputeInput();
 		random_action.push_back(-1);
 		eps = 0.0f;
 		exp = 0.0f;
@@ -23,7 +22,8 @@ namespace StrikingDummy
 	{
 		this->eps = eps;
 		this->exp = exp;
-		this->exploring = false;
+		//this->exploring = false;
+		//this->input = model.getModelComputeInput();
 	}
 
 	void ModelRotation::step()
@@ -33,16 +33,17 @@ namespace StrikingDummy
 		else
 		{
 			int action;
-			if (unif(model_rotation_rng) < (exploring ? std::max(eps, exp) : eps))
+			//if (unif(rng) < (exploring ? std::max(eps, exp) : eps))
+			if (unif(rng) < eps)
 			{
-				std::sample(job.actions.begin(), job.actions.end(), random_action.begin(), 1, model_rotation_rng);
+				std::sample(job.actions.begin(), job.actions.end(), random_action.begin(), 1, rng);
 				action = random_action.front();
-				exploring = true;
+				//exploring = true;
 			}
 			else
 			{
-				memcpy(model.m_x0.data(), job.get_state(), sizeof(float)* job.get_state_size());
-				float* output = model.compute();
+				memcpy(input.m_x0.data(), job.get_state(), sizeof(float) * job.get_state_size());
+				float* output = model.compute(input);
 				int max_action = job.actions[0];
 				float max_weight = output[max_action];
 				auto cend = job.actions.cend();
@@ -55,8 +56,9 @@ namespace StrikingDummy
 						max_action = index;
 					}
 				}
+				stored_max_weight = max_weight;
 				action = max_action;
-				exploring = false;
+				//exploring = false;
 			}
 			job.use_action(action);
 		}

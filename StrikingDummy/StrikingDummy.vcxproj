@@ -128,10 +128,11 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>cudart_static.lib;curand.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;curand.lib;cublas.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -158,7 +159,9 @@
     <ClInclude Include="TrainingDummy.h" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="CUDA.cu" />
+    <CudaCompile Include="CUDA.cu">
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">compute_61,sm_61</CodeGeneration>
+    </CudaCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
