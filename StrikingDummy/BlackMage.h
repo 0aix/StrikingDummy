@@ -116,18 +116,14 @@ namespace StrikingDummy
 
 		// MP costs and multipliers
 		static constexpr int F1_MP_COST = 800;
-		static constexpr int F2_MP_COST = 1500;
 		static constexpr int F3_MP_COST = 2000;
 		static constexpr int F4_MP_COST = 800;
 		static constexpr int B1_MP_COST = 400;
-		static constexpr int B2_MP_COST = 800;
 		static constexpr int B3_MP_COST = 800;
 		static constexpr int B4_MP_COST = 800;
 		static constexpr int FREEZE_MP_COST = 1000;
 		static constexpr int T3_MP_COST = 400;
-		static constexpr int T4_MP_COST = 800;
 		static constexpr int DESPAIR_MP_COST = 800;
-		static constexpr int SLEEP_MP_COST = 800;
 
 		const int base_gcd;
 		const int iii_gcd;
