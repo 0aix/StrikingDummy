@@ -5,6 +5,8 @@
 #include <curand.h>
 #include <cublas_v2.h>
 
+#define NUM_ACTIONS 21
+
 int blockSize = 0;
 bool cuda_init = false;
 curandGenerator_t gen;
@@ -219,6 +221,13 @@ void arrayInitialize(float** A, int n, float r)
 	_arrayInitialize<<<numBlocks, blockSize>>>(*A, n, r);
 }
 
+__global__ void _arrayAddRep(float* C, float* A, float* B, int n, int width)
+{
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < n)
+		C[i] = A[i] + B[i % width];
+}
+
 __global__ void _arrayAddRepSigmoid(float* C, float* A, float* B, int n, int width)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -228,7 +237,7 @@ __global__ void _arrayAddRepSigmoid(float* C, float* A, float* B, int n, int wid
 
 __global__ void _arrayMultiplyDerivSigmoid(float* C, float* A, float* B, int n)
 {
-int i = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < n)
 		C[i] = A[i] * B[i] * (1.0f - B[i]);
 }
@@ -254,6 +263,12 @@ void arrayCopyToHost(float* A, float* _A, int n)
 	}
 }
 
+void arrayAddRep(float* C, float* A, float* B, int n, int m)
+{
+	int numBlocks = (n * m + blockSize - 1) / blockSize;
+	_arrayAddRep<<<numBlocks, blockSize>>>(C, A, B, n * m, n);
+}
+
 void arrayAddRepSigmoid(float* C, float* A, float* B, int n, int m)
 {
 	int numBlocks = (n * m + blockSize - 1) / blockSize;
@@ -266,16 +281,31 @@ void arrayMultiplyDerivSigmoid(float* C, float* A, float* B, int n)
 	_arrayMultiplyDerivSigmoid<<<numBlocks, blockSize>>>(C, A, B, n);
 }
 
+void arrayAbsSum(float* A, int n, float* out)
+{
+	cublasSasum(handle, n, A, 1, out);
+}
+
 void arrayStep(float* B, float* A, float nu, int n)
 {
 	cublasSaxpy(handle, n, &nu, A, 1, B, 1);
 }
 
-__global__ void _unpotato(float* A, int* B)
+__global__ void _adamStep(float* A, float* B, float BETA1, float BETA2, int n)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if ((i + 1) % 2500)
-		A[i * 20 + B[i]] = 0.0f;
+	float dldw = A[i];
+	float dldwm = (1.0f - BETA1) * dldw + BETA1 * B[i * 2];
+	float dldwv = (1.0f - BETA2) * dldw * dldw + BETA2 * B[i * 2 + 1];
+	B[i * 2] = dldwm;
+	B[i * 2 + 1] = dldwv;
+	A[i] = dldwm / (sqrtf(dldwv) + 1e-8);
+}
+
+void adamStep(float* A, float* B, float BETA1, float BETA2, int n)
+{
+	int numBlocks = (n + blockSize - 1) / blockSize;
+	_adamStep<<<numBlocks, blockSize>>>(A, B, BETA1, BETA2, n);
 }
 
 __global__ void _potato(float* A, float* B, unsigned char* C, float* D, int* E)
@@ -283,18 +313,13 @@ __global__ void _potato(float* A, float* B, unsigned char* C, float* D, int* E)
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if ((i + 1) % 2500)
 	{
-		// _d3, _X3, _action + 20 * offset, _reward + 2 * offset
-		unsigned int m = i * 20;
-		unsigned int n = m + 20;
+		// _d3, _X3, _action + NUM_ACTIONS * offset, _reward + 2 * offset
+		unsigned int m = i * NUM_ACTIONS;
+		unsigned int n = m + NUM_ACTIONS;
 		float q = 0.0f;
-		/*
-		for (int k = 0; k < 20; ++k)
-			if (C[m + k] && B[n + k] > q)
-				q = B[n + k];
-		*/
 		int k = 0;
 		unsigned char a;
-		while ((a = C[m + k++]) < 20)
+		while ((a = C[m + k++]) < NUM_ACTIONS)
 			if (B[n + a] > q)
 				q = B[n + a];
 		float x = B[m + E[i]];
@@ -302,11 +327,11 @@ __global__ void _potato(float* A, float* B, unsigned char* C, float* D, int* E)
 	}
 }
 
-void unpotato(float* A, int* B, int n)
+__global__ void _unpotato(float* A, int* B)
 {
-	if (n % 1000)
-		throw 0;
-	_unpotato<<<n / 1000, 1000>>>(A, B);
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if ((i + 1) % 2500)
+		A[i * NUM_ACTIONS + B[i]] = 0.0f;
 }
 
 void potato(float* A, float* B, unsigned char* C, float* D, int* E, int n)
@@ -314,4 +339,11 @@ void potato(float* A, float* B, unsigned char* C, float* D, int* E, int n)
 	if (n % 1000)
 		throw 0;
 	_potato<<<n / 1000, 1000>>>(A, B, C, D, E);
+}
+
+void unpotato(float* A, int* B, int n)
+{
+	if (n % 1000)
+		throw 0;
+	_unpotato<<<n / 1000, 1000>>>(A, B);
 }

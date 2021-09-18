@@ -1,5 +1,4 @@
 #include "BlackMage.h"
-#include "Logger.h"
 #include <assert.h>
 #include <algorithm>
 #include <numeric>
@@ -16,7 +15,7 @@
 
 namespace StrikingDummy
 {
-	BlackMage::BlackMage(Stats& stats, Opener opener, ActionSet action_set) : 
+	BlackMage::BlackMage(Stats& stats, Opener opener, ActionSet action_set) :
 		Job(stats, BLM_ATTR),
 		opener(opener),
 		action_set(action_set),
@@ -38,6 +37,11 @@ namespace StrikingDummy
 	}
 
 	void BlackMage::reset()
+	{
+		reset(0, 0, 0);
+	}
+
+	void BlackMage::reset(int mp_tick, int lucid_tick, int dot_tick)
 	{
 		timeline = {};
 
@@ -62,15 +66,16 @@ namespace StrikingDummy
 		t3p = false;
 
 		// server ticks
-		mp_timer.reset(tick(rng), false);
-		dot_timer.reset(tick(rng), false);
-		lucid_timer.reset(tick(rng), false);
+		mp_timer.reset(mp_tick <= 0 ? tick(rng) : mp_tick, false);
+		dot_timer.reset(dot_tick <= 0 ? tick(rng) : dot_tick, false);
+		lucid_timer.reset(lucid_tick <= 0 ? tick(rng) : lucid_tick, false);
 		timeline.push_event(mp_timer.time);
 		timeline.push_event(dot_timer.time);
 		timeline.push_event(lucid_timer.time);
 		mp_wait = 0;
 
 		skip_lucid_tick = false;
+		skip_transpose_tick = false;
 
 		// elemental gauge
 		gauge.reset(0, 0);
@@ -88,6 +93,9 @@ namespace StrikingDummy
 		lucid.reset(0, 0);
 		pot.reset(0, 0);
 
+		dot_travel_timer.reset(0, false);
+		dot_travel = 0;
+
 		// cooldowns		
 		swift_cd.reset(0, true);
 		triple_cd.reset(0, true);
@@ -104,7 +112,6 @@ namespace StrikingDummy
 		cast_timer.reset(0, false);
 		action_timer.reset(0, true);
 		casting = Action::NONE;
-		casting_mp_cost = 0;
 
 		// precast
 		if (opener == Opener::PRE_F3 || opener == Opener::PRE_B3 || opener == Opener::PRE_LL_F3 || opener == Opener::PRE_LL_B3)
@@ -115,8 +122,7 @@ namespace StrikingDummy
 			timeline.push_event(gauge.time);
 			timeline.push_event(sharp.time);
 			timeline.push_event(sharp_cd.time);
-
-			sharp_last = -12000 + SHARP_CD;
+			sharp_last = -12000;
 		}
 		if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
 		{
@@ -124,10 +130,20 @@ namespace StrikingDummy
 			leylines_cd.reset(LL_CD - 3500, false);
 			timeline.push_event(leylines.time);
 			timeline.push_event(leylines_cd.time);
+			ll_last = -3500;
+		}
+		if (opener == Opener::PRE_T3)
+		{
+			dot_travel = 1;
+			dot_travel_timer.reset(DOT_TRAVEL_DURATION - CAST_LOCK, false);
+			tc_proc.reset(TC_DURATION - CAST_LOCK, 1);
+			sharp_cd.reset(SHARP_CD - 15000, false);
+			timeline.push_event(dot_travel_timer.time);
+			timeline.push_event(tc_proc.time);
+			timeline.push_event(sharp_cd.time);
 		}
 
 		// metrics
-		total_damage = 0.0f;
 		xeno_count = 0;
 		f1_count = 0;
 		f4_count = 0;
@@ -144,7 +160,8 @@ namespace StrikingDummy
 		total_xeno_damage = 0.0f;
 		total_t3_damage = 0.0f;
 		total_dot_damage = 0.0f;
-		
+		total_damage = 0.0f;
+
 		history.clear();
 
 		update_history();
@@ -152,7 +169,7 @@ namespace StrikingDummy
 
 	void BlackMage::update(int elapsed)
 	{
-		DBG(assert(elapsed > 0));
+		assert(elapsed > 0);
 
 		// time metrics
 		if (dot.time > 0)
@@ -183,6 +200,8 @@ namespace StrikingDummy
 		lucid.update(elapsed);
 		pot.update(elapsed);
 
+		dot_travel_timer.update(elapsed);
+
 		// cooldowns
 		swift_cd.update(elapsed);
 		triple_cd.update(elapsed);
@@ -199,7 +218,14 @@ namespace StrikingDummy
 		cast_timer.update(elapsed);
 		action_timer.update(elapsed);
 
-		// 
+		//
+		if (dot_travel_timer.ready)
+		{
+			dot.reset(DOT_DURATION, dot_travel);
+			dot_travel_timer.ready = false;
+			dot_travel = 0;
+			push_event(DOT_DURATION);
+		}
 		if (mp_timer.ready)
 			update_mp();
 		if (dot_timer.ready)
@@ -225,7 +251,7 @@ namespace StrikingDummy
 			end_action();
 		if (element == Element::AF || mp == MAX_MP)
 			mp_wait = 0;
-		
+
 		update_history();
 	}
 
@@ -234,8 +260,10 @@ namespace StrikingDummy
 		actions.clear();
 		if (action_timer.ready)
 		{
-			for (int i = 0; i < NUM_ACTIONS; i++) if (can_use_action(i)) actions.push_back(i);
-			
+			for (int i = 0; i < NUM_ACTIONS; i++)
+				if (can_use_action(i))
+					actions.push_back(i);
+
 			if (actions.empty() || (actions.size() == 1 && actions[0] == NONE))
 				return;
 
@@ -244,7 +272,7 @@ namespace StrikingDummy
 			{
 				Transition& t = history.back();
 				get_state(t.t1);
-				t.dt = timeline.time - t.dt;
+				t.dt = timeline.time - t.time;
 				t.actions = actions;
 			}
 
@@ -252,34 +280,38 @@ namespace StrikingDummy
 			Transition& t = history.back();
 			get_state(t.t0);
 			t.reward = 0.0f;
-			t.dt = timeline.time;
+			t.time = timeline.time;
 		}
 	}
 
 	void BlackMage::update_mp()
 	{
-		if (element != Element::AF)
+		if (!skip_transpose_tick)
 		{
-			switch (gauge.count)
+			if (element != Element::AF)
 			{
-			case 0:
-				mp += MP_PER_TICK;
-				break;
-			case 1:
-				mp += MP_PER_TICK_UI1;
-				break;
-			case 2:
-				mp += MP_PER_TICK_UI2;
-				break;
-			case 3:
-				mp += MP_PER_TICK_UI3;
+				switch (gauge.count)
+				{
+				case 0:
+					mp += MP_PER_TICK;
+					break;
+				case 1:
+					mp += MP_PER_TICK_UI1;
+					break;
+				case 2:
+					mp += MP_PER_TICK_UI2;
+					break;
+				case 3:
+					mp += MP_PER_TICK_UI3;
+				}
+				if (mp > MAX_MP)
+					mp = MAX_MP;
 			}
-			if (mp > MAX_MP)
-				mp = MAX_MP;
 		}
 		mp_timer.reset(TICK_TIMER, false);
 		push_event(TICK_TIMER);
 		mp_wait = 0;
+		skip_transpose_tick = false;
 	}
 
 	void BlackMage::update_dot()
@@ -292,8 +324,8 @@ namespace StrikingDummy
 			history.back().reward += damage;
 			if (prob(rng) < TC_PROC_RATE)
 			{
-				tc_proc.reset(TC_DURATION, 1);
-				push_event(TC_DURATION);
+				tc_proc.reset(TC_REFRESH_DURATION, 1);
+				push_event(TC_REFRESH_DURATION);
 			}
 		}
 		dot_timer.reset(TICK_TIMER, false);
@@ -319,38 +351,73 @@ namespace StrikingDummy
 		push_event(TICK_TIMER);
 	}
 
-	void BlackMage::update_metric(int action)
+	void BlackMage::update_metric(int action, float damage)
 	{
-		if (!metrics_enabled)
+		switch (action)
+		{
+		case XENO:
+			xeno_count++;
+			total_xeno_damage += damage;
+			break;
+		case F1:
+			f1_count++;
+			break;
+		case F4:
+			f4_count++;
+			total_f4_damage += damage;
+			break;
+		case B4:
+			b4_count++;
+			break;
+		case T3:
+			t3_count++;
+			total_t3_damage += damage;
+			break;
+		case DESPAIR:
+			despair_count++;
+			total_desp_damage += damage;
+			break;
+		case TRANSPOSE:
+			transpose_count++;
+			break;
+		case LUCID:
+			lucid_count++;
+			break;
+		case POT:
+			pot_count++;
+			break;
+		}
+		// distribution metrics
+		if (!dist_metrics_enabled)
 			return;
 		switch (action)
 		{
 		case T3:
 			if (tc_proc.count > 0)
-				t3p_dist.push_back(timeline.time - t3_last);
+				t3p_dist.push_back(timeline.time - t3_last + DOT_DURATION);
 			else
-				t3_dist.push_back(timeline.time - t3_last);
-			t3_last = timeline.time + DOT_DURATION;
+				t3_dist.push_back(timeline.time - t3_last + DOT_DURATION);
+			t3_last = timeline.time;
 			break;
 		case SWIFT:
-			swift_dist.push_back(timeline.time - swift_last);
-			swift_last = timeline.time + SWIFT_CD;
+			swift_dist.push_back(timeline.time - swift_last + SWIFT_CD);
+			swift_last = timeline.time;
 			break;
 		case TRIPLE:
-			triple_dist.push_back(timeline.time - triple_last);
-			triple_last = timeline.time + TRIPLE_CD;
+			triple_dist.push_back(timeline.time - triple_last + TRIPLE_CD);
+			triple_last = timeline.time;
 			break;
 		case SHARP:
-			sharp_dist.push_back(timeline.time - sharp_last);
-			sharp_last = timeline.time + SHARP_CD;
+			sharp_dist.push_back(timeline.time - sharp_last + SHARP_CD);
+			sharp_last = timeline.time;
 			break;
 		case LEYLINES:
-			ll_dist.push_back(timeline.time - ll_last);
-			ll_last = timeline.time + LL_CD;
+			ll_dist.push_back(timeline.time - ll_last + LL_CD);
+			ll_last = timeline.time;
 			break;
 		case MANAFONT:
-			mf_dist.push_back(timeline.time - mf_last);
-			mf_last = timeline.time + MANAFONT_CD;
+			mf_dist.push_back(timeline.time - mf_last + MANAFONT_CD);
+			mf_last = timeline.time;
 			break;
 		}
 	}
@@ -358,7 +425,7 @@ namespace StrikingDummy
 	bool BlackMage::is_instant_cast(int action) const
 	{
 		// for gcds
-		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0) || action == XENO ||action == UMBRAL_SOUL;
+		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || (action == T3 && tc_proc.count > 0) || action == XENO || action == UMBRAL_SOUL;
 	}
 
 	int BlackMage::get_ll_cast_time(int ll_cast_time, int cast_time) const
@@ -483,6 +550,11 @@ namespace StrikingDummy
 				return false;
 		case POT:
 			return pot_cd.ready;
+		case F3P_OFF:
+			if (action_set == ActionSet::FULL)
+				return fs_proc.count > 0;
+			else
+				return false;
 		case UMBRAL_SOUL:
 			//return gcd_timer.ready && element == UI && enochian && gauge.count < 3;
 			return false;
@@ -520,24 +592,10 @@ namespace StrikingDummy
 		case XENO:
 		case DESPAIR:
 		case UMBRAL_SOUL:
-			if (action == XENO)
-				xeno_count++;
-			else if (action == F1)
-				f1_count++;
-			else if (action == F4)
-				f4_count++;
-			else if (action == B4)
-				b4_count++;
-			else if (action == T3)
-				t3_count++;
-			else if (action == DESPAIR)
-				despair_count++;
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
 			action_timer.reset(get_action_time(action), false);
 			casting = action;
-			casting_mp_cost = get_mp_cost(action);
-			assert(casting_mp_cost <= mp);
 			if (casting == T3)
 				t3p = tc_proc.count > 0;
 			if (cast_timer.time == 0)
@@ -588,14 +646,13 @@ namespace StrikingDummy
 		case TRANSPOSE:
 			assert(element != Element::NE);
 			element = element == Element::AF ? Element::UI : Element::AF;
+			skip_transpose_tick = mp_timer.time <= LATENCY;
 			transpose_cd.reset(TRANSPOSE_CD, false);
 			gauge.reset(GAUGE_DURATION, 1);
 			push_event(TRANSPOSE_CD);
 			push_event(GAUGE_DURATION);
-			transpose_count++;
 			break;
 		case LUCID:
-			lucid_count++;
 			skip_lucid_tick = lucid_timer.time <= ANIMATION_LOCK + ACTION_TAX;
 			lucid.reset(LUCID_DURATION, 1);
 			lucid_cd.reset(LUCID_CD, false);
@@ -603,38 +660,41 @@ namespace StrikingDummy
 			push_event(LUCID_CD);
 			break;
 		case POT:
-			pot_count++;
 			pot.reset(POT_DURATION, 1);
 			pot_cd.reset(POT_CD, false);
 			push_event(POT_DURATION);
 			push_event(POT_CD);
-			action_timer.reset(POTION_LOCK + ACTION_TAX, false);
+			break;
+		case F3P_OFF:
+			fs_proc.reset(0, 0);
+			action_timer.reset(1, false);
 			push_event(action_timer.time);
 			return;
 		}
 		// ogcd only
-		action_timer.reset(ANIMATION_LOCK + ACTION_TAX, false);
+		action_timer.reset(action == POT ? POTION_LOCK + ACTION_TAX : ANIMATION_LOCK + ACTION_TAX, false);
 		push_event(action_timer.time);
 		update_metric(action);
 	}
 
 	void BlackMage::end_action()
 	{
-		assert(casting != NONE);
 		assert(cast_timer.time == 0);
 		assert(cast_timer.ready || is_instant_cast(casting));
-		assert(mp >= casting_mp_cost);
 
-		update_metric(casting);
+		int casting_mp_cost = get_mp_cost(casting, true);
+
+		assert(casting != NONE);
+		assert(mp >= casting_mp_cost);
+		float damage = get_damage(casting);
+		total_damage += damage;
+		history.back().reward += damage;
+		update_metric(casting, damage);
 
 		if (casting == DESPAIR)
 			mp = 0;
 		else
 			mp -= casting_mp_cost;
-
-		float damage = get_damage(casting);
-		total_damage += damage;
-		history.back().reward += damage;
 
 		if (casting == F3 && fs_proc.count > 0);
 		// firestarter doesn't use swift or triple
@@ -719,48 +779,53 @@ namespace StrikingDummy
 		case F4:
 			if (umbral_hearts > 0)
 				umbral_hearts--;
-			total_f4_damage += damage;
 			break;
 		case T3:
 			if (t3p)
 				tc_proc.reset(0, 0);
-			dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0)));
-			push_event(DOT_DURATION);
+			//dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0)));
+			//push_event(DOT_DURATION);
+			if (dot_travel_timer.time > 0)
+			{
+				dot.reset(DOT_DURATION + dot_travel_timer.time, dot_travel);
+				push_event(DOT_DURATION + dot_travel_timer.time);
+			}
+			dot_travel_timer.reset(DOT_TRAVEL_DURATION, false);
+			dot_travel = (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0));
+			push_event(DOT_TRAVEL_DURATION);
 			if (sharp.count > 0)
 			{
 				tc_proc.reset(TC_DURATION, 1);
 				sharp.reset(0, 0);
 				push_event(TC_DURATION);
 			}
-			total_t3_damage += damage;
 			break;
 		case XENO:
 			assert(xeno_procs > 0);
 			xeno_procs--;
-			total_xeno_damage += damage;
 			break;
 		case DESPAIR:
 			element = AF;
 			gauge.reset(GAUGE_DURATION, 3);
 			push_event(GAUGE_DURATION);
-			total_desp_damage += damage;
 			break;
 		case UMBRAL_SOUL:
 			assert(element == UI);
 			umbral_hearts = std::min(umbral_hearts + 1, 3);
 			gauge.reset(GAUGE_DURATION, std::min(gauge.count + 1, 3));
 			push_event(GAUGE_DURATION);
+			break;
 		}
 		casting = NONE;
 		cast_timer.ready = false;
 	}
 
-	int BlackMage::get_mp_cost(int action) const
+	int BlackMage::get_mp_cost(int action, bool is_end_action) const
 	{
 		switch (action)
 		{
 		case B1:
-			if (element == AF && get_cast_time(B1) < gauge.time)
+			if (element == AF && (is_end_action || get_cast_time(B1) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return B1_MP_COST / 2;
@@ -768,7 +833,7 @@ namespace StrikingDummy
 					return B1_MP_COST / 4;
 				return 0;
 			}
-			else if (element == UI && get_cast_time(B1) < gauge.time)
+			else if (element == UI && (is_end_action || get_cast_time(B1) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return B1_MP_COST * 3 / 4;
@@ -778,7 +843,7 @@ namespace StrikingDummy
 			}
 			return B1_MP_COST;
 		case B3:
-			if (element == AF && get_cast_time(B3) < gauge.time)
+			if (element == AF && (is_end_action || get_cast_time(B3) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return B3_MP_COST / 2;
@@ -786,7 +851,7 @@ namespace StrikingDummy
 					return B3_MP_COST / 4;
 				return 0;
 			}
-			else if (element == UI && get_cast_time(B3) < gauge.time)
+			else if (element == UI && (is_end_action || get_cast_time(B3) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return B3_MP_COST * 3 / 4;
@@ -796,7 +861,7 @@ namespace StrikingDummy
 			}
 			return B3_MP_COST;
 		case B4:
-			if (element == UI && get_cast_time(B4) < gauge.time)
+			if (element == UI && (is_end_action || get_cast_time(B4) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return B4_MP_COST * 3 / 4;
@@ -806,7 +871,7 @@ namespace StrikingDummy
 			}
 			return B4_MP_COST;
 		case FREEZE:
-			if (element == AF && get_cast_time(FREEZE) < gauge.time)
+			if (element == AF && (is_end_action || get_cast_time(FREEZE) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return FREEZE_MP_COST / 2;
@@ -814,7 +879,7 @@ namespace StrikingDummy
 					return FREEZE_MP_COST / 4;
 				return 0;
 			}
-			else if (element == UI && get_cast_time(FREEZE) < gauge.time)
+			else if (element == UI && (is_end_action || get_cast_time(FREEZE) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return FREEZE_MP_COST * 3 / 4;
@@ -824,7 +889,7 @@ namespace StrikingDummy
 			}
 			return FREEZE_MP_COST;
 		case F1:
-			if (element == UI && get_cast_time(F1) < gauge.time)
+			if (element == UI && (is_end_action || get_cast_time(F1) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return F1_MP_COST / 2;
@@ -836,7 +901,7 @@ namespace StrikingDummy
 		case F3:
 			if (fs_proc.count > 0)
 				return 0;
-			if (element == UI && get_cast_time(F3) < gauge.time)
+			if (element == UI && (is_end_action || get_cast_time(F3) < gauge.time))
 			{
 				if (gauge.count == 1)
 					return F3_MP_COST / 2;
@@ -848,7 +913,7 @@ namespace StrikingDummy
 		case F4:
 			return umbral_hearts == 0 ? F4_MP_COST * 2 : F4_MP_COST;
 		case T3:
-			return tc_proc.count > 0 ? 0 : T3_MP_COST;
+			return (is_end_action && t3p) || (!is_end_action && tc_proc.count > 0) ? 0 : T3_MP_COST;
 		case XENO:
 			return 0;
 		case DESPAIR:
@@ -856,7 +921,7 @@ namespace StrikingDummy
 		case UMBRAL_SOUL:
 			return 0;
 		}
-		return 99999;
+		return 0;
 	}
 
 	float BlackMage::get_damage(int action)
@@ -987,7 +1052,7 @@ namespace StrikingDummy
 		//float rng_multiplier = damage_range(rng) * (prob(rng) < stats.crit_rate ? stats.crit_multiplier : 1.0f) * (prob(rng) < stats.dhit_rate ? 1.25f : 1.0f);
 		//return potency * stats.potency_multiplier * rng_multiplier * (enochian ? ENO_MULTIPLIER : 1.0f) * (pot.count > 0 ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
 	}
-	
+
 	float BlackMage::get_dot_damage()
 	{
 		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
@@ -1056,6 +1121,11 @@ namespace StrikingDummy
 		state[55] = pot_cd.time / (float)POT_CD;
 		//state[56] = mp_wait / (float)TICK_TIMER;
 		state[56] = mp_timer.time / (float)TICK_TIMER;
+		state[57] = lucid_timer.time / (float)TICK_TIMER;
+		state[58] = dot_travel > 0;
+		state[59] = dot_travel_timer.time / (float)DOT_TRAVEL_DURATION;
+		state[60] = (dot_travel & 2) != 0;
+		state[61] = (dot_travel & 4) != 0;
 	}
 
 	std::string BlackMage::get_info()

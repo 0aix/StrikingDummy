@@ -32,12 +32,18 @@ void arrayCopyToDevice(float* _A, float* A, int n);
 
 void arrayCopyToHost(float* A, float* _A, int n);
 
+void arrayAddRep(float* C, float* A, float* B, int n, int m);
+
 void arrayAddRepSigmoid(float* C, float* A, float* B, int n, int m);
 
 void arrayMultiplyDerivSigmoid(float* C, float* A, float* B, int n);
 
+void arrayAbsSum(float* A, int n, float* out);
+
 void arrayStep(float* B, float* A, float nu, int n);
 
-void unpotato(float* A, int* B, int n);
+void adamStep(float* A, float* B, float BETA1, float BETA2, int n);
 
 void potato(float* A, float* B, unsigned char* C, float* D, int* E, int n);
+
+void unpotato(float* A, int* B, int n);

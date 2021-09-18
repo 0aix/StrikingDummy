@@ -12,7 +12,7 @@ namespace StrikingDummy
 			B1, B3, B4, F1, F3, F4, T3, XENO, DESPAIR,
 			SWIFT, TRIPLE, SHARP, LEYLINES, MANAFONT, ENOCHIAN, TRANSPOSE,
 			LUCID, WAIT_FOR_MP,
-			POT, FREEZE, UMBRAL_SOUL
+			POT, F3P_OFF, FREEZE, UMBRAL_SOUL
 		};
 
 		enum Element
@@ -22,7 +22,7 @@ namespace StrikingDummy
 
 		enum Opener
 		{
-			NO_OPENER, PRE_F3, PRE_B3, PRE_LL_F3, PRE_LL_B3
+			NO_OPENER, PRE_F3, PRE_B3, PRE_T3, PRE_LL_F3, PRE_LL_B3
 		};
 
 		enum ActionSet
@@ -30,23 +30,24 @@ namespace StrikingDummy
 			FULL, NO_B4, STANDARD
 		};
 
-		std::string blm_actions[22] =
+		const std::string blm_actions[23] =
 		{
 			"NONE",
 			"B1", "B3", "B4", "F1", "F3", "F4", "T3", "XENO", "DESPAIR",
 			"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "MANAFONT", "ENOCHIAN", "TRANSPOSE",
 			"LUCID", "WAIT_FOR_MP",
-			"HQ_TINCTURE_OF_INTELLIGENCE", "FREEZE", "UMBRAL_SOUL"
+			"HQ_TINCTURE_OF_INTELLIGENCE", "F3P OFF", "FREEZE", "UMBRAL_SOUL"
 		};
 
-		static constexpr float BLM_ATTR = 115.0f;
+		static constexpr int NUM_ACTIONS = 21;
 
-		static constexpr int NUM_ACTIONS = 20;
+		static constexpr float BLM_ATTR = 115.0f;
 
 		static constexpr int ACTION_TAX = 117;
 		static constexpr int CAST_LOCK = 500;
 		static constexpr int ANIMATION_LOCK = 600;
 		static constexpr int POTION_LOCK = 1100;
+		static constexpr int LATENCY = 100;
 
 		// Assume only in UI3 and AF3
 		static constexpr int MAX_MP = 10000;
@@ -71,10 +72,12 @@ namespace StrikingDummy
 		static constexpr int SWIFT_DURATION = 10000;
 		static constexpr int TRIPLE_DURATION = 15000;
 		static constexpr int SHARP_DURATION = 15000;
-		static constexpr int FS_DURATION = 18000;
-		static constexpr int TC_DURATION = 18000;
+		static constexpr int FS_DURATION = 19000; // 1 additional second when proc'd
+		static constexpr int TC_DURATION = 19000; // 1 additional second when proc'd from sharpcast
+		static constexpr int TC_REFRESH_DURATION = 17600; // 17.6s as taken from packet data
 		static constexpr int LL_DURATION = 30000;
 		static constexpr int DOT_DURATION = 24000;
+		static constexpr int DOT_TRAVEL_DURATION = 1000;
 		static constexpr int LUCID_DURATION = 21000;
 		static constexpr int POT_DURATION = 30000;
 
@@ -113,14 +116,18 @@ namespace StrikingDummy
 
 		// MP costs and multipliers
 		static constexpr int F1_MP_COST = 800;
+		static constexpr int F2_MP_COST = 1500;
 		static constexpr int F3_MP_COST = 2000;
 		static constexpr int F4_MP_COST = 800;
 		static constexpr int B1_MP_COST = 400;
+		static constexpr int B2_MP_COST = 800;
 		static constexpr int B3_MP_COST = 800;
 		static constexpr int B4_MP_COST = 800;
 		static constexpr int FREEZE_MP_COST = 1000;
 		static constexpr int T3_MP_COST = 400;
+		static constexpr int T4_MP_COST = 800;
 		static constexpr int DESPAIR_MP_COST = 800;
+		static constexpr int SLEEP_MP_COST = 800;
 
 		const int base_gcd;
 		const int iii_gcd;
@@ -152,6 +159,7 @@ namespace StrikingDummy
 		int mp_wait = 0;
 
 		bool skip_lucid_tick = false;
+		bool skip_transpose_tick = false;
 
 		// elemental gauge
 		Buff gauge;
@@ -165,10 +173,12 @@ namespace StrikingDummy
 		Buff leylines;
 		Buff fs_proc;
 		Buff tc_proc;
-		Buff dot;	// NOT ACTUALLY A BUFF BUT YOU KNOW
-					// (value & 2) <=> enochian; (value & 4) <=> pot
+		Buff dot; // (value & 2) <=> enochian; (value & 4) <=> pot
 		Buff lucid;
 		Buff pot;
+
+		Timer dot_travel_timer;
+		int dot_travel;
 
 		// cooldowns		
 		Timer swift_cd;
@@ -186,7 +196,6 @@ namespace StrikingDummy
 		Timer cast_timer;
 		Timer action_timer;
 		int casting = Action::NONE;
-		int casting_mp_cost = 0;
 
 		// count metrics
 		int xeno_count = 0;
@@ -200,8 +209,15 @@ namespace StrikingDummy
 		int pot_count = 0;
 		int total_dot_time = 0;
 
-		// distribution metrics
-		bool metrics_enabled = false;
+		double total_f4_damage = 0.0f;
+		double total_desp_damage = 0.0f;
+		double total_xeno_damage = 0.0f;
+		double total_t3_damage = 0.0f;
+		double total_dot_damage = 0.0f;
+
+		// distribution metrics tracking how long buffs fall off for before being reapplied
+		bool dist_metrics_enabled = false;
+
 		std::vector<int> t3_dist;
 		std::vector<int> t3p_dist;
 		std::vector<int> swift_dist;
@@ -216,15 +232,11 @@ namespace StrikingDummy
 		int ll_last = 0;
 		int mf_last = 0;
 
-		float total_f4_damage = 0.0f;
-		float total_desp_damage = 0.0f;
-		float total_xeno_damage = 0.0f;
-		float total_t3_damage = 0.0f;
-		float total_dot_damage = 0.0f;
-
 		BlackMage(Stats& stats, Opener opener, ActionSet action_set);
 
 		void reset();
+		void reset(int mp_tick, int lucid_tick, int dot_tick);
+
 		void update(int elapsed);
 		void update_history();
 
@@ -232,7 +244,7 @@ namespace StrikingDummy
 		void update_dot();
 		void update_lucid();
 
-		void update_metric(int action);
+		void update_metric(int action, float damage = 0.0f);
 
 		bool is_instant_cast(int action) const;
 		int get_ll_cast_time(int ll_cast_time, int cast_time) const;
@@ -245,12 +257,12 @@ namespace StrikingDummy
 		void use_action(int action);
 		void end_action();
 
-		int get_mp_cost(int action) const;
+		int get_mp_cost(int action, bool is_end_action = false) const;
 		float get_damage(int action);
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 57; }
+		int get_state_size() { return 62; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

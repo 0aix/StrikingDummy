@@ -72,6 +72,7 @@ namespace StrikingDummy
 		int action = 0;
 		float reward = 0.0f;
 		int dt = 0;
+		int time = 0;
 		std::vector<int> actions;
 	};
 
@@ -87,7 +88,7 @@ namespace StrikingDummy
 		std::uniform_real_distribution<float> damage_range;
 		std::uniform_int_distribution<int> tick;
 
-		float total_damage = 0.0f;
+		double total_damage = 0.0f;
 
 		Job(Stats& job_stats, float job_attr);
 		void step();

@@ -25,8 +25,8 @@ namespace StrikingDummy
 			rotation.step();
 
 			// DPS
-			std::cout << "DPS: " << 100.0f / job.timeline.time * job.total_damage << std::endl;
-			std::cout << "Time (seconds): " << job.timeline.time / 100.0f << std::endl;
+			std::cout << "DPS: " << 100.0 / job.timeline.time * job.total_damage << std::endl;
+			std::cout << "Time (seconds): " << job.timeline.time / 1000.0 << std::endl;
 		}
 	}
 }
