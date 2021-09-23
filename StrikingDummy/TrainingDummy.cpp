@@ -25,10 +25,10 @@ namespace StrikingDummy
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
 	const float EPS_MIN = 0.01f;
-	const float OUTPUT_LOWER = 24.840f;
-	const float OUTPUT_UPPER = 25.640f;
+	const float OUTPUT_LOWER = 26.100f;
+	const float OUTPUT_UPPER = 27.000f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 25.330;
+	const double BEST_THRESHOLD_TO_SAVE = 26.600;
 
 	void TrainingDummy::train()
 	{
@@ -166,7 +166,7 @@ namespace StrikingDummy
 				double dps = job.total_damage / job.timeline.time;
 
 				std::stringstream ss;
-				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b1s: " << blm.b1_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
 				ss << "20000 rotation steps ms: " << generate_time / 1000000.0 / total_count << ", epoch ms: " << copy_time / 1000000.0 / copy_count << std::endl;
 
 				generate_time = 0;
@@ -190,7 +190,6 @@ namespace StrikingDummy
 			{
 				if (best_future.valid() && best_future.get())
 				{
-					// print some things
 					std::stringstream ss;
 					ss << "best epoch: " << best_epoch << ", ms: " << best_time / 1000000.0 << ", best mean: " << best_mean << std::endl;
 					Logger::log(ss.str().c_str());
@@ -270,8 +269,6 @@ namespace StrikingDummy
 	{
 		Logger::open("trace");
 
-		std::cout.precision(4);
-
 		BlackMage& blm = (BlackMage&)job;
 		blm.reset();
 
@@ -284,13 +281,15 @@ namespace StrikingDummy
 			rotation.step();
 
 		std::stringstream ss;
+		ss.setf(std::ios::fixed, std::ios::floatfield);
+		ss.precision(2);
 		ss << "DPS: " << 1000.0 / blm.timeline.time * blm.total_damage << "\n";
 		ss << "T3 uptime: " << 100.0 / blm.timeline.time * blm.total_dot_time << "%\n";
-		ss << "F4 % damage: " << 100.0 / blm.total_damage * blm.total_f4_damage << "% | " << 1000.0 / blm.timeline.time * blm.total_f4_damage << "\n";
-		ss << "Desp % damage: " << 100.0 / blm.total_damage * blm.total_desp_damage << "% | " << 1000.0 / blm.timeline.time * blm.total_desp_damage << "\n";
-		ss << "Xeno % damage: " << 100.0 / blm.total_damage * blm.total_xeno_damage << "% | " << 1000.0 / blm.timeline.time * blm.total_xeno_damage << "\n";
-		ss << "T3 % damage: " << 100.0 / blm.total_damage * blm.total_t3_damage << "% | " << 1000.0 / blm.timeline.time * blm.total_t3_damage << "\n";
-		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "% | " << 1000.0 / blm.timeline.time * blm.total_dot_damage << "\n=============" << std::endl;
+		ss << "F4 % damage: " << 100.0 / blm.total_damage * blm.total_f4_damage << "%\n";
+		ss << "Desp % damage: " << 100.0 / blm.total_damage * blm.total_desp_damage << "%\n";
+		ss << "Xeno % damage: " << 100.0 / blm.total_damage * blm.total_xeno_damage << "%\n";
+		ss << "T3 % damage: " << 100.0 / blm.total_damage * blm.total_t3_damage << "%\n";
+		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 
 		int length = blm.history.size() - 1;
@@ -305,6 +304,8 @@ namespace StrikingDummy
 			int seconds = (time / 1000) % 60;
 			int centiseconds = lround(time % 1000) / 10;
 			std::stringstream ss;
+			ss.setf(std::ios::fixed, std::ios::floatfield);
+			ss.precision(1);
 			if (t.action != 0)
 			{
 				ss << "[";
@@ -320,32 +321,36 @@ namespace StrikingDummy
 				if (centiseconds < 10)
 					ss << "0";
 				ss << centiseconds << "] ";
-			}
-			if (t.action == 5 && t.t0[21] == 1.0f)
-				ss << t.t0[0] * 10000.0f << " F3p";
-			else if (t.action == 7)
-			{
-				if (t.t0[23] == 1.0f)
-					ss << t.t0[0] * 10000.0f << " T3p at " << lround(t.t0[26] * 2400.0f) / 100.0f << "s left on dot";
+				ss << (int)(t.t0[0] * 10000.0f) << " ";
+				if (t.action == BlackMage::B1 && t.t0[1] == 1.0f && t.t0[8] == 1.0f)
+					ss << "ICY HOT";
+				else if (t.action == BlackMage::F1 && t.t0[2] == 1.0f && t.t0[8] == 1.0f)
+					ss << "ICY HOT";
+				else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
+					ss << "F3p";
+				else if (t.action == BlackMage::T3)
+				{
+					if (t.t0[26] == 1.0f)
+						ss << "T3p at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+					else
+						ss << "T3 at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+				}
+				else if (t.action == BlackMage::XENO)
+				{
+					if (t.t0[14] == 1.0f)
+						ss << "XENO**";
+					else
+						ss << "XENO*";
+				}
 				else
-					ss << t.t0[0] * 10000.0f << " T3 at " << lround(t.t0[26] * 2400.0f) / 100.0f << "s left on dot";
-			}
-			else if (t.action == 8)
-			{
-				if (t.t0[11] == 1.0f)
-					ss << t.t0[0] * 10000.0f << " XENO**";
-				else
-					ss << t.t0[0] * 10000.0f << " XENO*";
-			}
-			else if (t.action != 0)
-				ss << t.t0[0] * 10000.0f << " " << blm.get_action_name(t.action);
-			if (t.action != 0)
-			{
-				if (t.t0[23] == 1.0f)
-					ss << " (T3p w/ " << lround(t.t0[24] * 1800.0f) / 100.0f << "s)";
+					ss << blm.get_action_name(t.action);
+
+				if (t.t0[26] == 1.0f)
+					ss << " (T3p w/ " << lround(t.t0[27] * BlackMage::TC_DURATION) / 1000.0f << "s)";
 				ss << std::endl;
+
+				Logger::log(ss.str().c_str());
 			}
-			Logger::log(ss.str().c_str());
 			time += t.dt;
 		}
 		Logger::close();
@@ -550,6 +555,7 @@ namespace StrikingDummy
 
 	void TrainingDummy::mp_offset()
 	{
+		/*
 		Logger::open("mp_offset");
 
 		BlackMage& blm = (BlackMage&)job;
@@ -580,5 +586,6 @@ namespace StrikingDummy
 		Logger::log(ss.str().c_str());
 
 		Logger::close();
+		*/
 	}
 }

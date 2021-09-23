@@ -9,10 +9,10 @@ namespace StrikingDummy
 		enum Action
 		{
 			NONE,
-			B1, B3, B4, F1, F3, F4, T3, XENO, DESPAIR,
-			SWIFT, TRIPLE, SHARP, LEYLINES, MANAFONT, ENOCHIAN, TRANSPOSE,
+			B1, B3, B4, F1, F3, F4, T3, XENO, DESPAIR, 
+			SWIFT, TRIPLE, SHARP, LEYLINES, MANAFONT, TRANSPOSE,
 			LUCID, WAIT_FOR_MP,
-			POT, F3P_OFF, FREEZE, UMBRAL_SOUL
+			POT, F3P_OFF
 		};
 
 		enum Element
@@ -30,16 +30,16 @@ namespace StrikingDummy
 			FULL, NO_B4, STANDARD
 		};
 
-		const std::string blm_actions[23] =
+		const std::string blm_actions[20] =
 		{
 			"NONE",
 			"B1", "B3", "B4", "F1", "F3", "F4", "T3", "XENO", "DESPAIR",
-			"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "MANAFONT", "ENOCHIAN", "TRANSPOSE",
+			"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "MANAFONT", "TRANSPOSE",
 			"LUCID", "WAIT_FOR_MP",
-			"HQ_TINCTURE_OF_INTELLIGENCE", "F3P OFF", "FREEZE", "UMBRAL_SOUL"
+			"HQ_TINCTURE_OF_INTELLIGENCE", "F3P OFF"
 		};
 
-		static constexpr int NUM_ACTIONS = 21;
+		static constexpr int NUM_ACTIONS = 20;
 
 		static constexpr float BLM_ATTR = 115.0f;
 
@@ -72,9 +72,9 @@ namespace StrikingDummy
 		static constexpr int SWIFT_DURATION = 10000;
 		static constexpr int TRIPLE_DURATION = 15000;
 		static constexpr int SHARP_DURATION = 15000;
-		static constexpr int FS_DURATION = 19000; // 1 additional second when proc'd
-		static constexpr int TC_DURATION = 19000; // 1 additional second when proc'd from sharpcast
-		static constexpr int TC_REFRESH_DURATION = 17600; // 17.6s as taken from packet data
+		static constexpr int FS_DURATION = 31000; // 1 additional second when proc'd
+		static constexpr int TC_DURATION = 31000; // 1 additional second when proc'd from sharpcast
+		static constexpr int TC_REFRESH_DURATION = 29600; // 17.6s as taken from packet data
 		static constexpr int LL_DURATION = 30000;
 		static constexpr int DOT_DURATION = 24000;
 		static constexpr int DOT_TRAVEL_DURATION = 1000;
@@ -86,7 +86,6 @@ namespace StrikingDummy
 		static constexpr int SHARP_CD = 30000;
 		static constexpr int LL_CD = 90000;
 		static constexpr int MANAFONT_CD = 180000;
-		static constexpr int ENO_CD = 30000;
 		static constexpr int TRANSPOSE_CD = 5000;
 		static constexpr int LUCID_CD = 60000;
 		static constexpr int POT_CD = 270000;
@@ -98,7 +97,7 @@ namespace StrikingDummy
 		static constexpr float B1_POTENCY = 180.0f;
 		static constexpr float B3_POTENCY = 240.0f;
 		static constexpr float B4_POTENCY = 300.0f;
-		static constexpr float FREEZE_POTENCY = 100.0f;
+		static constexpr float AI_POTENCY = 340.0f;
 		static constexpr float T3_POTENCY = 70.0f;
 		static constexpr float T3_DOT_POTENCY = 40.0f;
 		static constexpr float TC_POTENCY = 390.0f;
@@ -121,7 +120,6 @@ namespace StrikingDummy
 		static constexpr int B1_MP_COST = 400;
 		static constexpr int B3_MP_COST = 800;
 		static constexpr int B4_MP_COST = 800;
-		static constexpr int FREEZE_MP_COST = 1000;
 		static constexpr int T3_MP_COST = 400;
 		static constexpr int DESPAIR_MP_COST = 800;
 
@@ -146,6 +144,7 @@ namespace StrikingDummy
 		Element element = Element::NE;
 		int umbral_hearts = 0;
 		bool enochian = false;
+		bool astral_ice = false;
 		bool t3p = false;
 
 		// ticks
@@ -157,10 +156,15 @@ namespace StrikingDummy
 		bool skip_lucid_tick = false;
 		bool skip_transpose_tick = false;
 
-		// elemental gauge
+		// misc timers
 		Buff gauge;
 		Timer xeno_timer;
+		Timer sharp_timer;
+		Timer dot_travel_timer;
+
 		int xeno_procs = 0;
+		int sharp_procs = 0;
+		int dot_travel;
 
 		// buffs
 		Buff swift;
@@ -173,16 +177,11 @@ namespace StrikingDummy
 		Buff lucid;
 		Buff pot;
 
-		Timer dot_travel_timer;
-		int dot_travel;
-
 		// cooldowns		
 		Timer swift_cd;
 		Timer triple_cd;
-		Timer sharp_cd;
 		Timer leylines_cd;
 		Timer manafont_cd;
-		Timer eno_cd;
 		Timer transpose_cd;
 		Timer lucid_cd;
 		Timer pot_cd;
@@ -197,6 +196,7 @@ namespace StrikingDummy
 		int xeno_count = 0;
 		int f1_count = 0;
 		int f4_count = 0;
+		int b1_count = 0;
 		int b4_count = 0;
 		int t3_count = 0;
 		int despair_count = 0;
@@ -258,7 +258,7 @@ namespace StrikingDummy
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 62; }
+		int get_state_size() { return 61; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();
