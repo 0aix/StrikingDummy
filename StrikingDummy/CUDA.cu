@@ -5,7 +5,7 @@
 #include <curand.h>
 #include <cublas_v2.h>
 
-#define NUM_ACTIONS 20
+#define NUM_ACTIONS 22
 
 int blockSize = 0;
 bool cuda_init = false;

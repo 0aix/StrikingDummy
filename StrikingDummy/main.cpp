@@ -14,6 +14,7 @@ StrikingDummy::Stats relic_crit(180, 5884, 464, 4142, 2065, 1635, 1929);
 int main()
 {
 	StrikingDummy::BlackMage blm(relic_crit, StrikingDummy::BlackMage::Opener::PRE_LL_F3, StrikingDummy::BlackMage::ActionSet::FULL);
+	//StrikingDummy::BlackMage blm(relic_crit, StrikingDummy::BlackMage::Opener::PRE_B3, StrikingDummy::BlackMage::ActionSet::STANDARD);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
 	dummy.train();

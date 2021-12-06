@@ -24,11 +24,11 @@ namespace StrikingDummy
 	const float WINDOW = 600000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
-	const float EPS_MIN = 0.01f;
-	const float OUTPUT_LOWER = 26.100f;
-	const float OUTPUT_UPPER = 27.000f;
+	const float EPS_MIN = 0.005f;
+	const float OUTPUT_LOWER = 5.400f;
+	const float OUTPUT_UPPER = 5.560f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 26.600;
+	const double BEST_THRESHOLD_TO_SAVE = 5.400;
 
 	void TrainingDummy::train()
 	{
@@ -166,7 +166,7 @@ namespace StrikingDummy
 				double dps = job.total_damage / job.timeline.time;
 
 				std::stringstream ss;
-				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b1s: " << blm.b1_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b3s: " << blm.b3_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
 				ss << "20000 rotation steps ms: " << generate_time / 1000000.0 / total_count << ", epoch ms: " << copy_time / 1000000.0 / copy_count << std::endl;
 
 				generate_time = 0;
@@ -321,13 +321,13 @@ namespace StrikingDummy
 				if (centiseconds < 10)
 					ss << "0";
 				ss << centiseconds << "] ";
-				ss << (int)(t.t0[0] * 10000.0f) << " ";
-				if (t.action == BlackMage::B1 && t.t0[1] == 1.0f && t.t0[8] == 1.0f)
-					ss << "ICY HOT";
-				else if (t.action == BlackMage::F1 && t.t0[2] == 1.0f && t.t0[8] == 1.0f)
-					ss << "ICY HOT";
+				ss << lroundf(t.t0[0] * 10000.0f) << " ";
+				if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
+					ss << "F1^";
 				else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
 					ss << "F3p";
+				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
+					ss << "PARADOX^";
 				else if (t.action == BlackMage::T3)
 				{
 					if (t.t0[26] == 1.0f)
@@ -342,11 +342,26 @@ namespace StrikingDummy
 					else
 						ss << "XENO*";
 				}
+				else if (t.action == BlackMage::TRIPLE)
+				{
+					if (t.t0[37] == 1.0f)
+						ss << "TRIPLE**";
+					else
+						ss << "TRIPLE*";
+				}
+				else if (t.action == BlackMage::SHARP)
+				{
+					if (t.t0[40] == 1.0f)
+						ss << "SHARP**";
+					else
+						ss << "SHARP*";
+				}
 				else
 					ss << blm.get_action_name(t.action);
 
 				if (t.t0[26] == 1.0f)
 					ss << " (T3p w/ " << lround(t.t0[27] * BlackMage::TC_DURATION) / 1000.0f << "s)";
+
 				ss << std::endl;
 
 				Logger::log(ss.str().c_str());
@@ -468,25 +483,40 @@ namespace StrikingDummy
 			for (int i = 0; i < length - 1; i++)
 			{
 				Transition& t = blm.history[i];
-				if (t.t0[2] == 1.0f && t.t1[1] == 1.0f)
+				//if (t.t0[2] == 1.0f && t.t1[1] == 1.0f)
+				//	points.push_back(i);
+				const int k = 2; // 1 for UI; 2 for AF
+				if (t.t0[k] != 1.0f && t.t1[k] == 1.0f)
+				{
 					points.push_back(i);
+					for (i = i + 1; i < length - 1; i++)
+					{
+						if (blm.history[i].t1[k] == 1.0f)
+							continue;
+						points.push_back(i);
+						break;
+					}
+				}
 			}
 
 			length = points.size() - 1;
-			for (int i = 0; i < length; i++)
+			//for (int i = 0; i < length; i++)
+			for (int i = 0; i < length; i += 2)
 			{
 				std::stringstream ss;
 				for (int j = points[i]; j <= points[i + 1]; j++)
 				{
 					Transition& t = blm.history[j];
-					if (t.action == 5 && t.t0[21] == 1.0f)
+					if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
+						ss << "F1^ ";
+					else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
 						ss << "F3p ";
-					else if (t.action == 7)
+					else if (t.action == BlackMage::T3)
 						ss << "T3/p ";
-					else if (t.action != 0 && t.action != 10 && t.action != 11 && t.action != 12 && t.action != 13 && t.action < 17)
+					else if (t.action != 0 && t.action != BlackMage::SWIFT && t.action != BlackMage::TRIPLE && t.action != BlackMage::SHARP && t.action != BlackMage::LEYLINES && t.action < BlackMage::AMPLIFIER)
 					{
-						// Not NONE, SWIFT, TRIPLE, SHARP, LEYLINES, LUCID, WAIT_FOR_MP, TINCTURE, or F3P_OFF
-						if (t.action != 8 && t.action != 14 && t.action != 16 && (t.t0[13] > 0.0f || t.t0[17] > 0.0f))
+						// Not NONE, SWIFT, TRIPLE, SHARP, LEYLINES, AMPLIFIER, LUCID, WAIT_FOR_MP, TINCTURE, or F3P_OFF
+						if ((t.action != BlackMage::XENO && t.action != BlackMage::MANAFONT && t.action != BlackMage::TRANSPOSE && (t.t0[16] > 0.0f || t.t0[20] > 0.0f)) || (t.action == BlackMage::PARADOX && t.t0[1] == 1.0f))
 							ss << blm.get_action_name(t.action) << "* ";
 						else
 							ss << blm.get_action_name(t.action) << " ";
@@ -496,7 +526,8 @@ namespace StrikingDummy
 			}
 			blm.reset();
 
-			total_rotations += length;
+			//total_rotations += length;
+			total_rotations += length / 2;
 			std::cout << "Total rotations: " << total_rotations << std::endl;
 		}
 
@@ -543,12 +574,12 @@ namespace StrikingDummy
 			Logger::log(ss.str().c_str());
 		}
 
-		for (int i = lines.size() - 100; i < lines.size(); i++)
-		{
-			std::stringstream ss;
-			ss << i + 1 << ") " << 100.0f * lines[i].second / total_rotations << "%: " << lines[i].first << std::endl;
-			Logger::log(ss.str().c_str());
-		}
+		//for (int i = lines.size() - 100; i < lines.size(); i++)
+		//{
+		//	std::stringstream ss;
+		//	ss << i + 1 << ") " << 100.0f * lines[i].second / total_rotations << "%: " << lines[i].first << std::endl;
+		//	Logger::log(ss.str().c_str());
+		//}
 
 		Logger::close();
 	}
