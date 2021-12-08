@@ -72,9 +72,9 @@ namespace StrikingDummy
 		static constexpr int SWIFT_DURATION = 10000;
 		static constexpr int TRIPLE_DURATION = 15000;
 		static constexpr int SHARP_DURATION = 30000;
-		static constexpr int FS_DURATION = 31000; // 1 additional second when proc'd
-		static constexpr int TC_DURATION = 41000; // 1 additional second when proc'd from sharpcast
-		static constexpr int TC_REFRESH_DURATION = 39600; // 17.6s as taken from packet data
+		static constexpr int FS_DURATION = 30000;
+		static constexpr int TC_DURATION = 40000;
+		static constexpr int TC_REFRESH_DURATION = 39960; // 39.96s as taken from packet data
 		static constexpr int LL_DURATION = 30000;
 		static constexpr int DOT_DURATION = 30000;
 		static constexpr int DOT_TRAVEL_DURATION = 1000;
@@ -263,7 +263,7 @@ namespace StrikingDummy
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 63; }
+		int get_state_size() { return 64; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

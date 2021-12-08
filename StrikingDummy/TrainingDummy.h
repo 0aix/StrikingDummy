@@ -26,7 +26,7 @@ namespace StrikingDummy
 		void trace();
 		void metrics();
 		void dist(int seconds, int times);
-		void study();
+		void study(int mode);
 		void mp_offset();
 	};
 }

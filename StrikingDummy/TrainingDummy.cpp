@@ -24,9 +24,9 @@ namespace StrikingDummy
 	const float WINDOW = 600000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
-	const float EPS_MIN = 0.005f;
-	const float OUTPUT_LOWER = 5.400f;
-	const float OUTPUT_UPPER = 5.560f;
+	const float EPS_MIN = 0.01f;
+	const float OUTPUT_LOWER = 5.390f;
+	const float OUTPUT_UPPER = 5.550f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 	const double BEST_THRESHOLD_TO_SAVE = 5.400;
 
@@ -453,7 +453,7 @@ namespace StrikingDummy
 		Logger::close();
 	}
 
-	void TrainingDummy::study()
+	void TrainingDummy::study(int mode)
 	{
 		Logger::open("study");
 
@@ -483,25 +483,31 @@ namespace StrikingDummy
 			for (int i = 0; i < length - 1; i++)
 			{
 				Transition& t = blm.history[i];
-				//if (t.t0[2] == 1.0f && t.t1[1] == 1.0f)
-				//	points.push_back(i);
-				const int k = 2; // 1 for UI; 2 for AF
-				if (t.t0[k] != 1.0f && t.t1[k] == 1.0f)
+				switch (mode)
 				{
-					points.push_back(i);
-					for (i = i + 1; i < length - 1; i++)
-					{
-						if (blm.history[i].t1[k] == 1.0f)
-							continue;
+				case 0:
+					if (t.t0[2] == 1.0f && t.t1[1] == 1.0f)
 						points.push_back(i);
-						break;
+					break;
+				case 1: // 1 for UI; 2 for AF
+				case 2:
+					if (t.t0[mode] != 1.0f && t.t1[mode] == 1.0f)
+					{
+						points.push_back(i);
+						for (i = i + 1; i < length - 1; i++)
+						{
+							if (blm.history[i].t1[mode] == 1.0f)
+								continue;
+							points.push_back(i);
+							break;
+						}
 					}
+					break;
 				}
 			}
-
+			int stride = mode == 0 ? 1 : 2;
 			length = points.size() - 1;
-			//for (int i = 0; i < length; i++)
-			for (int i = 0; i < length; i += 2)
+			for (int i = 0; i < length; i += stride)
 			{
 				std::stringstream ss;
 				for (int j = points[i]; j <= points[i + 1]; j++)
@@ -526,24 +532,18 @@ namespace StrikingDummy
 			}
 			blm.reset();
 
-			//total_rotations += length;
-			total_rotations += length / 2;
+			total_rotations += length / stride;
 			std::cout << "Total rotations: " << total_rotations << std::endl;
 		}
+
+		if (mode != 0)
+			total_rotations /= 2;
 
 		std::vector<std::pair<std::string, int>> lines(lines_map.begin(), lines_map.end());
 		std::sort(lines.begin(), lines.end(), [](std::pair<std::string, int>& a, std::pair<std::string, int>& b) { return a.second > b.second; });
 
-		//int length;// = lines.size();
-		//for (length = 0; length < lines.size(); length++)
-		//	if (100.0f * lines[length].second / total_rotations < 0.01f)
-		//		break;
-		//if (length > 200)
-		//	length = 200;
-
 		int sum = 0;
 		int length = 0;
-		//for (int i = 0; i < length; i++)
 		for (int i = 0; i < lines.size(); i++)
 		{
 			sum += lines[i].second;
@@ -563,23 +563,11 @@ namespace StrikingDummy
 		Logger::log(ss.str().c_str());
 
 		for (int i = 0; i < length; i++)
-			//for (int i = 0; i < lines.size(); i++)
 		{
 			std::stringstream ss;
-			//float percent = 100.0f * lines[i].second / total_rotations;
-			//if (percent < 0.01f)
-			//	break;
 			ss << i + 1 << ") " << 100.0f * lines[i].second / total_rotations << "%: " << lines[i].first << std::endl;
-			//ss << i + 1 << ") " << percent << "%: " << lines[i].first << std::endl;
 			Logger::log(ss.str().c_str());
 		}
-
-		//for (int i = lines.size() - 100; i < lines.size(); i++)
-		//{
-		//	std::stringstream ss;
-		//	ss << i + 1 << ") " << 100.0f * lines[i].second / total_rotations << "%: " << lines[i].first << std::endl;
-		//	Logger::log(ss.str().c_str());
-		//}
 
 		Logger::close();
 	}

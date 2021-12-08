@@ -1138,10 +1138,10 @@ namespace StrikingDummy
 		state[53] = pot.time / (float)POT_DURATION;
 		state[54] = pot_cd.ready;
 		state[55] = pot_cd.time / (float)POT_CD;
-		//state[56] = mp_wait / (float)TICK_TIMER;
-		state[56] = mp_timer.time / (float)TICK_TIMER;
-		//state[57] = 0.0f;
-		state[57] = lucid_timer.time / (float)TICK_TIMER;
+		state[56] = mp_wait / (float)TICK_TIMER;
+		//state[56] = mp_timer.time / (float)TICK_TIMER;
+		state[57] = 0.0f;
+		//state[57] = lucid_timer.time / (float)TICK_TIMER;
 		state[58] = dot_travel > 0;
 		state[59] = dot_travel_timer.time / (float)DOT_TRAVEL_DURATION;
 		state[60] = (dot_travel & 2) != 0;
