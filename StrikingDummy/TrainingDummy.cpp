@@ -24,9 +24,9 @@ namespace StrikingDummy
 	const float WINDOW = 600000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
-	const float EPS_MIN = 0.01f;
-	const float OUTPUT_LOWER = 5.400f;
-	const float OUTPUT_UPPER = 5.560f;
+	const float EPS_MIN = 0.005f;
+	const float OUTPUT_LOWER = 5.405f;
+	const float OUTPUT_UPPER = 5.565f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 	const double BEST_THRESHOLD_TO_SAVE = 5.400;
 
@@ -505,7 +505,7 @@ namespace StrikingDummy
 					break;
 				}
 			}
-			int stride = mode == 0 ? 1 : 2;
+			int stride = (mode == 0) ? 1 : 2;
 			length = points.size() - 1;
 			for (int i = 0; i < length; i += stride)
 			{
@@ -535,9 +535,6 @@ namespace StrikingDummy
 			total_rotations += length / stride;
 			std::cout << "Total rotations: " << total_rotations << std::endl;
 		}
-
-		if (mode != 0)
-			total_rotations /= 2;
 
 		std::vector<std::pair<std::string, int>> lines(lines_map.begin(), lines_map.end());
 		std::sort(lines.begin(), lines.end(), [](std::pair<std::string, int>& a, std::pair<std::string, int>& b) { return a.second > b.second; });
