@@ -25,8 +25,8 @@ namespace StrikingDummy
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
 	const float EPS_MIN = 0.005f;
-	const float OUTPUT_LOWER = 5.405f;
-	const float OUTPUT_UPPER = 5.565f;
+	const float OUTPUT_LOWER = 5.410f;
+	const float OUTPUT_UPPER = 5.570f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 	const double BEST_THRESHOLD_TO_SAVE = 5.400;
 
