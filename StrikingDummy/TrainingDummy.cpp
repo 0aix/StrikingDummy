@@ -24,11 +24,11 @@ namespace StrikingDummy
 	const float WINDOW = 600000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
-	const float EPS_MIN = 0.005f;
-	const float OUTPUT_LOWER = 5.420f;
-	const float OUTPUT_UPPER = 5.580f;
+	const float EPS_MIN = 0.01f;
+	const float OUTPUT_LOWER = 8.700f;
+	const float OUTPUT_UPPER = 9.950f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 5.400;
+	const double BEST_THRESHOLD_TO_SAVE = 8.600;
 
 	void TrainingDummy::train()
 	{
@@ -58,7 +58,6 @@ namespace StrikingDummy
 		BlackMage& blm = (BlackMage&)job;
 
 		float nu = 0.00001f;
-		//float nu = 0.0002f;
 		float eps = EPS_START;
 		//float eps = EPS_MIN;
 		float exp = 0.0f;

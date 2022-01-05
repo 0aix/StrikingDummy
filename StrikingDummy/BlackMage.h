@@ -106,7 +106,7 @@ namespace StrikingDummy
 		static constexpr float PARADOX_POTENCY = 500.0f;
 
 		static constexpr float ENO_MULTIPLIER = 1.20f;
-		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30f * 0.2f;
+		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30f;
 		static constexpr float AF1_MULTIPLIER = 1.40f;
 		static constexpr float AF2_MULTIPLIER = 1.60f;
 		static constexpr float AF3_MULTIPLIER = 1.80f;
