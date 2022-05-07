@@ -182,6 +182,90 @@ namespace StrikingDummy
 		update_history();
 	}
 
+	void BlackMage::reset(BlackMage& blm)
+	{
+		timeline = blm.timeline;
+		mp = blm.mp;
+		element = blm.element;
+
+		umbral_hearts = blm.umbral_hearts;
+		enochian = blm.enochian;
+		paradox = blm.paradox;
+		t3p = blm.t3p;
+
+		// server ticks
+		mp_timer = blm.mp_timer;
+		dot_timer = blm.dot_timer;
+		lucid_timer = blm.lucid_timer;
+		mp_wait = blm.mp_wait;
+
+		skip_lucid_tick = blm.skip_lucid_tick;
+		skip_transpose_tick = blm.skip_transpose_tick;
+
+		// misc timers
+		gauge = blm.gauge;
+		xeno_timer = blm.xeno_timer;
+		sharp_timer = blm.sharp_timer;
+		triple_timer = blm.triple_timer;
+		dot_travel_timer = blm.dot_travel_timer;
+
+		xeno_procs = blm.xeno_procs;
+		sharp_procs = blm.sharp_procs;
+		triple_procs = blm.triple_procs;
+		dot_travel = blm.dot_travel;
+
+		// buffs
+		swift = blm.swift;
+		sharp = blm.sharp;
+		triple = blm.triple;
+		leylines = blm.leylines;
+		fs_proc = blm.fs_proc;
+		tc_proc = blm.tc_proc;
+		dot = blm.dot;
+		lucid = blm.lucid;
+		pot = blm.pot;
+
+		// cooldowns		
+		swift_cd = blm.swift_cd;
+		leylines_cd = blm.leylines_cd;
+		manafont_cd = blm.manafont_cd;
+		transpose_cd = blm.transpose_cd;
+		lucid_cd = blm.lucid_cd;
+		pot_cd = blm.pot_cd;
+		amplifier_cd = blm.amplifier_cd;
+
+		// actions
+		gcd_timer = blm.gcd_timer;
+		cast_timer = blm.cast_timer;
+		action_timer = blm.action_timer;
+		casting = blm.casting;
+
+		// metrics
+		xeno_count = 0;
+		f1_count = 0;
+		f4_count = 0;
+		b1_count = 0;
+		b3_count = 0;
+		b4_count = 0;
+		t3_count = 0;
+		despair_count = 0;
+		transpose_count = 0;
+		lucid_count = 0;
+		pot_count = 0;
+		total_dot_time = 0;
+
+		total_f4_damage = 0.0f;
+		total_desp_damage = 0.0f;
+		total_xeno_damage = 0.0f;
+		total_t3_damage = 0.0f;
+		total_dot_damage = 0.0f;
+		total_damage = 0.0f;
+
+		history.clear();
+
+		history.push_back(blm.history.back());
+	}
+
 	void BlackMage::update(int elapsed)
 	{
 		assert(elapsed > 0);
@@ -1138,10 +1222,10 @@ namespace StrikingDummy
 		state[53] = pot.time / (float)POT_DURATION;
 		state[54] = pot_cd.ready;
 		state[55] = pot_cd.time / (float)POT_CD;
-		state[56] = mp_wait / (float)TICK_TIMER;
-		state[57] = 0.0f;
-		//state[56] = mp_timer.time / (float)TICK_TIMER;
-		//state[57] = lucid_timer.time / (float)TICK_TIMER;
+		//state[56] = mp_wait / (float)TICK_TIMER;
+		//state[57] = 0.0f;
+		state[56] = mp_timer.time / (float)TICK_TIMER;
+		state[57] = lucid_timer.time / (float)TICK_TIMER;
 		state[58] = dot_travel > 0;
 		state[59] = dot_travel_timer.time / (float)DOT_TRAVEL_DURATION;
 		state[60] = (dot_travel & 2) != 0;

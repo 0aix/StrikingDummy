@@ -24,6 +24,7 @@ namespace StrikingDummy
 		float test();
 		bool best();
 		void trace();
+		void montecarlo();
 		void metrics();
 		void dist(int seconds, int times);
 		void study(int mode);

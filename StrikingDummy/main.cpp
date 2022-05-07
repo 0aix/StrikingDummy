@@ -14,13 +14,14 @@ StrikingDummy::Stats slow_bis(120, 2699, 189, 2323, 1037, 1518, 884);
 int main()
 {
 	//StrikingDummy::BlackMage blm(speed_bis, StrikingDummy::BlackMage::Opener::PRE_T3, StrikingDummy::BlackMage::ActionSet::FULL);
-	StrikingDummy::BlackMage blm(speed_bis, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
+	StrikingDummy::BlackMage blm(mid_bis, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
 	//StrikingDummy::BlackMage blm(speed_bis, StrikingDummy::BlackMage::Opener::PRE_B3, StrikingDummy::BlackMage::ActionSet::STANDARD);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
 	dummy.train();
 	//dummy.trace();
 	//dummy.metrics();
+	//dummy.montecarlo();
 	//dummy.dist(450, 10000);
 	//dummy.study(0);
 	//dummy.study(1);

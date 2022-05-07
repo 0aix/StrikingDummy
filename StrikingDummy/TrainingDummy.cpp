@@ -24,11 +24,11 @@ namespace StrikingDummy
 	const float WINDOW = 600000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
-	const float EPS_MIN = 0.01f;
-	const float OUTPUT_LOWER = 8.700f;
-	const float OUTPUT_UPPER = 9.950f;
+	const float EPS_MIN = 0.005f;
+	const float OUTPUT_LOWER = 9.090f;
+	const float OUTPUT_UPPER = 9.340f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 8.600;
+	const double BEST_THRESHOLD_TO_SAVE = 9.150;
 
 	void TrainingDummy::train()
 	{
@@ -357,6 +357,161 @@ namespace StrikingDummy
 				}
 				else
 					ss << blm.get_action_name(t.action);
+
+				if (t.t0[26] == 1.0f)
+					ss << " (T3p w/ " << lround(t.t0[27] * BlackMage::TC_DURATION) / 1000.0f << "s)";
+
+				ss << std::endl;
+
+				Logger::log(ss.str().c_str());
+			}
+			time += t.dt;
+		}
+		Logger::close();
+	}
+
+	void TrainingDummy::montecarlo()
+	{
+		Logger::open("monte-carlo");
+
+		BlackMage& blm = (BlackMage&)job;
+		blm.reset();
+
+		BlackMage temp(blm);
+		temp.reset();
+
+		ModelRotation rotation(temp, model);
+
+		Logger::log("=============\n");
+
+		model.load("Weights\\weights");
+
+		MCRotation mc(job, rotation);
+
+		while (blm.timeline.time < 1200000)
+			mc.step();
+
+		std::stringstream ss;
+		ss.setf(std::ios::fixed, std::ios::floatfield);
+		ss.precision(2);
+		ss << "DPS: " << 1000.0 / blm.timeline.time * blm.total_damage << "\n";
+		ss << "T3 uptime: " << 100.0 / blm.timeline.time * blm.total_dot_time << "%\n";
+		ss << "F4 % damage: " << 100.0 / blm.total_damage * blm.total_f4_damage << "%\n";
+		ss << "Desp % damage: " << 100.0 / blm.total_damage * blm.total_desp_damage << "%\n";
+		ss << "Xeno % damage: " << 100.0 / blm.total_damage * blm.total_xeno_damage << "%\n";
+		ss << "T3 % damage: " << 100.0 / blm.total_damage * blm.total_t3_damage << "%\n";
+		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n=============" << std::endl;
+		Logger::log(ss.str().c_str());
+
+		int length = blm.history.size() - 1;
+		if (length > 10000)
+			length = 10000;
+		int time = 0;
+		for (int i = 0; i < length; i++)
+		{
+			Transition& t = blm.history[i];
+			int hours = time / 3600000;
+			int minutes = (time / 60000) % 60;
+			int seconds = (time / 1000) % 60;
+			int centiseconds = lround(time % 1000) / 10;
+			std::stringstream ss;
+			ss.setf(std::ios::fixed, std::ios::floatfield);
+			ss.precision(1);
+			if (t.action != 0)
+			{
+				ss << "[";
+				if (hours < 10)
+					ss << "0";
+				ss << hours << ":";
+				if (minutes < 10)
+					ss << "0";
+				ss << minutes << ":";
+				if (seconds < 10)
+					ss << "0";
+				ss << seconds << ".";
+				if (centiseconds < 10)
+					ss << "0";
+				ss << centiseconds << "] ";
+				ss << lroundf(t.t0[0] * 10000.0f) << " ";
+				if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
+					ss << "F1^";
+				else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
+					ss << "F3p";
+				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
+					ss << "PARADOX^";
+				else if (t.action == BlackMage::T3)
+				{
+					if (t.t0[26] == 1.0f)
+						ss << "T3p at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+					else
+						ss << "T3 at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+				}
+				else if (t.action == BlackMage::XENO)
+				{
+					if (t.t0[14] == 1.0f)
+						ss << "XENO**";
+					else
+						ss << "XENO*";
+				}
+				else if (t.action == BlackMage::TRIPLE)
+				{
+					if (t.t0[37] == 1.0f)
+						ss << "TRIPLE**";
+					else
+						ss << "TRIPLE*";
+				}
+				else if (t.action == BlackMage::SHARP)
+				{
+					if (t.t0[40] == 1.0f)
+						ss << "SHARP**";
+					else
+						ss << "SHARP*";
+				}
+				else
+					ss << blm.get_action_name(t.action);
+
+				int temp = mc.history[i];
+				if (t.action != temp)
+				{
+					ss << " [[";
+					if (temp == BlackMage::F1 && t.t0[24] == 1.0f)
+						ss << "F1^";
+					else if (temp == BlackMage::F3 && t.t0[24] == 1.0f)
+						ss << "F3p";
+					else if (temp == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
+						ss << "PARADOX^";
+					else if (temp == BlackMage::T3)
+					{
+						if (t.t0[26] == 1.0f)
+							ss << "T3p at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+						else
+							ss << "T3 at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+					}
+					else if (temp == BlackMage::XENO)
+					{
+						if (t.t0[14] == 1.0f)
+							ss << "XENO**";
+						else
+							ss << "XENO*";
+					}
+					else if (temp == BlackMage::TRIPLE)
+					{
+						if (t.t0[37] == 1.0f)
+							ss << "TRIPLE**";
+						else
+							ss << "TRIPLE*";
+					}
+					else if (temp == BlackMage::SHARP)
+					{
+						if (t.t0[40] == 1.0f)
+							ss << "SHARP**";
+						else
+							ss << "SHARP*";
+					}
+					else
+						ss << blm.get_action_name(temp);
+					ss << "]]";
+				}
 
 				if (t.t0[26] == 1.0f)
 					ss << " (T3p w/ " << lround(t.t0[27] * BlackMage::TC_DURATION) / 1000.0f << "s)";

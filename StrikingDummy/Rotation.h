@@ -7,6 +7,7 @@
 namespace StrikingDummy
 {
 	struct Job;
+	struct BlackMage;
 
 	struct Rotation
 	{
@@ -24,14 +25,26 @@ namespace StrikingDummy
 
 		std::vector<int> random_action;
 		float eps;
-		float exp;
-		bool exploring;
 		float stored_max_weight;
 
 		std::mt19937 rng;
 		std::uniform_real_distribution<float> unif = std::uniform_real_distribution<float>(0.0f, 1.0f);
 
 		ModelRotation(Job& job, Model& model, long long offset = 0);
+
+		void reset(float eps, float exp);
+		void step();
+	};
+
+	struct MCRotation : Rotation
+	{
+		ModelRotation& rotation;
+		ModelComputeInput input;
+		BlackMage& blm;
+		BlackMage& temp;
+		std::vector<int> history;
+
+		MCRotation(Job& job, ModelRotation& rotation);
 
 		void reset(float eps, float exp);
 		void step();

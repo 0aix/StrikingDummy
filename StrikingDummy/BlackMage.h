@@ -93,15 +93,15 @@ namespace StrikingDummy
 
 		// Assume not using Flare
 		static constexpr float F1_POTENCY = 180.0f;
-		static constexpr float F3_POTENCY = 240.0f;
-		static constexpr float F4_POTENCY = 300.0f;
+		static constexpr float F3_POTENCY = 260.0f;
+		static constexpr float F4_POTENCY = 310.0f;
 		static constexpr float B1_POTENCY = 180.0f;
-		static constexpr float B3_POTENCY = 240.0f;
-		static constexpr float B4_POTENCY = 300.0f;
+		static constexpr float B3_POTENCY = 260.0f;
+		static constexpr float B4_POTENCY = 310.0f;
 		static constexpr float T3_POTENCY = 50.0f;
 		static constexpr float T3_DOT_POTENCY = 35.0f;
 		static constexpr float TC_POTENCY = 400.0f;
-		static constexpr float XENO_POTENCY = 660.0f;
+		static constexpr float XENO_POTENCY = 760.0f;
 		static constexpr float DESPAIR_POTENCY = 340.0f;
 		static constexpr float PARADOX_POTENCY = 500.0f;
 
@@ -237,6 +237,7 @@ namespace StrikingDummy
 
 		void reset();
 		void reset(int mp_tick, int lucid_tick, int dot_tick);
+		void reset(BlackMage& blm);
 
 		void update(int elapsed);
 		void update_history();
