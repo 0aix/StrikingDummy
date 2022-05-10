@@ -25,10 +25,10 @@ namespace StrikingDummy
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
 	const float EPS_MIN = 0.005f;
-	const float OUTPUT_LOWER = 9.090f;
-	const float OUTPUT_UPPER = 9.340f;
+	const float OUTPUT_LOWER = 9.050f;
+	const float OUTPUT_UPPER = 9.300f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 9.150;
+	const double BEST_THRESHOLD_TO_SAVE = 9.190;
 
 	void TrainingDummy::train()
 	{
