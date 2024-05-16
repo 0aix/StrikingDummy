@@ -138,8 +138,6 @@ namespace StrikingDummy
 
 			model.copyToHost();
 
-			std::priority_queue<std::pair<float, int>, std::vector<std::pair<float, int>>, std::greater<std::pair<float, int>>> pq;
-
 			model.copyMemory(m_index * NUM_STEPS_PER_EPOCH, state_memory, action_memory, reward_memory, move_memory, NUM_STEPS_PER_EPOCH);
 
 			if (++m_index == NUM_INDICES)
