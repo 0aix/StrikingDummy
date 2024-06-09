@@ -21,7 +21,7 @@ namespace StrikingDummy
 		TrainingDummy(Job& job) : job(job), model(job.get_state_size(), job.get_num_actions()), rotation(job, model), best_model(job.get_state_size(), job.get_num_actions()) {}
 
 		void train();
-		float test();
+		void test(float& start, float& end);
 		bool best();
 		void trace();
 		void montecarlo();

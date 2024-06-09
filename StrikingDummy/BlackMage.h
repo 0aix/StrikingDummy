@@ -9,10 +9,9 @@ namespace StrikingDummy
 		enum Action
 		{
 			NONE,
-			B1, B3, B4, F1, F3, F4, T3, XENO, DESPAIR, PARADOX,
-			SWIFT, TRIPLE, SHARP, LEYLINES, MANAFONT, TRANSPOSE, AMPLIFIER,
-			LUCID, WAIT_FOR_MP,
-			POT, F3P_OFF
+			B1, B3, B4, F1, F3, F4, T5, XENO, DESPAIR, PARADOX, FLARE_STAR,
+			SWIFT, TRIPLE, LEYLINES, MANAFONT, TRANSPOSE, AMPLIFIER, POT, LUCID,
+			FLARE, F3P_OFF, SHARP, WAIT_FOR_MP
 		};
 
 		enum Element
@@ -30,16 +29,15 @@ namespace StrikingDummy
 			FULL, NO_B4, STANDARD
 		};
 
-		const std::string blm_actions[22] =
+		const std::string blm_actions[24] =
 		{
 			"NONE",
-			"B1", "B3", "B4", "F1", "F3", "F4", "T3", "XENO", "DESPAIR", "PARADOX",
-			"SWIFT", "TRIPLE", "SHARP", "LEYLINES", "MANAFONT", "TRANSPOSE", "AMPLIFIER",
-			"LUCID", "WAIT_FOR_MP",
-			"HQ_TINCTURE_OF_INTELLIGENCE", "F3P OFF"
+			"B1", "B3", "B4", "F1", "F3", "F4", "T5", "XENO", "DESPAIR", "PARADOX", "FLARE STAR",
+			"SWIFT", "TRIPLE", "LEYLINES", "MANAFONT", "TRANSPOSE", "AMPLIFIER", "POTION", "LUCID",
+			"FLARE", "F3P OFF", "SHARP", "WAIT_FOR_MP"
 		};
 
-		static constexpr int NUM_ACTIONS = 22;
+		static constexpr int NUM_ACTIONS = 21;
 
 		static constexpr float BLM_ATTR = 115.0f;
 
@@ -52,19 +50,24 @@ namespace StrikingDummy
 		// Assume only in UI3 and AF3
 		static constexpr int MAX_MP = 10000;
 		static constexpr int MP_PER_TICK = 200;			// 2% per tick
-		static constexpr int MP_PER_TICK_UI1 = 3200;	// 32% per tick in UI1
-		static constexpr int MP_PER_TICK_UI2 = 4700;	// 47% per tick in UI2
-		static constexpr int MP_PER_TICK_UI3 = 6200;	// 62% per tick in UI3
-		static constexpr int MANAFONT_MP = 3000;		// 30%
+		static constexpr int UI1_MP = 2500;
+		static constexpr int UI2_MP = 5000;
+		static constexpr int UI3_MP = 10000;
 		static constexpr int LUCID_MP = 550;			// 5.5%
+		static constexpr int UI_MP[4] = { 0, UI1_MP, UI2_MP, UI3_MP };
 
 		static constexpr float BASE_GCD = 2.50f;
+		static constexpr float II_GCD = 3.00f;
 		static constexpr float III_GCD = 3.50f;
 		static constexpr float IV_GCD = 2.80f;
 		static constexpr float DESPAIR_GCD = 3.00f;
+		static constexpr float FLARE_GCD = 4.00f;
 
 		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
+
+		static constexpr int DOWNTIME_TIMER = 180000;
+		static constexpr int DOWNTIME_DURATION = 10000;
 
 		static constexpr int TICK_TIMER = 3000;
 		static constexpr int XENO_TIMER = 30000;
@@ -73,19 +76,17 @@ namespace StrikingDummy
 		static constexpr int TRIPLE_DURATION = 15000;
 		static constexpr int SHARP_DURATION = 30000;
 		static constexpr int FS_DURATION = 30000;
-		static constexpr int TC_DURATION = 40000;
-		static constexpr int TC_REFRESH_DURATION = 39960; // 39.96s as taken from packet data
+		static constexpr int TC_DURATION = 30000;
 		static constexpr int LL_DURATION = 30000;
 		static constexpr int DOT_DURATION = 30000;
-		static constexpr int DOT_TRAVEL_DURATION = 1000;
 		static constexpr int LUCID_DURATION = 21000;
 		static constexpr int POT_DURATION = 30000;
 
-		static constexpr int SWIFT_CD = 60000;
+		static constexpr int SWIFT_CD = 40000;
 		static constexpr int TRIPLE_CD = 60000;
 		static constexpr int SHARP_CD = 30000;
 		static constexpr int LL_CD = 120000;
-		static constexpr int MANAFONT_CD = 120000;
+		static constexpr int MANAFONT_CD = 100000;
 		static constexpr int TRANSPOSE_CD = 5000;
 		static constexpr int LUCID_CD = 60000;
 		static constexpr int POT_CD = 270000;
@@ -93,19 +94,20 @@ namespace StrikingDummy
 
 		// Assume not using Flare
 		static constexpr float F1_POTENCY = 180.0f;
-		static constexpr float F3_POTENCY = 260.0f;
+		static constexpr float F3_POTENCY = 280.0f;
 		static constexpr float F4_POTENCY = 310.0f;
 		static constexpr float B1_POTENCY = 180.0f;
-		static constexpr float B3_POTENCY = 260.0f;
+		static constexpr float B3_POTENCY = 280.0f;
 		static constexpr float B4_POTENCY = 310.0f;
-		static constexpr float T3_POTENCY = 50.0f;
-		static constexpr float T3_DOT_POTENCY = 35.0f;
-		static constexpr float TC_POTENCY = 400.0f;
-		static constexpr float XENO_POTENCY = 760.0f;
+		static constexpr float T5_POTENCY = 200.0f;
+		static constexpr float T5_DOT_POTENCY = 55.0f;
+		static constexpr float XENO_POTENCY = 880.0f;
 		static constexpr float DESPAIR_POTENCY = 340.0f;
 		static constexpr float PARADOX_POTENCY = 500.0f;
+		static constexpr float FLARE_STAR_POTENCY = 400.0f;
+		static constexpr float FLARE_POTENCY = 240.0f;
 
-		static constexpr float ENO_MULTIPLIER = 1.20f;
+		static constexpr float ENO_MULTIPLIER = 1.30f;
 		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30f;
 		static constexpr float AF1_MULTIPLIER = 1.40f;
 		static constexpr float AF2_MULTIPLIER = 1.60f;
@@ -121,21 +123,27 @@ namespace StrikingDummy
 		static constexpr int B1_MP_COST = 400;
 		static constexpr int B3_MP_COST = 800;
 		static constexpr int B4_MP_COST = 800;
-		static constexpr int T3_MP_COST = 400;
 		static constexpr int DESPAIR_MP_COST = 800;
 		static constexpr int PARADOX_MP_COST = 1600;
+		static constexpr int FLARE_MP_COST = 800;
 
 		const int base_gcd;
+		const int ii_gcd;
 		const int iii_gcd;
 		const int iv_gcd;
 		const int despair_gcd;
+		const int flare_gcd;
 		const int fast_base_gcd;
+		const int fast_ii_gcd;
 		const int fast_iii_gcd;
 		const int ll_base_gcd;
+		const int ll_ii_gcd;
 		const int ll_iii_gcd;
 		const int ll_iv_gcd;
 		const int ll_despair_gcd;
+		const int ll_flare_gcd;
 		const int ll_fast_base_gcd;
+		const int ll_fast_ii_gcd;
 		const int ll_fast_iii_gcd;
 
 		Opener opener;
@@ -161,18 +169,18 @@ namespace StrikingDummy
 		// misc timers
 		Buff gauge;
 		Timer xeno_timer;
-		Timer sharp_timer;
+		//Timer sharp_timer;
 		Timer triple_timer;
-		Timer dot_travel_timer;
+		Timer downtime_timer;
 
 		int xeno_procs = 0;
-		int sharp_procs = 0;
+		//int sharp_procs = 0;
 		int triple_procs = 0;
-		int dot_travel;
+		int astral_stacks = 0;
 
 		// buffs
 		Buff swift;
-		Buff sharp;
+		//Buff sharp;
 		Buff triple;
 		Buff leylines;
 		Buff fs_proc;
@@ -205,6 +213,8 @@ namespace StrikingDummy
 		int b4_count = 0;
 		int t3_count = 0;
 		int despair_count = 0;
+		int flare_star_count = 0;
+		int flare_count = 0;
 		int transpose_count = 0;
 		int lucid_count = 0;
 		int pot_count = 0;
@@ -213,6 +223,7 @@ namespace StrikingDummy
 		double total_f4_damage = 0.0f;
 		double total_desp_damage = 0.0f;
 		double total_xeno_damage = 0.0f;
+		double total_flare_star_damage = 0.0f;
 		double total_t3_damage = 0.0f;
 		double total_dot_damage = 0.0f;
 
@@ -264,7 +275,7 @@ namespace StrikingDummy
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 64; }
+		int get_state_size() { return 55; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

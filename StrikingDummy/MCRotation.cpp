@@ -20,11 +20,11 @@ namespace StrikingDummy
 
 	void MCRotation::step()
 	{
-		const float OUTPUT_LOWER = 9.090f;
-		const float OUTPUT_UPPER = 9.340f;
-		const int N = 2;
-		const int K = 600;
-		const int L = 30000;
+		const float OUTPUT_LOWER = 9.23f;
+		const float OUTPUT_UPPER = 9.57f;
+		const int N = 4;
+		const int K = 1;
+		const int L = 600000;
 		const float WINDOW = 600000.0f;
 
 		if (job.actions.size() == 1)
@@ -50,13 +50,15 @@ namespace StrikingDummy
 					temp.reset(blm);
 					temp.use_action(job.actions[i]);
 					temp.step();
-					while (temp.timeline.time < job.timeline.time + L)
+					//while (temp.timeline.time < job.timeline.time + L)
+					while (temp.timeline.time < 1200000.0f)
 						rotation.step();
 					float time_passed = temp.timeline.time - job.timeline.time;
 					float total_damage = temp.total_damage;
 					rotation.step();
-					float future_est_dps = (OUTPUT_LOWER + (OUTPUT_UPPER - OUTPUT_LOWER) / (1.0f + expf(-rotation.stored_max_weight)));
-					est_dps += (total_damage + future_est_dps * (WINDOW - time_passed)) / WINDOW;
+					//float future_est_dps = (OUTPUT_LOWER + (OUTPUT_UPPER - OUTPUT_LOWER) / (1.0f + expf(-rotation.stored_max_weight)));
+					//est_dps += (total_damage + future_est_dps * (WINDOW - time_passed)) / WINDOW;
+					est_dps += total_damage;
 				}
 				if (est_dps > best_est_dps)
 				{

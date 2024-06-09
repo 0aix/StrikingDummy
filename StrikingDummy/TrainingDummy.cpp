@@ -16,7 +16,7 @@ namespace StrikingDummy
 	const int NUM_STEPS_PER_THREAD = NUM_STEPS_PER_EPOCH / NUM_THREADS;
 	const int NUM_STEPS_PER_EPISODE = 2500;
 	const int NUM_EPISODES = NUM_STEPS_PER_EPOCH / NUM_STEPS_PER_EPISODE;
-	const int CAPACITY = 1000000;
+	const int CAPACITY = 2000000;
 	const int NUM_INDICES = CAPACITY / NUM_STEPS_PER_EPOCH;
 	const int BATCH_SIZE = 10000;
 	const int NUM_BATCHES = CAPACITY / BATCH_SIZE;
@@ -25,10 +25,13 @@ namespace StrikingDummy
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
 	const float EPS_MIN = 0.005f;
-	const float OUTPUT_LOWER = 9.050f;
-	const float OUTPUT_UPPER = 9.300f;
+	const float NU_DECAY = 0.9999f;
+	const float NU_START = 0.0001f; //0.0001f;
+	const float NU_MIN = 0.000001f;
+	const float OUTPUT_LOWER = 14.700f;
+	const float OUTPUT_UPPER = 15.200f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 9.190;
+	const double BEST_THRESHOLD_TO_SAVE = 14.000;
 
 	void TrainingDummy::train()
 	{
@@ -57,7 +60,7 @@ namespace StrikingDummy
 
 		BlackMage& blm = (BlackMage&)job;
 
-		float nu = 0.00001f;
+		float nu = NU_START;
 		float eps = EPS_START;
 		//float eps = EPS_MIN;
 		float exp = 0.0f;
@@ -153,17 +156,24 @@ namespace StrikingDummy
 			if (eps < EPS_MIN)
 				eps = EPS_MIN;
 
+			//nu *= NU_DECAY;
+			//if (nu < NU_MIN)
+			//	nu = NU_MIN;
+
 			// test model
 			if (epoch % 50 == 0)
 			{
-				float q = test();
+				float q;
+				float r;
+				test(q, r);
 
 				q = OUTPUT_LOWER + (OUTPUT_UPPER - OUTPUT_LOWER) / (1.0f + expf(-q));
+				r = OUTPUT_LOWER + (OUTPUT_UPPER - OUTPUT_LOWER) / (1.0f + expf(-r));
 
 				double dps = job.total_damage / job.timeline.time;
 
 				std::stringstream ss;
-				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b3s: " << blm.b3_count << ", b4s: " << blm.b4_count << ", t3s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
+				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", end_guess: " << r << ", xenos: " << blm.xeno_count << ", f1s: " << blm.f1_count << ", f4s: " << blm.f4_count << ", b3s: " << blm.b3_count << ", b4s: " << blm.b4_count << ", t5s: " << blm.t3_count << ", transposes: " << blm.transpose_count << ", despairs: " << blm.despair_count << ", flare stars: " << blm.flare_star_count << ", flares: " << blm.flare_count << ", lucids: " << blm.lucid_count << ", pots: " << blm.pot_count << std::endl;
 				ss << "20000 rotation steps ms: " << generate_time / 1000000.0 / total_count << ", epoch ms: " << copy_time / 1000000.0 / copy_count << std::endl;
 
 				generate_time = 0;
@@ -211,15 +221,15 @@ namespace StrikingDummy
 		Logger::close();
 	}
 
-	float TrainingDummy::test()
+	void TrainingDummy::test(float& q, float& r)
 	{
 		rotation.reset(0.0f, 0.0f);
 		job.reset();
 		rotation.step();
-		float q = rotation.stored_max_weight;
+		q = rotation.stored_max_weight;
 		while (job.timeline.time < 600000)
 			rotation.step();
-		return q;
+		r = rotation.stored_max_weight;
 	}
 
 	bool TrainingDummy::best()
@@ -284,6 +294,7 @@ namespace StrikingDummy
 		ss << "T3 uptime: " << 100.0 / blm.timeline.time * blm.total_dot_time << "%\n";
 		ss << "F4 % damage: " << 100.0 / blm.total_damage * blm.total_f4_damage << "%\n";
 		ss << "Desp % damage: " << 100.0 / blm.total_damage * blm.total_desp_damage << "%\n";
+		ss << "Flare Star % damage: " << 100.0 / blm.total_damage * blm.total_flare_star_damage << "%\n";
 		ss << "Xeno % damage: " << 100.0 / blm.total_damage * blm.total_xeno_damage << "%\n";
 		ss << "T3 % damage: " << 100.0 / blm.total_damage * blm.total_t3_damage << "%\n";
 		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n=============" << std::endl;
@@ -319,36 +330,33 @@ namespace StrikingDummy
 					ss << "0";
 				ss << centiseconds << "] ";
 				ss << lroundf(t.t0[0] * 10000.0f) << " ";
-				if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
+				if (t.action == BlackMage::F1 && t.t0[25] == 1.0f)
 					ss << "F1^";
-				else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
+				else if (t.action == BlackMage::F3 && t.t0[25] == 1.0f)
 					ss << "F3p";
-				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
+				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[25] == 1.0f)
 					ss << "PARADOX^";
-				else if (t.action == BlackMage::T3)
-				{
-					if (t.t0[26] == 1.0f)
-						ss << "T3p at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
-					else
-						ss << "T3 at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
-				}
+				else if (t.action == BlackMage::T5)
+					ss << "T3 at " << lround(t.t0[30] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
 				else if (t.action == BlackMage::XENO)
 				{
-					if (t.t0[14] == 1.0f)
+					if (t.t0[15] == 1.0f)
+						ss << "XENO***";
+					else if (t.t0[14] == 1.0f)
 						ss << "XENO**";
 					else
 						ss << "XENO*";
 				}
 				else if (t.action == BlackMage::TRIPLE)
 				{
-					if (t.t0[37] == 1.0f)
+					if (t.t0[38] == 1.0f)
 						ss << "TRIPLE**";
 					else
 						ss << "TRIPLE*";
 				}
 				else if (t.action == BlackMage::SHARP)
 				{
-					if (t.t0[40] == 1.0f)
+					if (t.t0[41] == 1.0f)
 						ss << "SHARP**";
 					else
 						ss << "SHARP*";
@@ -356,8 +364,8 @@ namespace StrikingDummy
 				else
 					ss << blm.get_action_name(t.action);
 
-				if (t.t0[26] == 1.0f)
-					ss << " (T3p w/ " << lround(t.t0[27] * BlackMage::TC_DURATION) / 1000.0f << "s)";
+				//if (t.t0[27] == 1.0f)
+				//	ss << " (T5p w/ " << lround(t.t0[28] * BlackMage::TC_DURATION) / 1000.0f << "s)";
 
 				ss << std::endl;
 
@@ -396,6 +404,7 @@ namespace StrikingDummy
 		ss << "T3 uptime: " << 100.0 / blm.timeline.time * blm.total_dot_time << "%\n";
 		ss << "F4 % damage: " << 100.0 / blm.total_damage * blm.total_f4_damage << "%\n";
 		ss << "Desp % damage: " << 100.0 / blm.total_damage * blm.total_desp_damage << "%\n";
+		ss << "Flare Star % damage: " << 100.0 / blm.total_damage * blm.total_flare_star_damage << "%\n";
 		ss << "Xeno % damage: " << 100.0 / blm.total_damage * blm.total_xeno_damage << "%\n";
 		ss << "T3 % damage: " << 100.0 / blm.total_damage * blm.total_t3_damage << "%\n";
 		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n=============" << std::endl;
@@ -431,36 +440,33 @@ namespace StrikingDummy
 					ss << "0";
 				ss << centiseconds << "] ";
 				ss << lroundf(t.t0[0] * 10000.0f) << " ";
-				if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
+				if (t.action == BlackMage::F1 && t.t0[25] == 1.0f)
 					ss << "F1^";
-				else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
+				else if (t.action == BlackMage::F3 && t.t0[25] == 1.0f)
 					ss << "F3p";
-				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
+				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[25] == 1.0f)
 					ss << "PARADOX^";
-				else if (t.action == BlackMage::T3)
-				{
-					if (t.t0[26] == 1.0f)
-						ss << "T3p at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
-					else
-						ss << "T3 at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
-				}
+				else if (t.action == BlackMage::T5)
+					ss << "T3 at " << lround(t.t0[30] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
 				else if (t.action == BlackMage::XENO)
 				{
-					if (t.t0[14] == 1.0f)
+					if (t.t0[15] == 1.0f)
+						ss << "XENO***";
+					else if (t.t0[14] == 1.0f)
 						ss << "XENO**";
 					else
 						ss << "XENO*";
 				}
 				else if (t.action == BlackMage::TRIPLE)
 				{
-					if (t.t0[37] == 1.0f)
+					if (t.t0[38] == 1.0f)
 						ss << "TRIPLE**";
 					else
 						ss << "TRIPLE*";
 				}
 				else if (t.action == BlackMage::SHARP)
 				{
-					if (t.t0[40] == 1.0f)
+					if (t.t0[41] == 1.0f)
 						ss << "SHARP**";
 					else
 						ss << "SHARP*";
@@ -472,36 +478,33 @@ namespace StrikingDummy
 				if (t.action != temp)
 				{
 					ss << " [[";
-					if (temp == BlackMage::F1 && t.t0[24] == 1.0f)
+					if (temp == BlackMage::F1 && t.t0[25] == 1.0f)
 						ss << "F1^";
-					else if (temp == BlackMage::F3 && t.t0[24] == 1.0f)
+					else if (temp == BlackMage::F3 && t.t0[25] == 1.0f)
 						ss << "F3p";
-					else if (temp == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
+					else if (temp == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[25] == 1.0f)
 						ss << "PARADOX^";
-					else if (temp == BlackMage::T3)
-					{
-						if (t.t0[26] == 1.0f)
-							ss << "T3p at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
-						else
-							ss << "T3 at " << lround(t.t0[29] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
-					}
+					else if (temp == BlackMage::T5)
+						ss << "T3 at " << lround(t.t0[30] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
 					else if (temp == BlackMage::XENO)
 					{
-						if (t.t0[14] == 1.0f)
+						if (t.t0[15] == 1.0f)
+							ss << "XENO***";
+						else if (t.t0[14] == 1.0f)
 							ss << "XENO**";
 						else
 							ss << "XENO*";
 					}
 					else if (temp == BlackMage::TRIPLE)
 					{
-						if (t.t0[37] == 1.0f)
+						if (t.t0[38] == 1.0f)
 							ss << "TRIPLE**";
 						else
 							ss << "TRIPLE*";
 					}
 					else if (temp == BlackMage::SHARP)
 					{
-						if (t.t0[40] == 1.0f)
+						if (t.t0[41] == 1.0f)
 							ss << "SHARP**";
 						else
 							ss << "SHARP*";
@@ -511,8 +514,8 @@ namespace StrikingDummy
 					ss << "]]";
 				}
 
-				if (t.t0[26] == 1.0f)
-					ss << " (T3p w/ " << lround(t.t0[27] * BlackMage::TC_DURATION) / 1000.0f << "s)";
+				//if (t.t0[26] == 1.0f)
+				//	ss << " (T3p w/ " << lround(t.t0[27] * BlackMage::TC_DURATION) / 1000.0f << "s)";
 
 				ss << std::endl;
 
@@ -669,7 +672,7 @@ namespace StrikingDummy
 						ss << "F1^ ";
 					else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
 						ss << "F3p ";
-					else if (t.action == BlackMage::T3)
+					else if (t.action == BlackMage::T5)
 						ss << "T3/p ";
 					else if (t.action != 0 && t.action != BlackMage::SWIFT && t.action != BlackMage::TRIPLE && t.action != BlackMage::SHARP && t.action != BlackMage::LEYLINES && t.action < BlackMage::AMPLIFIER)
 					{
