@@ -21,17 +21,17 @@ namespace StrikingDummy
 	const int BATCH_SIZE = 10000;
 	const int NUM_BATCHES = CAPACITY / BATCH_SIZE;
 	const int NUM_BATCHES_PER_EPOCH = NUM_BATCHES;
-	const float WINDOW = 600000.0f;
+	const float WINDOW = 510000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
 	const float EPS_MIN = 0.005f;
 	const float NU_DECAY = 0.9999f;
 	const float NU_START = 0.0001f; //0.0001f;
 	const float NU_MIN = 0.000001f;
-	const float OUTPUT_LOWER = 14.700f;
-	const float OUTPUT_UPPER = 15.200f;
+	const float OUTPUT_LOWER = 15.750f;
+	const float OUTPUT_UPPER = 16.300f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 14.000;
+	const double BEST_THRESHOLD_TO_SAVE = 15.000;
 
 	void TrainingDummy::train()
 	{
@@ -354,13 +354,6 @@ namespace StrikingDummy
 					else
 						ss << "TRIPLE*";
 				}
-				else if (t.action == BlackMage::SHARP)
-				{
-					if (t.t0[41] == 1.0f)
-						ss << "SHARP**";
-					else
-						ss << "SHARP*";
-				}
 				else
 					ss << blm.get_action_name(t.action);
 
@@ -464,13 +457,6 @@ namespace StrikingDummy
 					else
 						ss << "TRIPLE*";
 				}
-				else if (t.action == BlackMage::SHARP)
-				{
-					if (t.t0[41] == 1.0f)
-						ss << "SHARP**";
-					else
-						ss << "SHARP*";
-				}
 				else
 					ss << blm.get_action_name(t.action);
 
@@ -501,13 +487,6 @@ namespace StrikingDummy
 							ss << "TRIPLE**";
 						else
 							ss << "TRIPLE*";
-					}
-					else if (temp == BlackMage::SHARP)
-					{
-						if (t.t0[41] == 1.0f)
-							ss << "SHARP**";
-						else
-							ss << "SHARP*";
 					}
 					else
 						ss << blm.get_action_name(temp);
@@ -544,7 +523,7 @@ namespace StrikingDummy
 		while (blm.timeline.time < 7 * 24 * 3600000)
 			rotation.step();
 		/*
-		std::vector<int>* dists[] = { &blm.t3_dist, &blm.t3p_dist, &blm.swift_dist, &blm.triple_dist, &blm.sharp_dist, &blm.ll_dist, &blm.mf_dist };
+		std::vector<int>* dists[] = { &blm.t3_dist, &blm.t3p_dist, &blm.swift_dist, &blm.triple_dist, &blm.ll_dist, &blm.mf_dist };
 		std::stringstream ss;
 		for (int i = 0; i < 7; i++)
 		{
@@ -674,9 +653,9 @@ namespace StrikingDummy
 						ss << "F3p ";
 					else if (t.action == BlackMage::T5)
 						ss << "T3/p ";
-					else if (t.action != 0 && t.action != BlackMage::SWIFT && t.action != BlackMage::TRIPLE && t.action != BlackMage::SHARP && t.action != BlackMage::LEYLINES && t.action < BlackMage::AMPLIFIER)
+					else if (t.action != 0 && t.action != BlackMage::SWIFT && t.action != BlackMage::TRIPLE && t.action != BlackMage::LEYLINES && t.action < BlackMage::AMPLIFIER)
 					{
-						// Not NONE, SWIFT, TRIPLE, SHARP, LEYLINES, AMPLIFIER, LUCID, WAIT_FOR_MP, TINCTURE, or F3P_OFF
+						// Not NONE, SWIFT, TRIPLE, LEYLINES, AMPLIFIER, LUCID, WAIT_FOR_MP, TINCTURE, or F3P_OFF
 						if ((t.action != BlackMage::XENO && t.action != BlackMage::MANAFONT && t.action != BlackMage::TRANSPOSE && (t.t0[16] > 0.0f || t.t0[20] > 0.0f)) || (t.action == BlackMage::PARADOX && t.t0[1] == 1.0f))
 							ss << blm.get_action_name(t.action) << "* ";
 						else

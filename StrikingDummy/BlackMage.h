@@ -11,7 +11,7 @@ namespace StrikingDummy
 			NONE,
 			B1, B3, B4, F1, F3, F4, T5, XENO, DESPAIR, PARADOX, FLARE_STAR,
 			SWIFT, TRIPLE, LEYLINES, MANAFONT, TRANSPOSE, AMPLIFIER, POT, LUCID,
-			FLARE, F3P_OFF, SHARP, WAIT_FOR_MP
+			FLARE, F3P_OFF, WAIT_FOR_MP
 		};
 
 		enum Element
@@ -34,7 +34,7 @@ namespace StrikingDummy
 			"NONE",
 			"B1", "B3", "B4", "F1", "F3", "F4", "T5", "XENO", "DESPAIR", "PARADOX", "FLARE STAR",
 			"SWIFT", "TRIPLE", "LEYLINES", "MANAFONT", "TRANSPOSE", "AMPLIFIER", "POTION", "LUCID",
-			"FLARE", "F3P OFF", "SHARP", "WAIT_FOR_MP"
+			"FLARE", "F3P OFF", "WAIT_FOR_MP"
 		};
 
 		static constexpr int NUM_ACTIONS = 21;
@@ -66,15 +66,13 @@ namespace StrikingDummy
 		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
 
-		static constexpr int DOWNTIME_TIMER = 180000;
-		static constexpr int DOWNTIME_DURATION = 10000;
+		static constexpr int DOWNTIME_TIMER = 510000; // 8m 30s
 
 		static constexpr int TICK_TIMER = 3000;
 		static constexpr int XENO_TIMER = 30000;
 		static constexpr int GAUGE_DURATION = 15000;
 		static constexpr int SWIFT_DURATION = 10000;
 		static constexpr int TRIPLE_DURATION = 15000;
-		static constexpr int SHARP_DURATION = 30000;
 		static constexpr int FS_DURATION = 30000;
 		static constexpr int TC_DURATION = 30000;
 		static constexpr int LL_DURATION = 30000;
@@ -84,7 +82,6 @@ namespace StrikingDummy
 
 		static constexpr int SWIFT_CD = 40000;
 		static constexpr int TRIPLE_CD = 60000;
-		static constexpr int SHARP_CD = 30000;
 		static constexpr int LL_CD = 120000;
 		static constexpr int MANAFONT_CD = 100000;
 		static constexpr int TRANSPOSE_CD = 5000;
@@ -115,6 +112,11 @@ namespace StrikingDummy
 		static constexpr float AF1UI1_MULTIPLIER = 0.90f;
 		static constexpr float AF2UI2_MULTIPLIER = 0.80f;
 		static constexpr float AF3UI3_MULTIPLIER = 0.70f;
+
+		static constexpr float RAID_BUFF_MULTIPLIER = 1.25f;
+		static constexpr int RAID_BUFF_OFFSET = 5000;
+		static constexpr int RAID_BUFF_TIMER = 120000;
+		static constexpr int RAID_BUFF_DURATION = 20000;
 
 		// MP costs and multipliers
 		static constexpr int F1_MP_COST = 800;
@@ -169,25 +171,24 @@ namespace StrikingDummy
 		// misc timers
 		Buff gauge;
 		Timer xeno_timer;
-		//Timer sharp_timer;
 		Timer triple_timer;
+		Timer raid_buff_timer;
 		Timer downtime_timer;
 
 		int xeno_procs = 0;
-		//int sharp_procs = 0;
 		int triple_procs = 0;
 		int astral_stacks = 0;
 
 		// buffs
 		Buff swift;
-		//Buff sharp;
 		Buff triple;
 		Buff leylines;
 		Buff fs_proc;
 		Buff tc_proc;
-		Buff dot; // (value & 2) <=> enochian; (value & 4) <=> pot
+		Buff dot; // (value & 2) <=> enochian; (value & 4) <=> pot; (value & 8) <=> raid buff
 		Buff lucid;
 		Buff pot;
+		Buff raid_buff;
 
 		// cooldowns
 		Timer swift_cd;
@@ -234,13 +235,11 @@ namespace StrikingDummy
 		std::vector<int> t3p_dist;
 		std::vector<int> swift_dist;
 		std::vector<int> triple_dist;
-		std::vector<int> sharp_dist;
 		std::vector<int> ll_dist;
 		std::vector<int> mf_dist;
 		int t3_last = 0;
 		int swift_last = 0;
 		int triple_last = 0;
-		int sharp_last = 0;
 		int ll_last = 0;
 		int mf_last = 0;
 
@@ -275,7 +274,7 @@ namespace StrikingDummy
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 55; }
+		int get_state_size() { return 60; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

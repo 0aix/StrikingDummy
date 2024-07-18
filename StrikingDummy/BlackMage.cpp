@@ -61,11 +61,6 @@ namespace StrikingDummy
 			mp = MAX_MP - F3_MP_COST;
 			element = Element::AF;
 		}
-		//else if (opener == Opener::PRE_T3)
-		//{
-		//	mp = MAX_MP - T3_MP_COST;
-		//	element = Element::NE;
-		//}
 		else
 		{
 			mp = MAX_MP;
@@ -92,20 +87,18 @@ namespace StrikingDummy
 		// misc timers
 		gauge.reset(0, 0);
 		xeno_timer.reset(0, false);
-		//sharp_timer.reset(0, false);
 		triple_timer.reset(0, false);
-		//downtime_timer.reset(0, false);
-		//downtime_timer.reset(DOWNTIME_TIMER, false);
-		//timeline.push_event(downtime_timer.time);
+		raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+		downtime_timer.reset(DOWNTIME_TIMER, false);
+		timeline.push_event(raid_buff_timer.time);
+		timeline.push_event(downtime_timer.time);
 
 		xeno_procs = 0;
-		//sharp_procs = 2;
 		triple_procs = 2;
 		astral_stacks = 0;
 
 		// buffs
 		swift.reset(0, 0);
-		//sharp.reset(0, 0);
 		triple.reset(0, 0);
 		leylines.reset(0, 0);
 		fs_proc.reset(0, 0);
@@ -113,6 +106,7 @@ namespace StrikingDummy
 		dot.reset(0, 0);
 		lucid.reset(0, 0);
 		pot.reset(0, 0);
+		raid_buff.reset(0, 0);
 
 		// cooldowns		
 		swift_cd.reset(0, true);
@@ -132,19 +126,13 @@ namespace StrikingDummy
 		// precast
 		if (opener == Opener::PRE_F3 || opener == Opener::PRE_B3 || opener == Opener::PRE_LL_F3 || opener == Opener::PRE_LL_B3)
 		{
-			//sharp_procs = 1;
-			//sharp.reset(SHARP_DURATION - 15000, 1);
-			//sharp_timer.reset(SHARP_CD - 15000, false);
 			enochian = true;
 			gauge.reset(GAUGE_DURATION - CAST_LOCK - ACTION_TAX, 3);
 			tc_proc.reset(TC_DURATION - CAST_LOCK - ACTION_TAX, 1);
 			xeno_timer.reset(XENO_TIMER, false);
 			timeline.push_event(gauge.time);
 			timeline.push_event(tc_proc.time);
-			//timeline.push_event(sharp.time);
-			//timeline.push_event(sharp_timer.time);
 			timeline.push_event(xeno_timer.time);
-			//sharp_last = -15000;
 		}
 		if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
 		{
@@ -154,16 +142,6 @@ namespace StrikingDummy
 			timeline.push_event(leylines_cd.time);
 			ll_last = -4000;
 		}
-		//if (opener == Opener::PRE_T3)
-		//{
-		//	dot.reset(DOT_DURATION, 1);
-		//	tc_proc.reset(TC_DURATION - CAST_LOCK - ACTION_TAX, 1);
-		//	sharp_procs = 1;
-		//	sharp_timer.reset(SHARP_CD - 15000, false);
-		//	timeline.push_event(dot.time);
-		//	timeline.push_event(tc_proc.time);
-		//	timeline.push_event(sharp_timer.time);
-		//}
 
 		// metrics
 		xeno_count = 0;
@@ -217,18 +195,16 @@ namespace StrikingDummy
 		// misc timers
 		gauge = blm.gauge;
 		xeno_timer = blm.xeno_timer;
-		//sharp_timer = blm.sharp_timer;
 		triple_timer = blm.triple_timer;
-		//downtime_timer = blm.downtime_timer;
+		raid_buff_timer = blm.raid_buff_timer;
+		downtime_timer = blm.downtime_timer;
 
 		xeno_procs = blm.xeno_procs;
-		//sharp_procs = blm.sharp_procs;
 		triple_procs = blm.triple_procs;
 		astral_stacks = blm.astral_stacks;
 
 		// buffs
 		swift = blm.swift;
-		//sharp = blm.sharp;
 		triple = blm.triple;
 		leylines = blm.leylines;
 		fs_proc = blm.fs_proc;
@@ -236,6 +212,7 @@ namespace StrikingDummy
 		dot = blm.dot;
 		lucid = blm.lucid;
 		pot = blm.pot;
+		raid_buff = blm.raid_buff;
 
 		// cooldowns		
 		swift_cd = blm.swift_cd;
@@ -302,13 +279,12 @@ namespace StrikingDummy
 		// misc timer
 		gauge.update(elapsed);
 		xeno_timer.update(elapsed);
-		//sharp_timer.update(elapsed);
 		triple_timer.update(elapsed);
-		//downtime_timer.update(elapsed);
+		raid_buff_timer.update(elapsed);
+		downtime_timer.update(elapsed);
 
 		// buffs
 		swift.update(elapsed);
-		//sharp.update(elapsed);
 		triple.update(elapsed);
 		leylines.update(elapsed);
 		fs_proc.update(elapsed);
@@ -316,6 +292,7 @@ namespace StrikingDummy
 		dot.update(elapsed);
 		lucid.update(elapsed);
 		pot.update(elapsed);
+		raid_buff.update(elapsed);
 
 		// cooldowns
 		swift_cd.update(elapsed);
@@ -355,18 +332,6 @@ namespace StrikingDummy
 			xeno_timer.ready = false;
 			push_event(XENO_TIMER);
 		}
-		//if (sharp_timer.ready)
-		//{
-		//	sharp_procs++;
-		//	assert(sharp_timer.time == 0);
-		//	assert(sharp_procs <= 2);
-		//	sharp_timer.ready = false;
-		//	if (sharp_procs < 2)
-		//	{
-		//		sharp_timer.time = SHARP_CD;
-		//		push_event(SHARP_CD);
-		//	}
-		//}
 		if (triple_timer.ready)
 		{
 			triple_procs++;
@@ -379,33 +344,99 @@ namespace StrikingDummy
 				push_event(TRIPLE_CD);
 			}
 		}
-		//if (downtime_timer.ready)
-		//{
-		//	downtime_timer.reset(DOWNTIME_TIMER + DOWNTIME_DURATION, false);
-		//	action_timer.reset(DOWNTIME_DURATION - flare_gcd, false);
-		//	gcd_timer.reset(DOWNTIME_DURATION, false);
-		//	gauge.reset(GAUGE_DURATION + DOWNTIME_DURATION - flare_gcd - base_gcd, 3);
-		//	element = Element::UI;
-		//	paradox = false;
-		//	umbral_hearts = 3;
-		//	astral_stacks = 0;
-		//	mp = MAX_MP;
-		//	triple_procs = 0;
-		//	triple_timer.reset(TRIPLE_CD, false);
-		//	triple.reset(0, 0);
-		//	swift_cd.reset(SWIFT_CD, false);
-		//	swift.reset(0, 0);
-		//	dot.reset(0, 0);
-		//	fs_proc.reset(0, 0);
-		//	tc_proc.reset(TC_DURATION, 1);
-		//	push_event(downtime_timer.time);
-		//	push_event(action_timer.time);
-		//	push_event(gcd_timer.time);
-		//	push_event(gauge.time);
-		//	push_event(tc_proc.time);
-		//	push_event(triple_timer.time);
-		//	push_event(swift_cd.time);
-		//}
+		if (raid_buff_timer.ready)
+		{
+			raid_buff.reset(RAID_BUFF_DURATION, 1);
+			raid_buff_timer.reset(RAID_BUFF_TIMER, false);
+			push_event(RAID_BUFF_DURATION);
+			push_event(RAID_BUFF_TIMER);
+		}
+		if (downtime_timer.ready)
+		{
+			if (opener == Opener::PRE_B3 || opener == Opener::PRE_LL_B3)
+			{
+				mp = MAX_MP - B3_MP_COST;
+				element = Element::UI;
+			}
+			else if (opener == Opener::PRE_F3 || opener == Opener::PRE_LL_F3)
+			{
+				mp = MAX_MP - F3_MP_COST;
+				element = Element::AF;
+			}
+			else
+			{
+				mp = MAX_MP;
+				element = Element::NE;
+			}
+
+			umbral_hearts = 0;
+			enochian = false;
+			paradox = false;
+			t3p = false;
+
+			mp_wait = 0;
+			skip_lucid_tick = false;
+			skip_transpose_tick = false;
+
+			// misc timers
+			gauge.reset(0, 0);
+			xeno_timer.reset(0, false);
+			triple_timer.reset(0, false);
+			raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+			downtime_timer.reset(DOWNTIME_TIMER, false);
+			timeline.push_event(raid_buff_timer.time);
+			timeline.push_event(downtime_timer.time);
+
+			xeno_procs = 0;
+			triple_procs = 2;
+			astral_stacks = 0;
+
+			// buffs
+			swift.reset(0, 0);
+			triple.reset(0, 0);
+			leylines.reset(0, 0);
+			fs_proc.reset(0, 0);
+			tc_proc.reset(0, 0);
+			dot.reset(0, 0);
+			lucid.reset(0, 0);
+			pot.reset(0, 0);
+			raid_buff.reset(0, 0);
+
+			// cooldowns		
+			swift_cd.reset(0, true);
+			leylines_cd.reset(0, true);
+			manafont_cd.reset(0, true);
+			transpose_cd.reset(0, true);
+			lucid_cd.reset(0, true);
+			pot_cd.reset(0, true);
+			amplifier_cd.reset(0, true);
+
+			// actions
+			gcd_timer.reset(0, true);
+			cast_timer.reset(0, false);
+			action_timer.reset(0, true);
+			casting = Action::NONE;
+
+			// precast
+			if (opener == Opener::PRE_F3 || opener == Opener::PRE_B3 || opener == Opener::PRE_LL_F3 || opener == Opener::PRE_LL_B3)
+			{
+				enochian = true;
+				gauge.reset(GAUGE_DURATION - CAST_LOCK - ACTION_TAX, 3);
+				tc_proc.reset(TC_DURATION - CAST_LOCK - ACTION_TAX, 1);
+				xeno_timer.reset(XENO_TIMER, false);
+				timeline.push_event(gauge.time);
+				timeline.push_event(tc_proc.time);
+				timeline.push_event(xeno_timer.time);
+			}
+			if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
+			{
+				leylines.reset(LL_DURATION - 4000, 1);
+				leylines_cd.reset(LL_CD - 4000, false);
+				timeline.push_event(leylines.time);
+				timeline.push_event(leylines_cd.time);
+				ll_last = -4000;
+			}
+		}
 		if (cast_timer.ready)
 			end_action();
 		if (element == Element::AF || mp == MAX_MP)
@@ -455,17 +486,12 @@ namespace StrikingDummy
 
 	void BlackMage::update_dot()
 	{
-		if (dot.count > 0/* && downtime_timer.time <= DOWNTIME_TIMER*/)
+		if (dot.count > 0)
 		{
 			float damage = get_dot_damage();
 			total_damage += damage;
 			total_dot_damage += damage;
 			history.back().reward += damage;
-			//if (prob(rng) < TC_PROC_RATE)
-			//{
-			//	tc_proc.reset(TC_REFRESH_DURATION, 1);
-			//	push_event(TC_REFRESH_DURATION);
-			//}
 		}
 		dot_timer.reset(TICK_TIMER, false);
 		push_event(TICK_TIMER);
@@ -559,10 +585,6 @@ namespace StrikingDummy
 			triple_dist.push_back(timeline.time - triple_last + TRIPLE_CD);
 			triple_last = timeline.time;
 			break;
-		case SHARP:
-			sharp_dist.push_back(timeline.time - sharp_last + SHARP_CD);
-			sharp_last = timeline.time;
-			break;
 		case LEYLINES:
 			ll_dist.push_back(timeline.time - ll_last + LL_CD);
 			ll_last = timeline.time;
@@ -619,10 +641,6 @@ namespace StrikingDummy
 		case DESPAIR:
 		case FLARE_STAR:
 			return get_ll_cast_time(ll_despair_gcd, despair_gcd) - CAST_LOCK;
-		//case HF2:
-		//	if (element == UI && gauge.count == 3)
-		//		return get_ll_cast_time(ll_fast_ii_gcd, fast_ii_gcd) - CAST_LOCK;
-		//	return get_ll_cast_time(ll_ii_gcd, ii_gcd) - CAST_LOCK;
 		case FLARE:
 			return get_ll_cast_time(ll_flare_gcd, flare_gcd) - CAST_LOCK;
 		}
@@ -651,42 +669,37 @@ namespace StrikingDummy
 		case NONE:
 			return !gcd_timer.ready;
 		case B1:
-			return gcd_timer.ready && !paradox && get_mp_cost(B1) <= mp;//&& get_cast_time(B1) < downtime_timer.time;
+			return gcd_timer.ready && !paradox && get_mp_cost(B1) <= mp && (downtime_timer.time == 0 || get_cast_time(B1) < downtime_timer.time);
 		case B3:
-			return gcd_timer.ready && get_mp_cost(B3) <= mp;//&& get_cast_time(B3) < downtime_timer.time;
+			return gcd_timer.ready && get_mp_cost(B3) <= mp && (downtime_timer.time == 0 || get_cast_time(B3) < downtime_timer.time);
 		case B4:
-			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp;//&& get_cast_time(B4) < downtime_timer.time;
+			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp && (downtime_timer.time == 0 || get_cast_time(B4) < downtime_timer.time);
 		case F1:
-			return gcd_timer.ready && !paradox && get_mp_cost(F1) <= mp;//&& get_cast_time(F1) < downtime_timer.time;
+			return gcd_timer.ready && !paradox && get_mp_cost(F1) <= mp && (downtime_timer.time == 0 || get_cast_time(F1) < downtime_timer.time);
 		case F3:
 			if (action_set == ActionSet::STANDARD)
-				return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != UI || umbral_hearts == 3);//&& get_cast_time(F3) < downtime_timer.time;
+				return gcd_timer.ready && get_mp_cost(F3) <= mp && (element != UI || umbral_hearts == 3) && (downtime_timer.time == 0 || get_cast_time(F3) < downtime_timer.time);
 			else
-				return gcd_timer.ready && get_mp_cost(F3) <= mp;//&& get_cast_time(F3) < downtime_timer.time;
+				return gcd_timer.ready && get_mp_cost(F3) <= mp && (downtime_timer.time == 0 || get_cast_time(F3) < downtime_timer.time);
 		case F4:
-			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp;//&& get_cast_time(F4) < downtime_timer.time;
+			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp && (downtime_timer.time == 0 || get_cast_time(F4) < downtime_timer.time);
 		case T5:
 			return gcd_timer.ready && tc_proc.count > 0;
 		case XENO:
 			return gcd_timer.ready && xeno_procs > 0;
 		case DESPAIR:
-			return gcd_timer.ready && element == AF && enochian && get_cast_time(DESPAIR) < gauge.time && get_mp_cost(DESPAIR) <= mp;//&& get_cast_time(DESPAIR) < downtime_timer.time;
+			return gcd_timer.ready && element == AF && enochian && get_cast_time(DESPAIR) < gauge.time && get_mp_cost(DESPAIR) <= mp && (downtime_timer.time == 0 || get_cast_time(DESPAIR) < downtime_timer.time);
 		case PARADOX:
 			return gcd_timer.ready && paradox && get_mp_cost(PARADOX) <= mp;
 		case FLARE_STAR:
-			return gcd_timer.ready && element == AF && enochian && astral_stacks == 6 && get_cast_time(FLARE_STAR) < gauge.time;//&& get_cast_time(FLARE_STAR) < downtime_timer.time;
-		//case HF2:
-		//	return gcd_timer.ready && get_mp_cost(HF2) <= mp;
+			return gcd_timer.ready && element == AF && enochian && astral_stacks == 6 && get_cast_time(FLARE_STAR) < gauge.time && (downtime_timer.time == 0 || get_cast_time(FLARE_STAR) < downtime_timer.time);
 		case FLARE:
-			return gcd_timer.ready && element == AF && enochian && get_cast_time(FLARE) < gauge.time && get_mp_cost(FLARE) <= mp;//&& get_cast_time(FLARE) < downtime_timer.time;
+			return gcd_timer.ready && element == AF && enochian && get_cast_time(FLARE) < gauge.time && get_mp_cost(FLARE) <= mp && (downtime_timer.time == 0 || get_cast_time(FLARE) < downtime_timer.time);
 		//	return false;
 		case SWIFT:
 			return swift_cd.ready;
 		case TRIPLE:
 			return triple_procs > 0;
-		case SHARP:
-			//return sharp_procs > 0;
-			return false;
 		case LEYLINES:
 			return leylines_cd.ready;
 		case MANAFONT:
@@ -749,7 +762,6 @@ namespace StrikingDummy
 		case DESPAIR:
 		case PARADOX:
 		case FLARE_STAR:
-		//case HF2:
 		case FLARE:
 			gcd_timer.reset(get_gcd_time(action), false);
 			cast_timer.reset(get_cast_time(action), false);
@@ -780,17 +792,6 @@ namespace StrikingDummy
 			triple.reset(TRIPLE_DURATION, 3);
 			push_event(TRIPLE_DURATION);
 			break;
-		//case SHARP:
-		//	sharp_procs--;
-		//	if (sharp_timer.time == 0)
-		//	{
-		//		assert(!sharp_timer.ready);
-		//		sharp_timer.reset(SHARP_CD, false);
-		//		push_event(SHARP_CD);
-		//	}
-		//	sharp.reset(SHARP_DURATION, 1);
-		//	push_event(SHARP_DURATION);
-		//	break;
 		case LEYLINES:
 			leylines.reset(LL_DURATION, 1);
 			leylines_cd.reset(LL_CD, false);
@@ -979,11 +980,9 @@ namespace StrikingDummy
 				if (umbral_hearts > 0)
 					umbral_hearts--;
 			}
-			//if (sharp.count > 0 || prob(rng) < FS_PROC_RATE)
 			if (prob(rng) < FS_PROC_RATE)
 			{
 				fs_proc.reset(FS_DURATION, 1);
-				//sharp.reset(0, 0);
 				push_event(FS_DURATION);
 			}
 			break;
@@ -1018,14 +1017,8 @@ namespace StrikingDummy
 		case T5:
 			if (t3p)
 				tc_proc.reset(0, 0);
-			dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0)));
+			dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0) | (raid_buff.count > 0 ? 8 : 0)));
 			push_event(DOT_DURATION);
-			//if (sharp.count > 0)
-			//{
-			//	tc_proc.reset(TC_DURATION, 1);
-			//	sharp.reset(0, 0);
-			//	push_event(TC_DURATION);
-			//}
 			break;
 		case XENO:
 			assert(xeno_procs > 0);
@@ -1048,21 +1041,6 @@ namespace StrikingDummy
 			assert(astral_stacks == 6);
 			astral_stacks = 0;
 			break;
-		//case HF2:
-		//	if (element == Element::AF && umbral_hearts > 0)
-		//		umbral_hearts--;
-		//	if (element == Element::UI && gauge.count == 3 && umbral_hearts == 3)
-		//		paradox = true;
-		//	element = Element::AF;
-		//	if (!enochian)
-		//	{
-		//		enochian = true;
-		//		xeno_timer.time = XENO_TIMER;
-		//		push_event(XENO_TIMER);
-		//	}
-		//	gauge.reset(GAUGE_DURATION, 3);
-		//	push_event(GAUGE_DURATION);
-		//	break;
 		case FLARE:
 			umbral_hearts = 0;
 			astral_stacks = std::min(astral_stacks + 3, 6);
@@ -1111,10 +1089,6 @@ namespace StrikingDummy
 			return PARADOX_MP_COST;
 		case FLARE_STAR:
 			return 0;
-		//case HF2:
-		//	if (element == UI && (is_end_action || get_cast_time(HF2) < gauge.time))
-		//		return 0;
-		//	return (element == AF && umbral_hearts == 0) ? HF2_MP_COST * 2 : HF2_MP_COST;
 		case FLARE:
 			return FLARE_MP_COST;
 		}
@@ -1243,28 +1217,6 @@ namespace StrikingDummy
 					potency = FLARE_STAR_POTENCY * AF3_MULTIPLIER;
 			}
 			break;
-		//case HF2:
-		//	if (element == UI)
-		//	{
-		//		if (gauge.count == 1)
-		//			potency = HF2_POTENCY * AF1UI1_MULTIPLIER;
-		//		else if (gauge.count == 2)
-		//			potency = HF2_POTENCY * AF2UI2_MULTIPLIER;
-		//		else if (gauge.count == 3)
-		//			potency = HF2_POTENCY * AF3UI3_MULTIPLIER;
-		//	}
-		//	else if (element == AF)
-		//	{
-		//		if (gauge.count == 1)
-		//			potency = HF2_POTENCY * AF1_MULTIPLIER;
-		//		else if (gauge.count == 2)
-		//			potency = HF2_POTENCY * AF2_MULTIPLIER;
-		//		else if (gauge.count == 3)
-		//			potency = HF2_POTENCY * AF3_MULTIPLIER;
-		//	}
-		//	else
-		//		potency = HF2_POTENCY;
-		//	break;
 		case FLARE:
 			assert(element == AF);
 			if (element == AF)
@@ -1279,7 +1231,7 @@ namespace StrikingDummy
 			break;
 		}
 		// floor(ptc * wd * ap * det * traits) * chr | * dhr | * rand(.95, 1.05) | ...
-		return potency * stats.potency_multiplier * stats.expected_multiplier * (enochian ? ENO_MULTIPLIER : 1.0f) * (pot.count > 0 ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
+		return potency * stats.potency_multiplier * stats.expected_multiplier * (enochian ? ENO_MULTIPLIER : 1.0f) * (pot.count > 0 ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER * (raid_buff.count > 0 ? RAID_BUFF_MULTIPLIER : 1.0f);
 		//float rng_multiplier = damage_range(rng) * (prob(rng) < stats.crit_rate ? stats.crit_multiplier : 1.0f) * (prob(rng) < stats.dhit_rate ? 1.25f : 1.0f);
 		//return potency * stats.potency_multiplier * rng_multiplier * (enochian ? ENO_MULTIPLIER : 1.0f) * (pot.count > 0 ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
 	}
@@ -1287,7 +1239,7 @@ namespace StrikingDummy
 	float BlackMage::get_dot_damage()
 	{
 		// floor(ptc * wd * ap * det * traits) * ss | * rand(.95, 1.05) | * chr | * dhr | ...
-		return T5_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * stats.expected_multiplier * ((dot.count & 2) ? ENO_MULTIPLIER : 1.0f) * ((dot.count & 4) ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
+		return T5_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * stats.expected_multiplier * ((dot.count & 2) ? ENO_MULTIPLIER : 1.0f) * ((dot.count & 4) ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER * ((dot.count & 8) ? RAID_BUFF_MULTIPLIER : 1.0f);
 		//float rng_multiplier = damage_range(rng) * (prob(rng) < stats.crit_rate ? stats.crit_multiplier : 1.0f) * (prob(rng) < stats.dhit_rate ? 1.25f : 1.0f);
 		//return T5_DOT_POTENCY * stats.potency_multiplier * stats.dot_multiplier * rng_multiplier * ((dot.count & 2) ? ENO_MULTIPLIER : 1.0f) * ((dot.count & 4) ? stats.pot_multiplier : 1.0f) * MAGICK_AND_MEND_MULTIPLIER;
 	}
@@ -1315,8 +1267,6 @@ namespace StrikingDummy
 		state[18] = swift.time / (float)SWIFT_DURATION;
 		state[19] = lucid.count > 0;
 		state[20] = lucid.time / (float)LUCID_DURATION;
-		//state[19] = sharp.count > 0;
-		//state[20] = sharp.time / (float)SHARP_DURATION;
 		state[21] = triple.count / 3.0f;
 		state[22] = triple.time / (float)TRIPLE_DURATION;
 		state[23] = leylines.count > 0;
@@ -1338,9 +1288,6 @@ namespace StrikingDummy
 		state[39] = (TRIPLE_CD - triple_timer.time) / (float)TRIPLE_CD;
 		state[40] = mp_timer.time / (float)TICK_TIMER;
 		state[41] = lucid_timer.time / (float)TICK_TIMER;
-		//state[40] = sharp_procs > 0;
-		//state[41] = sharp_procs > 1;
-		//state[42] = (SHARP_CD - sharp_timer.time) / (float)SHARP_CD;
 		state[42] = leylines_cd.ready;
 		state[43] = leylines_cd.time / (float)LL_CD;
 		state[44] = manafont_cd.ready;
@@ -1354,8 +1301,11 @@ namespace StrikingDummy
 		state[52] = pot.time / (float)POT_DURATION;
 		state[53] = pot_cd.ready;
 		state[54] = pot_cd.time / (float)POT_CD;
-		//state[55] = downtime_timer.time / (float)DOWNTIME_TIMER;
-		//state[57] = mp_wait / (float)TICK_TIMER;
+		state[55] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
+		state[56] = raid_buff.count > 0;
+		state[57] = raid_buff.time / (float)RAID_BUFF_DURATION;
+		state[58] = (dot.count & 8) != 0;
+		state[59] = downtime_timer.time / (float)DOWNTIME_TIMER;
 	}
 
 	std::string BlackMage::get_info()

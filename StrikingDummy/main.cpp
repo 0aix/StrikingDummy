@@ -12,7 +12,7 @@ StrikingDummy::Stats speed_bis(132, 3378, 262, 851, 1439, 1422, 2521);
 
 int main()
 {
-	StrikingDummy::BlackMage blm(speed_bis, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
+	StrikingDummy::BlackMage blm(new_bis, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
 	dummy.train();

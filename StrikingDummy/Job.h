@@ -89,6 +89,7 @@ namespace StrikingDummy
 		std::uniform_int_distribution<int> tick;
 
 		double total_damage = 0.0f;
+		double pre_damage = 0.0f;
 
 		Job(Stats& job_stats, float job_attr);
 		void step();
