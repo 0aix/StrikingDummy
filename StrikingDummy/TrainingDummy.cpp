@@ -12,26 +12,23 @@ namespace StrikingDummy
 {
 	const int NUM_EPOCHS = 1000000;
 	const int NUM_STEPS_PER_EPOCH = 20000;
-	const int NUM_THREADS = 8;
-	const int NUM_STEPS_PER_THREAD = NUM_STEPS_PER_EPOCH / NUM_THREADS;
 	const int NUM_STEPS_PER_EPISODE = 2500;
 	const int NUM_EPISODES = NUM_STEPS_PER_EPOCH / NUM_STEPS_PER_EPISODE;
-	const int CAPACITY = 2000000;
+	const int CAPACITY = 1000000;
 	const int NUM_INDICES = CAPACITY / NUM_STEPS_PER_EPOCH;
 	const int BATCH_SIZE = 10000;
-	const int NUM_BATCHES = CAPACITY / BATCH_SIZE;
-	const int NUM_BATCHES_PER_EPOCH = NUM_BATCHES;
-	const float WINDOW = 510000.0f;
+	const int NUM_BATCHES_PER_EPOCH = CAPACITY / BATCH_SIZE;
+	const float WINDOW = 1020000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
-	const float EPS_MIN = 0.005f;
+	const float EPS_MIN = 0.015f;
 	const float NU_DECAY = 0.9999f;
-	const float NU_START = 0.0001f; //0.0001f;
+	const float NU_START = 0.00001f; //0.0001f;
 	const float NU_MIN = 0.000001f;
-	const float OUTPUT_LOWER = 15.750f;
-	const float OUTPUT_UPPER = 16.300f;
+	const float OUTPUT_LOWER = 29.450f; //16.600f;
+	const float OUTPUT_UPPER = 30.850f; //17.300f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 15.000;
+	const double BEST_THRESHOLD_TO_SAVE = 28.000;
 
 	void TrainingDummy::train()
 	{
@@ -81,9 +78,9 @@ namespace StrikingDummy
 
 		std::future<bool> best_future;
 
-		std::vector<BlackMage> jobs(NUM_THREADS, blm);
+		std::vector<BlackMage> jobs(NUM_EPISODES, blm);
 		std::vector<ModelRotation> rotations;
-		std::vector<int> ints(NUM_THREADS);
+		std::vector<int> ints(NUM_EPISODES);
 		std::iota(ints.begin(), ints.end(), 0);
 		std::for_each(ints.begin(), ints.end(), [&](int& i) { rotations.emplace_back(jobs[i], model, i * 1111); });
 
@@ -227,7 +224,8 @@ namespace StrikingDummy
 		job.reset();
 		rotation.step();
 		q = rotation.stored_max_weight;
-		while (job.timeline.time < 600000)
+		//while (job.timeline.time < 600000)
+		while (job.timeline.time < 510000)
 			rotation.step();
 		r = rotation.stored_max_weight;
 	}
@@ -245,7 +243,8 @@ namespace StrikingDummy
 			for (int lucid_tick = 100; lucid_tick <= 3000; lucid_tick += 100)
 			{
 				blm.reset(mp_tick, lucid_tick, 0);
-				while (blm.timeline.time < 6000000) // 100 minutes
+				//while (blm.timeline.time < 6000000) // 100 minutes
+				while (blm.timeline.time < 510000)
 					rotation.step();
 				dps.push_back(blm.total_damage / blm.timeline.time);
 			}
@@ -284,7 +283,8 @@ namespace StrikingDummy
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
-		while (blm.timeline.time < 7 * 24 * 3600000)
+		//while (blm.timeline.time < 7 * 24 * 3600000)
+		while (blm.timeline.time < 600000)
 			rotation.step();
 
 		std::stringstream ss;
@@ -304,6 +304,7 @@ namespace StrikingDummy
 		if (length > 10000)
 			length = 10000;
 		int time = 0;
+		float damage = blm.pre_damage;
 		for (int i = 0; i < length; i++)
 		{
 			Transition& t = blm.history[i];
@@ -314,6 +315,7 @@ namespace StrikingDummy
 			std::stringstream ss;
 			ss.setf(std::ios::fixed, std::ios::floatfield);
 			ss.precision(1);
+			damage += t.reward;
 			if (t.action != 0)
 			{
 				ss << "[";
@@ -356,10 +358,7 @@ namespace StrikingDummy
 				}
 				else
 					ss << blm.get_action_name(t.action);
-
-				//if (t.t0[27] == 1.0f)
-				//	ss << " (T5p w/ " << lround(t.t0[28] * BlackMage::TC_DURATION) / 1000.0f << "s)";
-
+				//ss << " " << 1000.0f * damage / time;
 				ss << std::endl;
 
 				Logger::log(ss.str().c_str());

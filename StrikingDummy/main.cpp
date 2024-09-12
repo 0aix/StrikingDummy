@@ -7,12 +7,14 @@
 #define BLACKMAGE
 
 // Stats(float wd, float stat, float pot, float crit, float dh, float det, float sks)
-StrikingDummy::Stats new_bis(132, 3378, 262, 2514, 1402, 1601, 716);
-StrikingDummy::Stats speed_bis(132, 3378, 262, 851, 1439, 1422, 2521);
+StrikingDummy::Stats new_bis(146, 5126, 392, 3321, 1882, 1572, 1047);
+StrikingDummy::Stats mid_bis(146, 5126, 392, 3321, 1558, 1356, 1587);
+StrikingDummy::Stats fast_bis(146, 5126, 392, 1129, 2055, 2050, 2588);
+StrikingDummy::Stats speed_bis(146, 5126, 392, 1129, 1623, 2050, 3020);
 
 int main()
 {
-	StrikingDummy::BlackMage blm(new_bis, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
+	StrikingDummy::BlackMage blm(fast_bis, StrikingDummy::BlackMage::Opener::PRE_B3, StrikingDummy::BlackMage::ActionSet::FULL);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
 	dummy.train();

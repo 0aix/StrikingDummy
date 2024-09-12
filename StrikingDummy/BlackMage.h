@@ -66,7 +66,7 @@ namespace StrikingDummy
 		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
 
-		static constexpr int DOWNTIME_TIMER = 510000; // 8m 30s
+		static constexpr int DOWNTIME_TIMER = 510000;
 
 		static constexpr int TICK_TIMER = 3000;
 		static constexpr int XENO_TIMER = 30000;
@@ -92,19 +92,19 @@ namespace StrikingDummy
 		// Assume not using Flare
 		static constexpr float F1_POTENCY = 180.0f;
 		static constexpr float F3_POTENCY = 280.0f;
-		static constexpr float F4_POTENCY = 310.0f;
+		static constexpr float F4_POTENCY = 320.0f;
 		static constexpr float B1_POTENCY = 180.0f;
 		static constexpr float B3_POTENCY = 280.0f;
-		static constexpr float B4_POTENCY = 310.0f;
-		static constexpr float T5_POTENCY = 200.0f;
-		static constexpr float T5_DOT_POTENCY = 55.0f;
+		static constexpr float B4_POTENCY = 320.0f;
+		static constexpr float T5_POTENCY = 150.0f;
+		static constexpr float T5_DOT_POTENCY = 60.0f;
 		static constexpr float XENO_POTENCY = 880.0f;
-		static constexpr float DESPAIR_POTENCY = 340.0f;
-		static constexpr float PARADOX_POTENCY = 500.0f;
+		static constexpr float DESPAIR_POTENCY = 350.0f;
+		static constexpr float PARADOX_POTENCY = 520.0f;
 		static constexpr float FLARE_STAR_POTENCY = 400.0f;
 		static constexpr float FLARE_POTENCY = 240.0f;
 
-		static constexpr float ENO_MULTIPLIER = 1.30f;
+		static constexpr float ENO_MULTIPLIER = 1.33f;
 		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30f;
 		static constexpr float AF1_MULTIPLIER = 1.40f;
 		static constexpr float AF2_MULTIPLIER = 1.60f;
@@ -274,7 +274,7 @@ namespace StrikingDummy
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 60; }
+		int get_state_size() { return 62; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

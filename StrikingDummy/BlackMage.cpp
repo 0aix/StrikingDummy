@@ -55,11 +55,13 @@ namespace StrikingDummy
 		{
 			mp = MAX_MP - B3_MP_COST;
 			element = Element::UI;
+			pre_damage = get_damage(B3);
 		}
 		else if (opener == Opener::PRE_F3 || opener == Opener::PRE_LL_F3)
 		{
 			mp = MAX_MP - F3_MP_COST;
 			element = Element::AF;
+			pre_damage = get_damage(F3);
 		}
 		else
 		{
@@ -88,6 +90,8 @@ namespace StrikingDummy
 		gauge.reset(0, 0);
 		xeno_timer.reset(0, false);
 		triple_timer.reset(0, false);
+		//raid_buff_timer.reset(0, false);
+		//downtime_timer.reset(0, false);
 		raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
 		downtime_timer.reset(DOWNTIME_TIMER, false);
 		timeline.push_event(raid_buff_timer.time);
@@ -382,6 +386,7 @@ namespace StrikingDummy
 			gauge.reset(0, 0);
 			xeno_timer.reset(0, false);
 			triple_timer.reset(0, false);
+			raid_buff_timer.reset(0, false);
 			raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
 			downtime_timer.reset(DOWNTIME_TIMER, false);
 			timeline.push_event(raid_buff_timer.time);
@@ -703,7 +708,7 @@ namespace StrikingDummy
 		case LEYLINES:
 			return leylines_cd.ready;
 		case MANAFONT:
-			return manafont_cd.ready && (mp < MAX_MP || !paradox || umbral_hearts < 3 || (gauge.count > 0 && gauge.count < 3));
+			return manafont_cd.ready && element == AF && (mp < MAX_MP || !paradox || umbral_hearts < 3 || (gauge.count > 0 && gauge.count < 3));
 		case TRANSPOSE:
 			if (action_set == ActionSet::FULL)
 				return transpose_cd.ready && element != Element::NE;
@@ -815,10 +820,8 @@ namespace StrikingDummy
 			break;
 		case TRANSPOSE:
 			assert(element != Element::NE);
-			if ((element == Element::UI && umbral_hearts == 3) && gauge.count == 3)
+			if (((element == Element::UI && umbral_hearts == 3) || element == Element::AF) && gauge.count == 3)
 				paradox = true;
-			else
-				paradox = false;
 			element = element == Element::AF ? Element::UI : Element::AF;
 			astral_stacks = 0;
 			skip_transpose_tick = mp_timer.time <= LATENCY;
@@ -908,7 +911,6 @@ namespace StrikingDummy
 				element = Element::NE;
 				umbral_hearts = 0;
 				enochian = false;
-				paradox = false;
 				gauge.reset(0, 0);
 				xeno_timer.time = 0;
 				astral_stacks = 0;
@@ -931,6 +933,8 @@ namespace StrikingDummy
 			}
 			break;
 		case B3:
+			if (element == Element::AF && gauge.count == 3)
+				paradox = true;
 			if (element == Element::UI)
 				mp = std::min(mp + UI_MP[gauge.count], MAX_MP);
 			else
@@ -939,7 +943,6 @@ namespace StrikingDummy
 				push_event(TC_DURATION);
 			}
 			element = Element::UI;
-			paradox = false;
 			astral_stacks = 0;
 			if (!enochian)
 			{
@@ -1030,11 +1033,13 @@ namespace StrikingDummy
 			push_event(GAUGE_DURATION);
 			break;
 		case PARADOX:
-			assert(element == Element::AF);
 			paradox = false;
-			fs_proc.reset(FS_DURATION, 1);
+			if (element == Element::AF)
+			{
+				fs_proc.reset(FS_DURATION, 1);
+				push_event(FS_DURATION);
+			}
 			gauge.reset(GAUGE_DURATION, std::min(gauge.count + 1, 3));
-			push_event(FS_DURATION);
 			push_event(GAUGE_DURATION);
 			break;
 		case FLARE_STAR:
@@ -1086,7 +1091,7 @@ namespace StrikingDummy
 		case DESPAIR:
 			return DESPAIR_MP_COST;
 		case PARADOX:
-			return PARADOX_MP_COST;
+			return element == Element::UI ? 0 : PARADOX_MP_COST;
 		case FLARE_STAR:
 			return 0;
 		case FLARE:
@@ -1301,11 +1306,13 @@ namespace StrikingDummy
 		state[52] = pot.time / (float)POT_DURATION;
 		state[53] = pot_cd.ready;
 		state[54] = pot_cd.time / (float)POT_CD;
-		state[55] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
-		state[56] = raid_buff.count > 0;
-		state[57] = raid_buff.time / (float)RAID_BUFF_DURATION;
-		state[58] = (dot.count & 8) != 0;
-		state[59] = downtime_timer.time / (float)DOWNTIME_TIMER;
+		state[55] = amplifier_cd.ready;
+		state[56] = amplifier_cd.time / (float)AMPLIFIER_CD;
+		state[57] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
+		state[58] = raid_buff.count > 0;
+		state[59] = raid_buff.time / (float)RAID_BUFF_DURATION;
+		state[60] = (dot.count & 8) != 0;
+		state[61] = downtime_timer.time / (float)DOWNTIME_TIMER;
 	}
 
 	std::string BlackMage::get_info()
