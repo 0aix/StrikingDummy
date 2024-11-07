@@ -90,10 +90,10 @@ namespace StrikingDummy
 		gauge.reset(0, 0);
 		xeno_timer.reset(0, false);
 		triple_timer.reset(0, false);
-		//raid_buff_timer.reset(0, false);
-		//downtime_timer.reset(0, false);
-		raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
-		downtime_timer.reset(DOWNTIME_TIMER, false);
+		raid_buff_timer.reset(0, false);
+		downtime_timer.reset(0, false);
+		//raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+		//downtime_timer.reset(DOWNTIME_TIMER, false);
 		timeline.push_event(raid_buff_timer.time);
 		timeline.push_event(downtime_timer.time);
 
@@ -387,7 +387,7 @@ namespace StrikingDummy
 			xeno_timer.reset(0, false);
 			triple_timer.reset(0, false);
 			raid_buff_timer.reset(0, false);
-			raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+			//raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
 			downtime_timer.reset(DOWNTIME_TIMER, false);
 			timeline.push_event(raid_buff_timer.time);
 			timeline.push_event(downtime_timer.time);
@@ -604,7 +604,7 @@ namespace StrikingDummy
 	bool BlackMage::is_instant_cast(int action) const
 	{
 		// for gcds
-		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || action == T5 || action == XENO || action == PARADOX;
+		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || action == T5 || action == XENO || action == DESPAIR || action == PARADOX;
 	}
 
 	int BlackMage::get_ll_cast_time(int ll_cast_time, int cast_time) const
@@ -894,8 +894,8 @@ namespace StrikingDummy
 		// firestarter doesn't use swift or triple
 		else if (casting == T5);
 		// thundercloud doesn't use swift or triple
-		else if (casting == XENO || casting == PARADOX);
-		// xeno and paradox don't use swift or triple
+		else if (casting == XENO || casting == DESPAIR || casting == PARADOX);
+		// xeno, despair, and paradox don't use swift or triple
 		else if (swift.count > 0)
 			swift.reset(0, 0);
 		else if (triple.count > 1)
@@ -1308,11 +1308,11 @@ namespace StrikingDummy
 		state[54] = pot_cd.time / (float)POT_CD;
 		state[55] = amplifier_cd.ready;
 		state[56] = amplifier_cd.time / (float)AMPLIFIER_CD;
-		state[57] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
-		state[58] = raid_buff.count > 0;
-		state[59] = raid_buff.time / (float)RAID_BUFF_DURATION;
-		state[60] = (dot.count & 8) != 0;
-		state[61] = downtime_timer.time / (float)DOWNTIME_TIMER;
+		//state[57] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
+		//state[58] = raid_buff.count > 0;
+		//state[59] = raid_buff.time / (float)RAID_BUFF_DURATION;
+		//state[60] = (dot.count & 8) != 0;
+		//state[61] = downtime_timer.time / (float)DOWNTIME_TIMER;
 	}
 
 	std::string BlackMage::get_info()
