@@ -24,7 +24,7 @@ namespace StrikingDummy
 	const float EPS_START = 1.0f;
 	const float EPS_MIN = 0.10f;
 	const float NU_DECAY = 0.9999f;
-	const float NU_START = 0.00001f; //0.0001f;
+	const float NU_START = 0.0001f; //0.0001f;
 	const float NU_MIN = 0.000001f;
 	const float OUTPUT_LOWER = 26.000f; //27.750f
 	const float OUTPUT_UPPER = 30.000f; //28.950f

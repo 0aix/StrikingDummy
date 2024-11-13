@@ -61,7 +61,7 @@ namespace StrikingDummy
 		static constexpr float III_GCD = 3.50f;
 		static constexpr float IV_GCD = 2.80f;
 		static constexpr float DESPAIR_GCD = 3.00f;
-		static constexpr float FLARE_GCD = 4.00f;
+		static constexpr float FLARE_GCD = 3.00f;
 
 		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
