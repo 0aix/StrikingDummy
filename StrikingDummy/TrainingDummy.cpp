@@ -649,16 +649,25 @@ namespace StrikingDummy
 				for (int j = points[i]; j <= points[i + 1]; j++)
 				{
 					Transition& t = blm.history[j];
-					if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
+					if (t.action == BlackMage::F1 && t.t0[25] == 1.0f)
 						ss << "F1^ ";
-					else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
+					else if (t.action == BlackMage::F3 && t.t0[25] == 1.0f)
 						ss << "F3p ";
 					else if (t.action == BlackMage::T5)
 						ss << "T3/p ";
-					else if (t.action != 0 && t.action != BlackMage::SWIFT && t.action != BlackMage::TRIPLE && t.action != BlackMage::LEYLINES && t.action < BlackMage::AMPLIFIER)
+					else if (t.action != BlackMage::NONE &&
+						t.action != BlackMage::SWIFT &&
+						t.action != BlackMage::TRIPLE &&
+						t.action != BlackMage::LEYLINES &&
+						t.action < BlackMage::AMPLIFIER)
 					{
 						// Not NONE, SWIFT, TRIPLE, LEYLINES, AMPLIFIER, LUCID, WAIT_FOR_MP, TINCTURE, or F3P_OFF
-						if ((t.action != BlackMage::XENO && t.action != BlackMage::MANAFONT && t.action != BlackMage::TRANSPOSE && (t.t0[16] > 0.0f || t.t0[20] > 0.0f)) || (t.action == BlackMage::PARADOX && t.t0[1] == 1.0f))
+						if (t.action != BlackMage::XENO &&
+							t.action != BlackMage::MANAFONT && 
+							t.action != BlackMage::TRANSPOSE && 
+							t.action != BlackMage::T5 &&
+							t.action != BlackMage::PARADOX &&
+							t.action != BlackMage::DESPAIR && (t.t0[17] > 0.0f || t.t0[21] > 0.0f))
 							ss << blm.get_action_name(t.action) << "* ";
 						else
 							ss << blm.get_action_name(t.action) << " ";

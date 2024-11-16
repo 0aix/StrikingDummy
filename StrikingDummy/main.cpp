@@ -20,7 +20,7 @@ int main()
 	dummy.train();
 	//dummy.trace();
 	
-	// reminder: these other functions have not been updated to log state correctly
+	// reminder: these other functions may not have been updated to log state correctly
 	//dummy.metrics();
 	//dummy.montecarlo();
 	//dummy.dist(450, 10000);
