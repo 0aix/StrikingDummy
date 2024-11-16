@@ -298,7 +298,8 @@ namespace StrikingDummy
 		ss << "Flare Star % damage: " << 100.0 / blm.total_damage * blm.total_flare_star_damage << "%\n";
 		ss << "Xeno % damage: " << 100.0 / blm.total_damage * blm.total_xeno_damage << "%\n";
 		ss << "T3 % damage: " << 100.0 / blm.total_damage * blm.total_t3_damage << "%\n";
-		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n=============" << std::endl;
+		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n";
+		ss << "Cast uptime %: " << 100.0 / blm.timeline.time * blm.total_cast_time << "%\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 
 		int length = blm.history.size() - 1;
@@ -400,7 +401,8 @@ namespace StrikingDummy
 		ss << "Flare Star % damage: " << 100.0 / blm.total_damage * blm.total_flare_star_damage << "%\n";
 		ss << "Xeno % damage: " << 100.0 / blm.total_damage * blm.total_xeno_damage << "%\n";
 		ss << "T3 % damage: " << 100.0 / blm.total_damage * blm.total_t3_damage << "%\n";
-		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n=============" << std::endl;
+		ss << "Dot % damage: " << 100.0 / blm.total_damage * blm.total_dot_damage << "%\n";
+		ss << "Cast uptime %: " << 100.0 / blm.timeline.time * blm.total_cast_time << "%\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 
 		int length = blm.history.size() - 1;

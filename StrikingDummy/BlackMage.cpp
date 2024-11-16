@@ -162,6 +162,7 @@ namespace StrikingDummy
 		lucid_count = 0;
 		pot_count = 0;
 		total_dot_time = 0;
+		total_cast_time = 0;
 
 		total_f4_damage = 0.0f;
 		total_desp_damage = 0.0f;
@@ -248,6 +249,7 @@ namespace StrikingDummy
 		lucid_count = 0;
 		pot_count = 0;
 		total_dot_time = 0;
+		total_cast_time = 0;
 
 		total_f4_damage = 0.0f;
 		total_desp_damage = 0.0f;
@@ -776,6 +778,8 @@ namespace StrikingDummy
 				t3p = tc_proc.count > 0;
 			if (cast_timer.time == 0)
 				end_action();
+			else
+				total_cast_time += cast_timer.time + CAST_LOCK;
 			push_event(gcd_timer.time);
 			push_event(cast_timer.time);
 			push_event(action_timer.time);

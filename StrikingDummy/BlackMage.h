@@ -220,6 +220,7 @@ namespace StrikingDummy
 		int lucid_count = 0;
 		int pot_count = 0;
 		int total_dot_time = 0;
+		int total_cast_time = 0;
 
 		double total_f4_damage = 0.0f;
 		double total_desp_damage = 0.0f;
