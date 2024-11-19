@@ -90,15 +90,17 @@ namespace StrikingDummy
 		gauge.reset(0, 0);
 		xeno_timer.reset(0, false);
 		triple_timer.reset(0, false);
-		raid_buff_timer.reset(0, false);
-		downtime_timer.reset(0, false);
-		//raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
-		//downtime_timer.reset(DOWNTIME_TIMER, false);
+		ll_timer.reset(0, false);
+		//raid_buff_timer.reset(0, false);
+		//downtime_timer.reset(0, false);
+		raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+		downtime_timer.reset(DOWNTIME_TIMER, false);
 		timeline.push_event(raid_buff_timer.time);
 		timeline.push_event(downtime_timer.time);
 
 		xeno_procs = 0;
 		triple_procs = 2;
+		ll_procs = 2;
 		astral_stacks = 0;
 
 		// buffs
@@ -114,7 +116,6 @@ namespace StrikingDummy
 
 		// cooldowns		
 		swift_cd.reset(0, true);
-		leylines_cd.reset(0, true);
 		manafont_cd.reset(0, true);
 		transpose_cd.reset(0, true);
 		lucid_cd.reset(0, true);
@@ -141,9 +142,10 @@ namespace StrikingDummy
 		if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
 		{
 			leylines.reset(LL_DURATION - 4000, 1);
-			leylines_cd.reset(LL_CD - 4000, false);
+			ll_procs = 1;
+			ll_timer.time = LL_CD - 4000;
 			timeline.push_event(leylines.time);
-			timeline.push_event(leylines_cd.time);
+			timeline.push_event(ll_timer.time);
 			ll_last = -4000;
 		}
 
@@ -201,11 +203,13 @@ namespace StrikingDummy
 		gauge = blm.gauge;
 		xeno_timer = blm.xeno_timer;
 		triple_timer = blm.triple_timer;
+		ll_timer = blm.ll_timer;
 		raid_buff_timer = blm.raid_buff_timer;
 		downtime_timer = blm.downtime_timer;
 
 		xeno_procs = blm.xeno_procs;
 		triple_procs = blm.triple_procs;
+		ll_procs = blm.ll_procs;
 		astral_stacks = blm.astral_stacks;
 
 		// buffs
@@ -221,7 +225,6 @@ namespace StrikingDummy
 
 		// cooldowns		
 		swift_cd = blm.swift_cd;
-		leylines_cd = blm.leylines_cd;
 		manafont_cd = blm.manafont_cd;
 		transpose_cd = blm.transpose_cd;
 		lucid_cd = blm.lucid_cd;
@@ -286,6 +289,7 @@ namespace StrikingDummy
 		gauge.update(elapsed);
 		xeno_timer.update(elapsed);
 		triple_timer.update(elapsed);
+		ll_timer.update(elapsed);
 		raid_buff_timer.update(elapsed);
 		downtime_timer.update(elapsed);
 
@@ -302,7 +306,6 @@ namespace StrikingDummy
 
 		// cooldowns
 		swift_cd.update(elapsed);
-		leylines_cd.update(elapsed);
 		manafont_cd.update(elapsed);
 		transpose_cd.update(elapsed);
 		lucid_cd.update(elapsed);
@@ -350,6 +353,18 @@ namespace StrikingDummy
 				push_event(TRIPLE_CD);
 			}
 		}
+		if (ll_timer.ready)
+		{
+			ll_procs++;
+			assert(ll_timer.time == 0);
+			assert(ll_procs <= 2);
+			ll_timer.ready = false;
+			if (ll_procs < 2)
+			{
+				ll_timer.time = LL_CD;
+				push_event(LL_CD);
+			}
+		}
 		if (raid_buff_timer.ready)
 		{
 			raid_buff.reset(RAID_BUFF_DURATION, 1);
@@ -388,14 +403,16 @@ namespace StrikingDummy
 			gauge.reset(0, 0);
 			xeno_timer.reset(0, false);
 			triple_timer.reset(0, false);
-			raid_buff_timer.reset(0, false);
-			//raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+			ll_timer.reset(0, false);
+			//raid_buff_timer.reset(0, false);
+			raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
 			downtime_timer.reset(DOWNTIME_TIMER, false);
 			timeline.push_event(raid_buff_timer.time);
 			timeline.push_event(downtime_timer.time);
 
 			xeno_procs = 0;
 			triple_procs = 2;
+			ll_procs = 2;
 			astral_stacks = 0;
 
 			// buffs
@@ -411,7 +428,6 @@ namespace StrikingDummy
 
 			// cooldowns		
 			swift_cd.reset(0, true);
-			leylines_cd.reset(0, true);
 			manafont_cd.reset(0, true);
 			transpose_cd.reset(0, true);
 			lucid_cd.reset(0, true);
@@ -438,9 +454,10 @@ namespace StrikingDummy
 			if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
 			{
 				leylines.reset(LL_DURATION - 4000, 1);
-				leylines_cd.reset(LL_CD - 4000, false);
+				ll_procs = 1;
+				ll_timer.time = LL_CD - 4000;
 				timeline.push_event(leylines.time);
-				timeline.push_event(leylines_cd.time);
+				timeline.push_event(ll_timer.time);
 				ll_last = -4000;
 			}
 		}
@@ -708,7 +725,7 @@ namespace StrikingDummy
 		case TRIPLE:
 			return triple_procs > 0;
 		case LEYLINES:
-			return leylines_cd.ready;
+			return ll_procs > 0;
 		case MANAFONT:
 			return manafont_cd.ready && element == AF && (mp < MAX_MP || !paradox || umbral_hearts < 3 || (gauge.count > 0 && gauge.count < 3));
 		case TRANSPOSE:
@@ -802,10 +819,15 @@ namespace StrikingDummy
 			push_event(TRIPLE_DURATION);
 			break;
 		case LEYLINES:
+			ll_procs--;
+			if (ll_timer.time == 0)
+			{
+				assert(!ll_timer.ready);
+				ll_timer.reset(LL_CD, false);
+				push_event(LL_CD);
+			}
 			leylines.reset(LL_DURATION, 1);
-			leylines_cd.reset(LL_CD, false);
 			push_event(LL_DURATION);
-			push_event(LL_CD);
 			break;
 		case MANAFONT:
 			mp = MAX_MP;
@@ -1297,26 +1319,27 @@ namespace StrikingDummy
 		state[39] = (TRIPLE_CD - triple_timer.time) / (float)TRIPLE_CD;
 		state[40] = mp_timer.time / (float)TICK_TIMER;
 		state[41] = lucid_timer.time / (float)TICK_TIMER;
-		state[42] = leylines_cd.ready;
-		state[43] = leylines_cd.time / (float)LL_CD;
-		state[44] = manafont_cd.ready;
-		state[45] = manafont_cd.time / (float)MANAFONT_CD;
-		state[46] = astral_stacks / 6.0f;
-		state[47] = gcd_timer.ready;
-		state[48] = gcd_timer.time / (BASE_GCD * 1000.0f);
-		state[49] = transpose_cd.ready;
-		state[50] = transpose_cd.time / (float)TRANSPOSE_CD;
-		state[51] = pot.count > 0;
-		state[52] = pot.time / (float)POT_DURATION;
-		state[53] = pot_cd.ready;
-		state[54] = pot_cd.time / (float)POT_CD;
-		state[55] = amplifier_cd.ready;
-		state[56] = amplifier_cd.time / (float)AMPLIFIER_CD;
-		//state[57] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
-		//state[58] = raid_buff.count > 0;
-		//state[59] = raid_buff.time / (float)RAID_BUFF_DURATION;
-		//state[60] = (dot.count & 8) != 0;
-		//state[61] = downtime_timer.time / (float)DOWNTIME_TIMER;
+		state[42] = ll_procs > 0;
+		state[43] = ll_procs > 1;
+		state[44] = (LL_CD - ll_timer.time) / (float)LL_CD;
+		state[45] = manafont_cd.ready;
+		state[46] = manafont_cd.time / (float)MANAFONT_CD;
+		state[47] = astral_stacks / 6.0f;
+		state[48] = gcd_timer.ready;
+		state[49] = gcd_timer.time / (BASE_GCD * 1000.0f);
+		state[50] = transpose_cd.ready;
+		state[51] = transpose_cd.time / (float)TRANSPOSE_CD;
+		state[52] = pot.count > 0;
+		state[53] = pot.time / (float)POT_DURATION;
+		state[54] = pot_cd.ready;
+		state[55] = pot_cd.time / (float)POT_CD;
+		state[56] = amplifier_cd.ready;
+		state[57] = amplifier_cd.time / (float)AMPLIFIER_CD;
+		state[58] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
+		state[59] = raid_buff.count > 0;
+		state[60] = raid_buff.time / (float)RAID_BUFF_DURATION;
+		state[61] = (dot.count & 8) != 0;
+		state[62] = downtime_timer.time / (float)DOWNTIME_TIMER;
 	}
 
 	std::string BlackMage::get_info()

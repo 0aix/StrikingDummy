@@ -104,7 +104,7 @@ namespace StrikingDummy
 		static constexpr float FLARE_STAR_POTENCY = 400.0f;
 		static constexpr float FLARE_POTENCY = 240.0f;
 
-		static constexpr float ENO_MULTIPLIER = 1.33f;
+		static constexpr float ENO_MULTIPLIER = 1.32f;
 		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30f;
 		static constexpr float AF1_MULTIPLIER = 1.40f;
 		static constexpr float AF2_MULTIPLIER = 1.60f;
@@ -113,7 +113,7 @@ namespace StrikingDummy
 		static constexpr float AF2UI2_MULTIPLIER = 0.80f;
 		static constexpr float AF3UI3_MULTIPLIER = 0.70f;
 
-		static constexpr float RAID_BUFF_MULTIPLIER = 1.25f;
+		static constexpr float RAID_BUFF_MULTIPLIER = 1.20f;
 		static constexpr int RAID_BUFF_OFFSET = 5000;
 		static constexpr int RAID_BUFF_TIMER = 120000;
 		static constexpr int RAID_BUFF_DURATION = 20000;
@@ -172,11 +172,13 @@ namespace StrikingDummy
 		Buff gauge;
 		Timer xeno_timer;
 		Timer triple_timer;
+		Timer ll_timer;
 		Timer raid_buff_timer;
 		Timer downtime_timer;
 
 		int xeno_procs = 0;
 		int triple_procs = 0;
+		int ll_procs = 0;
 		int astral_stacks = 0;
 
 		// buffs
@@ -192,7 +194,6 @@ namespace StrikingDummy
 
 		// cooldowns
 		Timer swift_cd;
-		Timer leylines_cd;
 		Timer manafont_cd;
 		Timer transpose_cd;
 		Timer lucid_cd;
@@ -275,7 +276,7 @@ namespace StrikingDummy
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 57; }
+		int get_state_size() { return 63; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();
