@@ -18,18 +18,18 @@ namespace StrikingDummy
 	const int NUM_INDICES = CAPACITY / NUM_STEPS_PER_EPOCH;
 	const int BATCH_SIZE = 10000;
 	const int NUM_BATCHES_PER_EPOCH = CAPACITY / BATCH_SIZE;
-	const float WINDOW = 1020000.0f;
-	//const float WINDOW = 600000.0f;
+	//const float WINDOW = 1020000.0f;
+	const float WINDOW = 600000.0f;
 	const float EPS_DECAY = 0.999f;
 	const float EPS_START = 1.0f;
 	const float EPS_MIN = 0.01f;
 	const float NU_DECAY = 0.9999f;
 	const float NU_START = 0.00001f; //0.0001f;
 	const float NU_MIN = 0.000001f;
-	const float OUTPUT_LOWER = 29.350f; //27.750f
-	const float OUTPUT_UPPER = 30.750f; //28.950f
+	const float OUTPUT_LOWER = 29.05f; //29.350f; //27.750f
+	const float OUTPUT_UPPER = 30.45f; //30.750f; //28.950f
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 27.000;
+	const double BEST_THRESHOLD_TO_SAVE = 28.000;
 
 	void TrainingDummy::train()
 	{
@@ -225,8 +225,8 @@ namespace StrikingDummy
 		job.reset();
 		rotation.step();
 		q = rotation.stored_max_weight;
-		//while (job.timeline.time < 600000)
-		while (job.timeline.time < 510000)
+		while (job.timeline.time < 600000)
+		//while (job.timeline.time < 510000)
 			rotation.step();
 		r = rotation.stored_max_weight;
 	}
@@ -244,8 +244,8 @@ namespace StrikingDummy
 			for (int lucid_tick = 100; lucid_tick <= 3000; lucid_tick += 100)
 			{
 				blm.reset(mp_tick, lucid_tick, 0);
-				//while (blm.timeline.time < 6000000) // 100 minutes
-				while (blm.timeline.time < 510000)
+				while (blm.timeline.time < 6000000) // 100 minutes
+				//while (blm.timeline.time < 510000)
 					rotation.step();
 				dps.push_back(blm.total_damage / blm.timeline.time);
 			}
@@ -284,8 +284,8 @@ namespace StrikingDummy
 		model.load("Weights\\weights");
 
 		rotation.eps = 0.0f;
-		//while (blm.timeline.time < 7 * 24 * 3600000)
-		while (blm.timeline.time < 510000)
+		while (blm.timeline.time < 7 * 24 * 3600000)
+		//while (blm.timeline.time < 510000)
 			rotation.step();
 
 		std::stringstream ss;
@@ -334,26 +334,26 @@ namespace StrikingDummy
 					ss << "0";
 				ss << centiseconds << "] ";
 				ss << lroundf(t.t0[0] * 10000.0f) << " ";
-				if (t.action == BlackMage::F1 && t.t0[25] == 1.0f)
+				if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
 					ss << "F1^";
-				else if (t.action == BlackMage::F3 && t.t0[25] == 1.0f)
+				else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
 					ss << "F3p";
-				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[25] == 1.0f)
+				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
 					ss << "PARADOX^";
 				else if (t.action == BlackMage::T5)
-					ss << "T3 at " << lround(t.t0[30] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+					ss << "T3 at " << lround(t.t0[27] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
 				else if (t.action == BlackMage::XENO)
 				{
-					if (t.t0[15] == 1.0f)
+					if (t.t0[14] == 1.0f)
 						ss << "XENO***";
-					else if (t.t0[14] == 1.0f)
+					else if (t.t0[13] == 1.0f)
 						ss << "XENO**";
 					else
 						ss << "XENO*";
 				}
 				else if (t.action == BlackMage::TRIPLE)
 				{
-					if (t.t0[38] == 1.0f)
+					if (t.t0[35] == 1.0f)
 						ss << "TRIPLE**";
 					else
 						ss << "TRIPLE*";
@@ -435,26 +435,26 @@ namespace StrikingDummy
 					ss << "0";
 				ss << centiseconds << "] ";
 				ss << lroundf(t.t0[0] * 10000.0f) << " ";
-				if (t.action == BlackMage::F1 && t.t0[25] == 1.0f)
+				if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
 					ss << "F1^";
-				else if (t.action == BlackMage::F3 && t.t0[25] == 1.0f)
+				else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
 					ss << "F3p";
-				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[25] == 1.0f)
+				else if (t.action == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
 					ss << "PARADOX^";
 				else if (t.action == BlackMage::T5)
-					ss << "T3 at " << lround(t.t0[30] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+					ss << "T3 at " << lround(t.t0[27] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
 				else if (t.action == BlackMage::XENO)
 				{
-					if (t.t0[15] == 1.0f)
+					if (t.t0[14] == 1.0f)
 						ss << "XENO***";
-					else if (t.t0[14] == 1.0f)
+					else if (t.t0[13] == 1.0f)
 						ss << "XENO**";
 					else
 						ss << "XENO*";
 				}
 				else if (t.action == BlackMage::TRIPLE)
 				{
-					if (t.t0[38] == 1.0f)
+					if (t.t0[35] == 1.0f)
 						ss << "TRIPLE**";
 					else
 						ss << "TRIPLE*";
@@ -466,26 +466,26 @@ namespace StrikingDummy
 				if (t.action != temp)
 				{
 					ss << " [[";
-					if (temp == BlackMage::F1 && t.t0[25] == 1.0f)
+					if (temp == BlackMage::F1 && t.t0[24] == 1.0f)
 						ss << "F1^";
-					else if (temp == BlackMage::F3 && t.t0[25] == 1.0f)
+					else if (temp == BlackMage::F3 && t.t0[24] == 1.0f)
 						ss << "F3p";
-					else if (temp == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[25] == 1.0f)
+					else if (temp == BlackMage::PARADOX && t.t0[2] == 1.0f && t.t0[24] == 1.0f)
 						ss << "PARADOX^";
 					else if (temp == BlackMage::T5)
-						ss << "T3 at " << lround(t.t0[30] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
+						ss << "T3 at " << lround(t.t0[27] * BlackMage::DOT_DURATION) / 1000.0f << "s left on dot";
 					else if (temp == BlackMage::XENO)
 					{
-						if (t.t0[15] == 1.0f)
+						if (t.t0[14] == 1.0f)
 							ss << "XENO***";
-						else if (t.t0[14] == 1.0f)
+						else if (t.t0[13] == 1.0f)
 							ss << "XENO**";
 						else
 							ss << "XENO*";
 					}
 					else if (temp == BlackMage::TRIPLE)
 					{
-						if (t.t0[38] == 1.0f)
+						if (t.t0[35] == 1.0f)
 							ss << "TRIPLE**";
 						else
 							ss << "TRIPLE*";
@@ -649,9 +649,9 @@ namespace StrikingDummy
 				for (int j = points[i]; j <= points[i + 1]; j++)
 				{
 					Transition& t = blm.history[j];
-					if (t.action == BlackMage::F1 && t.t0[25] == 1.0f)
+					if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)
 						ss << "F1^ ";
-					else if (t.action == BlackMage::F3 && t.t0[25] == 1.0f)
+					else if (t.action == BlackMage::F3 && t.t0[24] == 1.0f)
 						ss << "F3p ";
 					else if (t.action == BlackMage::T5)
 						ss << "T3/p ";
@@ -667,7 +667,7 @@ namespace StrikingDummy
 							t.action != BlackMage::TRANSPOSE && 
 							t.action != BlackMage::T5 &&
 							t.action != BlackMage::PARADOX &&
-							t.action != BlackMage::DESPAIR && (t.t0[17] > 0.0f || t.t0[21] > 0.0f))
+							t.action != BlackMage::DESPAIR && (t.t0[16] > 0.0f || t.t0[20] > 0.0f))
 							ss << blm.get_action_name(t.action) << "* ";
 						else
 							ss << blm.get_action_name(t.action) << " ";

@@ -20,22 +20,18 @@ namespace StrikingDummy
 		opener(opener),
 		action_set(action_set),
 		base_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * BASE_GCD))) * 10),
-		ii_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * II_GCD))) * 10),
+		i_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * I_GCD))) * 10),
 		iii_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * III_GCD))) * 10),
-		iv_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * IV_GCD))) * 10),
-		despair_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * DESPAIR_GCD))) * 10),
 		flare_gcd(lround(floor(0.1f * floor(this->stats.ss_multiplier * FLARE_GCD))) * 10),
 		fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * BASE_GCD)))) * 10),
-		fast_ii_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * II_GCD)))) * 10),
+		fast_i_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * I_GCD)))) * 10),
 		fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(this->stats.ss_multiplier * III_GCD)))) * 10),
 		ll_base_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD)))) * 10),
-		ll_ii_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * II_GCD)))) * 10),
+		ll_i_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * I_GCD)))) * 10),
 		ll_iii_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD)))) * 10),
-		ll_iv_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * IV_GCD)))) * 10),
-		ll_despair_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * DESPAIR_GCD)))) * 10),
 		ll_flare_gcd(lround(floor(0.1f * floor(0.85 * floor(this->stats.ss_multiplier * FLARE_GCD)))) * 10),
 		ll_fast_base_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * BASE_GCD))))) * 10),
-		ll_fast_ii_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * II_GCD))))) * 10),
+		ll_fast_i_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * I_GCD))))) * 10),
 		ll_fast_iii_gcd(lround(floor(0.1f * floor(0.5f * floor(0.85 * floor(this->stats.ss_multiplier * III_GCD))))) * 10)
 	{
 		actions.reserve(NUM_ACTIONS);
@@ -69,9 +65,11 @@ namespace StrikingDummy
 			element = Element::NE;
 		}
 
+		gauge = 0;
 		umbral_hearts = 0;
 		enochian = false;
 		paradox = false;
+		f3p = false;
 		t3p = false;
 
 		// server ticks
@@ -87,16 +85,15 @@ namespace StrikingDummy
 		skip_transpose_tick = false;
 
 		// misc timers
-		gauge.reset(0, 0);
 		xeno_timer.reset(0, false);
 		triple_timer.reset(0, false);
 		ll_timer.reset(0, false);
-		//raid_buff_timer.reset(0, false);
-		//downtime_timer.reset(0, false);
-		raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
-		downtime_timer.reset(DOWNTIME_TIMER, false);
-		timeline.push_event(raid_buff_timer.time);
-		timeline.push_event(downtime_timer.time);
+		raid_buff_timer.reset(0, false);
+		downtime_timer.reset(0, false);
+		//raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+		//downtime_timer.reset(DOWNTIME_TIMER, false);
+		//timeline.push_event(raid_buff_timer.time);
+		//timeline.push_event(downtime_timer.time);
 
 		xeno_procs = 0;
 		triple_procs = 2;
@@ -107,8 +104,6 @@ namespace StrikingDummy
 		swift.reset(0, 0);
 		triple.reset(0, 0);
 		leylines.reset(0, 0);
-		fs_proc.reset(0, 0);
-		tc_proc.reset(0, 0);
 		dot.reset(0, 0);
 		lucid.reset(0, 0);
 		pot.reset(0, 0);
@@ -132,11 +127,9 @@ namespace StrikingDummy
 		if (opener == Opener::PRE_F3 || opener == Opener::PRE_B3 || opener == Opener::PRE_LL_F3 || opener == Opener::PRE_LL_B3)
 		{
 			enochian = true;
-			gauge.reset(GAUGE_DURATION - CAST_LOCK - ACTION_TAX, 3);
-			tc_proc.reset(TC_DURATION - CAST_LOCK - ACTION_TAX, 1);
+			gauge = 3;
+			t3p = true;
 			xeno_timer.reset(XENO_TIMER, false);
-			timeline.push_event(gauge.time);
-			timeline.push_event(tc_proc.time);
 			timeline.push_event(xeno_timer.time);
 		}
 		if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
@@ -185,9 +178,11 @@ namespace StrikingDummy
 		mp = blm.mp;
 		element = blm.element;
 
+		gauge = blm.gauge;
 		umbral_hearts = blm.umbral_hearts;
 		enochian = blm.enochian;
 		paradox = blm.paradox;
+		f3p = blm.f3p;
 		t3p = blm.t3p;
 
 		// server ticks
@@ -216,8 +211,6 @@ namespace StrikingDummy
 		swift = blm.swift;
 		triple = blm.triple;
 		leylines = blm.leylines;
-		fs_proc = blm.fs_proc;
-		tc_proc = blm.tc_proc;
 		dot = blm.dot;
 		lucid = blm.lucid;
 		pot = blm.pot;
@@ -286,7 +279,6 @@ namespace StrikingDummy
 		lucid_timer.update(elapsed);
 
 		// misc timer
-		gauge.update(elapsed);
 		xeno_timer.update(elapsed);
 		triple_timer.update(elapsed);
 		ll_timer.update(elapsed);
@@ -297,8 +289,6 @@ namespace StrikingDummy
 		swift.update(elapsed);
 		triple.update(elapsed);
 		leylines.update(elapsed);
-		fs_proc.update(elapsed);
-		tc_proc.update(elapsed);
 		dot.update(elapsed);
 		lucid.update(elapsed);
 		pot.update(elapsed);
@@ -324,15 +314,6 @@ namespace StrikingDummy
 			update_dot();
 		if (lucid_timer.ready)
 			update_lucid();
-		if (element != Element::NE && gauge.count == 0)
-		{
-			element = Element::NE;
-			umbral_hearts = 0;
-			enochian = false;
-			paradox = false;
-			xeno_timer.time = 0;
-			astral_stacks = 0;
-		}
 		if (enochian && xeno_timer.time == 0)
 		{
 			xeno_timer.time = XENO_TIMER;
@@ -390,9 +371,11 @@ namespace StrikingDummy
 				element = Element::NE;
 			}
 
+			gauge = 0;
 			umbral_hearts = 0;
 			enochian = false;
 			paradox = false;
+			f3p = false;
 			t3p = false;
 
 			mp_wait = 0;
@@ -400,12 +383,11 @@ namespace StrikingDummy
 			skip_transpose_tick = false;
 
 			// misc timers
-			gauge.reset(0, 0);
 			xeno_timer.reset(0, false);
 			triple_timer.reset(0, false);
 			ll_timer.reset(0, false);
-			//raid_buff_timer.reset(0, false);
-			raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
+			raid_buff_timer.reset(0, false);
+			//raid_buff_timer.reset(RAID_BUFF_OFFSET, false);
 			downtime_timer.reset(DOWNTIME_TIMER, false);
 			timeline.push_event(raid_buff_timer.time);
 			timeline.push_event(downtime_timer.time);
@@ -419,8 +401,6 @@ namespace StrikingDummy
 			swift.reset(0, 0);
 			triple.reset(0, 0);
 			leylines.reset(0, 0);
-			fs_proc.reset(0, 0);
-			tc_proc.reset(0, 0);
 			dot.reset(0, 0);
 			lucid.reset(0, 0);
 			pot.reset(0, 0);
@@ -444,11 +424,9 @@ namespace StrikingDummy
 			if (opener == Opener::PRE_F3 || opener == Opener::PRE_B3 || opener == Opener::PRE_LL_F3 || opener == Opener::PRE_LL_B3)
 			{
 				enochian = true;
-				gauge.reset(GAUGE_DURATION - CAST_LOCK - ACTION_TAX, 3);
-				tc_proc.reset(TC_DURATION - CAST_LOCK - ACTION_TAX, 1);
+				gauge = 3;
+				t3p = true;
 				xeno_timer.reset(XENO_TIMER, false);
-				timeline.push_event(gauge.time);
-				timeline.push_event(tc_proc.time);
 				timeline.push_event(xeno_timer.time);
 			}
 			if (opener == Opener::PRE_LL_B3 || opener == Opener::PRE_LL_F3)
@@ -595,7 +573,7 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case T5:
-			if (tc_proc.count > 0)
+			if (t3p)
 				t3p_dist.push_back(timeline.time - t3_last + DOT_DURATION);
 			else
 				t3_dist.push_back(timeline.time - t3_last + DOT_DURATION);
@@ -623,7 +601,7 @@ namespace StrikingDummy
 	bool BlackMage::is_instant_cast(int action) const
 	{
 		// for gcds
-		return swift.count == 1 || triple.count > 0 || (action == F3 && fs_proc.count > 0) || action == T5 || action == XENO || action == DESPAIR || action == PARADOX;
+		return swift.count == 1 || triple.count > 0 || (action == F3 && f3p) || action == T5 || action == XENO || action == DESPAIR || action == PARADOX;
 	}
 
 	int BlackMage::get_ll_cast_time(int ll_cast_time, int cast_time) const
@@ -640,31 +618,30 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case B1:
-			if (element == AF && gauge.count == 3)
-				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd) - CAST_LOCK;
-			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
+			if (element == AF && gauge == 3)
+				return get_ll_cast_time(ll_fast_i_gcd, fast_i_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_i_gcd, i_gcd) - CAST_LOCK;
 		case B3:
-			if (element == AF && gauge.count == 3)
+			if (element == AF && gauge == 3)
 				return get_ll_cast_time(ll_fast_iii_gcd, fast_iii_gcd) - CAST_LOCK;
 			return get_ll_cast_time(ll_iii_gcd, iii_gcd) - CAST_LOCK;
 		case F1:
-			if (element == UI && gauge.count == 3)
-				return get_ll_cast_time(ll_fast_base_gcd, fast_base_gcd) - CAST_LOCK;
-			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
+			if (element == UI && gauge == 3)
+				return get_ll_cast_time(ll_fast_i_gcd, fast_i_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_i_gcd, i_gcd) - CAST_LOCK;
 		case F3:
-			if (element == UI && gauge.count == 3)
+			if (element == UI && gauge == 3)
 				return get_ll_cast_time(ll_fast_iii_gcd, fast_iii_gcd) - CAST_LOCK;
 			return get_ll_cast_time(ll_iii_gcd, iii_gcd) - CAST_LOCK;
-		case F4:
-			return get_ll_cast_time(ll_iv_gcd, iv_gcd) - CAST_LOCK;
 		case B4:
+		case F4:
+		case FLARE_STAR:
+			return get_ll_cast_time(ll_i_gcd, i_gcd) - CAST_LOCK;
 		case T5:
 		case XENO:
 		case PARADOX:
-			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
 		case DESPAIR:
-		case FLARE_STAR:
-			return get_ll_cast_time(ll_despair_gcd, despair_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
 		case FLARE:
 			return get_ll_cast_time(ll_flare_gcd, flare_gcd) - CAST_LOCK;
 		}
@@ -697,7 +674,7 @@ namespace StrikingDummy
 		case B3:
 			return gcd_timer.ready && get_mp_cost(B3) <= mp && (downtime_timer.time == 0 || get_cast_time(B3) < downtime_timer.time);
 		case B4:
-			return gcd_timer.ready && element == UI && enochian && get_cast_time(B4) < gauge.time && get_mp_cost(B4) <= mp && (downtime_timer.time == 0 || get_cast_time(B4) < downtime_timer.time);
+			return gcd_timer.ready && element == UI && enochian && get_mp_cost(B4) <= mp && (downtime_timer.time == 0 || get_cast_time(B4) < downtime_timer.time);
 		case F1:
 			return gcd_timer.ready && !paradox && get_mp_cost(F1) <= mp && (downtime_timer.time == 0 || get_cast_time(F1) < downtime_timer.time);
 		case F3:
@@ -706,19 +683,19 @@ namespace StrikingDummy
 			else
 				return gcd_timer.ready && get_mp_cost(F3) <= mp && (downtime_timer.time == 0 || get_cast_time(F3) < downtime_timer.time);
 		case F4:
-			return gcd_timer.ready && element == AF && enochian && get_cast_time(F4) < gauge.time && get_mp_cost(F4) <= mp && (downtime_timer.time == 0 || get_cast_time(F4) < downtime_timer.time);
+			return gcd_timer.ready && element == AF && enochian && get_mp_cost(F4) <= mp && (downtime_timer.time == 0 || get_cast_time(F4) < downtime_timer.time);
 		case T5:
-			return gcd_timer.ready && tc_proc.count > 0;
+			return gcd_timer.ready && t3p;
 		case XENO:
 			return gcd_timer.ready && xeno_procs > 0;
 		case DESPAIR:
-			return gcd_timer.ready && element == AF && enochian && get_cast_time(DESPAIR) < gauge.time && get_mp_cost(DESPAIR) <= mp && (downtime_timer.time == 0 || get_cast_time(DESPAIR) < downtime_timer.time);
+			return gcd_timer.ready && element == AF && enochian && get_mp_cost(DESPAIR) <= mp && (downtime_timer.time == 0 || get_cast_time(DESPAIR) < downtime_timer.time);
 		case PARADOX:
 			return gcd_timer.ready && paradox && get_mp_cost(PARADOX) <= mp;
 		case FLARE_STAR:
-			return gcd_timer.ready && element == AF && enochian && astral_stacks == 6 && get_cast_time(FLARE_STAR) < gauge.time && (downtime_timer.time == 0 || get_cast_time(FLARE_STAR) < downtime_timer.time);
+			return gcd_timer.ready && element == AF && enochian && astral_stacks == 6 && (downtime_timer.time == 0 || get_cast_time(FLARE_STAR) < downtime_timer.time);
 		case FLARE:
-			return gcd_timer.ready && element == AF && enochian && get_cast_time(FLARE) < gauge.time && get_mp_cost(FLARE) <= mp && (downtime_timer.time == 0 || get_cast_time(FLARE) < downtime_timer.time);
+			return gcd_timer.ready && element == AF && enochian && get_mp_cost(FLARE) <= mp && (downtime_timer.time == 0 || get_cast_time(FLARE) < downtime_timer.time);
 		//	return false;
 		case SWIFT:
 			return swift_cd.ready;
@@ -727,7 +704,7 @@ namespace StrikingDummy
 		case LEYLINES:
 			return ll_procs > 0;
 		case MANAFONT:
-			return manafont_cd.ready && element == AF && (mp < MAX_MP || !paradox || umbral_hearts < 3 || (gauge.count > 0 && gauge.count < 3));
+			return manafont_cd.ready && element == AF && (mp < MAX_MP || !paradox || umbral_hearts < 3 || gauge < 3);
 		case TRANSPOSE:
 			if (action_set == ActionSet::FULL)
 				return transpose_cd.ready && element != Element::NE;
@@ -749,7 +726,7 @@ namespace StrikingDummy
 			return pot_cd.ready;
 		case F3P_OFF:
 			if (action_set == ActionSet::FULL)
-				return fs_proc.count > 0;
+				return f3p;
 			else
 				return false;
 		}
@@ -791,8 +768,6 @@ namespace StrikingDummy
 			cast_timer.reset(get_cast_time(action), false);
 			action_timer.reset(get_action_time(action), false);
 			casting = action;
-			if (casting == T5)
-				t3p = tc_proc.count > 0;
 			if (cast_timer.time == 0)
 				end_action();
 			else
@@ -830,33 +805,26 @@ namespace StrikingDummy
 			push_event(LL_DURATION);
 			break;
 		case MANAFONT:
+			assert(element == Element::AF);
 			mp = MAX_MP;
-			if (element == Element::AF)
-				paradox = true;
-			if (element != Element::NE)
-			{
-				umbral_hearts = 3;
-				tc_proc.reset(TC_DURATION, 1);
-				gauge.reset(GAUGE_DURATION, 3);
-				push_event(TC_DURATION);
-				push_event(GAUGE_DURATION);
-			}
+			paradox = true;
+			umbral_hearts = 3;
+			t3p = true;
+			gauge = 3;
 			manafont_cd.reset(MANAFONT_CD, false);
 			push_event(MANAFONT_CD);
 			break;
 		case TRANSPOSE:
 			assert(element != Element::NE);
-			if (((element == Element::UI && umbral_hearts == 3) || element == Element::AF) && gauge.count == 3)
+			if (((element == Element::UI && umbral_hearts == 3) || element == Element::AF) && gauge == 3)
 				paradox = true;
 			element = element == Element::AF ? Element::UI : Element::AF;
 			astral_stacks = 0;
 			skip_transpose_tick = mp_timer.time <= LATENCY;
 			transpose_cd.reset(TRANSPOSE_CD, false);
-			tc_proc.reset(TC_DURATION, 1);
-			gauge.reset(GAUGE_DURATION, 1);
+			t3p = true;
+			gauge = 1;
 			push_event(TRANSPOSE_CD);
-			push_event(TC_DURATION);
-			push_event(GAUGE_DURATION);
 			break;
 		case AMPLIFIER:
 			assert(element != Element::NE);
@@ -879,7 +847,7 @@ namespace StrikingDummy
 			push_event(POT_CD);
 			break;
 		case F3P_OFF:
-			fs_proc.reset(0, 0);
+			f3p = false;
 			action_timer.reset(1, false);
 			push_event(action_timer.time);
 			return;
@@ -916,7 +884,7 @@ namespace StrikingDummy
 		else
 			mp -= casting_mp_cost;
 
-		if (casting == F3 && fs_proc.count > 0);
+		if (casting == F3 && f3p);
 		// firestarter doesn't use swift or triple
 		else if (casting == T5);
 		// thundercloud doesn't use swift or triple
@@ -937,37 +905,32 @@ namespace StrikingDummy
 				element = Element::NE;
 				umbral_hearts = 0;
 				enochian = false;
-				gauge.reset(0, 0);
+				gauge = 0;
 				xeno_timer.time = 0;
 				astral_stacks = 0;
 			}
 			else
 			{
 				if (element == Element::UI)
-					mp = std::min(mp + UI_MP[gauge.count], MAX_MP);
+					mp = std::min(mp + UI_MP[gauge], MAX_MP);
 				element = Element::UI;
 				if (!enochian)
 				{
 					enochian = true;
-					tc_proc.reset(TC_DURATION, 1);
+					t3p = true;
 					xeno_timer.time = XENO_TIMER;
-					push_event(TC_DURATION);
 					push_event(XENO_TIMER);
 				}
-				gauge.reset(GAUGE_DURATION, std::min(gauge.count + 1, 3));
-				push_event(GAUGE_DURATION);
+				gauge = std::min(gauge + 1, 3);
 			}
 			break;
 		case B3:
-			if (element == Element::AF && gauge.count == 3)
+			if (element == Element::AF && gauge == 3)
 				paradox = true;
 			if (element == Element::UI)
-				mp = std::min(mp + UI_MP[gauge.count], MAX_MP);
+				mp = std::min(mp + UI_MP[gauge], MAX_MP);
 			else
-			{
-				tc_proc.reset(TC_DURATION, 1);
-				push_event(TC_DURATION);
-			}
+				t3p = true;
 			element = Element::UI;
 			astral_stacks = 0;
 			if (!enochian)
@@ -976,12 +939,11 @@ namespace StrikingDummy
 				xeno_timer.time = XENO_TIMER;
 				push_event(XENO_TIMER);
 			}
-			gauge.reset(GAUGE_DURATION, 3);
-			push_event(GAUGE_DURATION);
+			gauge = 3;
 			break;
 		case B4:
 			if (element == Element::UI)
-				mp = std::min(mp + UI_MP[gauge.count], MAX_MP);
+				mp = std::min(mp + UI_MP[gauge], MAX_MP);
 			umbral_hearts = 3;
 			break;
 		case F1:
@@ -990,7 +952,7 @@ namespace StrikingDummy
 				element = Element::NE;
 				umbral_hearts = 0;
 				enochian = false;
-				gauge.reset(0, 0);
+				gauge = 0;
 				xeno_timer.time = 0;
 			}
 			else
@@ -999,34 +961,26 @@ namespace StrikingDummy
 				if (!enochian)
 				{
 					enochian = true;
-					tc_proc.reset(TC_DURATION, 1);
+					t3p = true;
 					xeno_timer.time = XENO_TIMER;
-					push_event(TC_DURATION);
 					push_event(XENO_TIMER);
 				}
-				gauge.reset(GAUGE_DURATION, std::min(gauge.count + 1, 3));
-				push_event(GAUGE_DURATION);
+				gauge = std::min(gauge + 1, 3);
 				if (umbral_hearts > 0)
 					umbral_hearts--;
 			}
 			if (prob(rng) < FS_PROC_RATE)
-			{
-				fs_proc.reset(FS_DURATION, 1);
-				push_event(FS_DURATION);
-			}
+				f3p = true;
 			break;
 		case F3:
-			if (fs_proc.count > 0)
-				fs_proc.reset(0, 0);
+			if (f3p)
+				f3p = false;
 			else if (element == Element::AF && umbral_hearts > 0)
 				umbral_hearts--;
-			if (element == Element::UI && gauge.count == 3 && umbral_hearts == 3)
+			if (element == Element::UI && gauge == 3 && umbral_hearts == 3)
 				paradox = true;
 			if (element != Element::AF)
-			{
-				tc_proc.reset(TC_DURATION, 1);
-				push_event(TC_DURATION);
-			}
+				t3p = true;
 			element = Element::AF;
 			if (!enochian)
 			{
@@ -1034,8 +988,7 @@ namespace StrikingDummy
 				xeno_timer.time = XENO_TIMER;
 				push_event(XENO_TIMER);
 			}
-			gauge.reset(GAUGE_DURATION, 3);
-			push_event(GAUGE_DURATION);
+			gauge = 3;
 			break;
 		case F4:
 			if (umbral_hearts > 0)
@@ -1044,8 +997,7 @@ namespace StrikingDummy
 				astral_stacks++;
 			break;
 		case T5:
-			if (t3p)
-				tc_proc.reset(0, 0);
+			t3p = false;
 			dot.reset(DOT_DURATION, (1 | (enochian ? 2 : 0) | (pot.count > 0 ? 4 : 0) | (raid_buff.count > 0 ? 8 : 0)));
 			push_event(DOT_DURATION);
 			break;
@@ -1055,18 +1007,13 @@ namespace StrikingDummy
 			break;
 		case DESPAIR:
 			element = Element::AF;
-			gauge.reset(GAUGE_DURATION, 3);
-			push_event(GAUGE_DURATION);
+			gauge = 3;
 			break;
 		case PARADOX:
 			paradox = false;
 			if (element == Element::AF)
-			{
-				fs_proc.reset(FS_DURATION, 1);
-				push_event(FS_DURATION);
-			}
-			gauge.reset(GAUGE_DURATION, std::min(gauge.count + 1, 3));
-			push_event(GAUGE_DURATION);
+				f3p = true;
+			//gauge = std::min(gauge + 1, 3);
 			break;
 		case FLARE_STAR:
 			assert(astral_stacks == 6);
@@ -1076,8 +1023,7 @@ namespace StrikingDummy
 			umbral_hearts = 0;
 			astral_stacks = std::min(astral_stacks + 3, 6);
 			element = Element::AF;
-			gauge.reset(GAUGE_DURATION, 3);
-			push_event(GAUGE_DURATION);
+			gauge = 3;
 			break;
 		}
 		casting = NONE;
@@ -1089,23 +1035,23 @@ namespace StrikingDummy
 		switch (action)
 		{
 		case B1:
-			if (element != Element::NE && (is_end_action || get_cast_time(B1) < gauge.time))
+			if (element != Element::NE)
 				return 0;
 			return B1_MP_COST;
 		case B3:
-			if (element != Element::NE && (is_end_action || get_cast_time(B3) < gauge.time))
+			if (element != Element::NE)
 				return 0;
 			return B3_MP_COST;
 		case B4:
 			return 0;
 		case F1:
-			if (element == UI && (is_end_action || get_cast_time(F1) < gauge.time))
+			if (element == UI)
 				return 0;
 			return (element == AF && umbral_hearts == 0) ? F1_MP_COST * 2 : F1_MP_COST;
 		case F3:
-			if (fs_proc.count > 0)
+			if (f3p)
 				return 0;
-			if (element == UI && (is_end_action || get_cast_time(F3) < gauge.time))
+			if (element == UI)
 				return 0;
 			return (element == AF && umbral_hearts == 0) ? F3_MP_COST * 2 : F3_MP_COST;
 		case F4:
@@ -1134,11 +1080,11 @@ namespace StrikingDummy
 		case B1:
 			if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = B1_POTENCY * AF1UI1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = B1_POTENCY * AF2UI2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = B1_POTENCY * AF3UI3_MULTIPLIER;
 			}
 			else
@@ -1147,11 +1093,11 @@ namespace StrikingDummy
 		case B3:
 			if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = B3_POTENCY * AF1UI1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = B3_POTENCY * AF2UI2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = B3_POTENCY * AF3UI3_MULTIPLIER;
 			}
 			else
@@ -1163,20 +1109,20 @@ namespace StrikingDummy
 		case F1:
 			if (element == UI)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = F1_POTENCY * AF1UI1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = F1_POTENCY * AF2UI2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = F1_POTENCY * AF3UI3_MULTIPLIER;
 			}
 			else if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = F1_POTENCY * AF1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = F1_POTENCY * AF2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = F1_POTENCY * AF3_MULTIPLIER;
 			}
 			else
@@ -1185,20 +1131,20 @@ namespace StrikingDummy
 		case F3:
 			if (element == UI)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = F3_POTENCY * AF1UI1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = F3_POTENCY * AF2UI2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = F3_POTENCY * AF3UI3_MULTIPLIER;
 			}
 			else if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = F3_POTENCY * AF1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = F3_POTENCY * AF2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = F3_POTENCY * AF3_MULTIPLIER;
 			}
 			else
@@ -1208,11 +1154,11 @@ namespace StrikingDummy
 			assert(element == AF);
 			if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = F4_POTENCY * AF1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = F4_POTENCY * AF2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = F4_POTENCY * AF3_MULTIPLIER;
 			}
 			break;
@@ -1225,11 +1171,11 @@ namespace StrikingDummy
 		case DESPAIR:
 			if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = DESPAIR_POTENCY * AF1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = DESPAIR_POTENCY * AF2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = DESPAIR_POTENCY * AF3_MULTIPLIER;
 			}
 			break;
@@ -1240,11 +1186,11 @@ namespace StrikingDummy
 			assert(element == AF);
 			if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = FLARE_STAR_POTENCY * AF1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = FLARE_STAR_POTENCY * AF2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = FLARE_STAR_POTENCY * AF3_MULTIPLIER;
 			}
 			break;
@@ -1252,11 +1198,11 @@ namespace StrikingDummy
 			assert(element == AF);
 			if (element == AF)
 			{
-				if (gauge.count == 1)
+				if (gauge == 1)
 					potency = FLARE_POTENCY * AF1_MULTIPLIER;
-				else if (gauge.count == 2)
+				else if (gauge == 2)
 					potency = FLARE_POTENCY * AF2_MULTIPLIER;
-				else if (gauge.count == 3)
+				else if (gauge == 3)
 					potency = FLARE_POTENCY * AF3_MULTIPLIER;
 			}
 			break;
@@ -1286,60 +1232,57 @@ namespace StrikingDummy
 		state[6] = umbral_hearts == 3;
 		state[7] = enochian;
 		state[8] = paradox;
-		state[9] = gauge.count == 1;
-		state[10] = gauge.count == 2;
-		state[11] = gauge.count == 3;
-		state[12] = gauge.time / (float)GAUGE_DURATION;
-		state[13] = xeno_procs > 0;
-		state[14] = xeno_procs > 1;
-		state[15] = xeno_procs > 2;
-		state[16] = (XENO_TIMER - xeno_timer.time) / (float)XENO_TIMER;
-		state[17] = swift.count > 0;
-		state[18] = swift.time / (float)SWIFT_DURATION;
-		state[19] = lucid.count > 0;
-		state[20] = lucid.time / (float)LUCID_DURATION;
-		state[21] = triple.count / 3.0f;
-		state[22] = triple.time / (float)TRIPLE_DURATION;
-		state[23] = leylines.count > 0;
-		state[24] = leylines.time / (float)LL_DURATION;
-		state[25] = fs_proc.count > 0;
-		state[26] = fs_proc.time / (float)FS_DURATION;
-		state[27] = tc_proc.count > 0;
-		state[28] = tc_proc.time / (float)TC_DURATION;
-		state[29] = dot.count > 0;
-		state[30] = dot.time / (float)DOT_DURATION;
-		state[31] = (dot.count & 2) != 0;
-		state[32] = (dot.count & 4) != 0;
-		state[33] = lucid_cd.ready;
-		state[34] = lucid_cd.time / (float)LUCID_CD;
-		state[35] = swift_cd.ready;
-		state[36] = swift_cd.time / (float)SWIFT_CD;
-		state[37] = triple_procs > 0;
-		state[38] = triple_procs > 1;
-		state[39] = (TRIPLE_CD - triple_timer.time) / (float)TRIPLE_CD;
-		state[40] = mp_timer.time / (float)TICK_TIMER;
-		state[41] = lucid_timer.time / (float)TICK_TIMER;
-		state[42] = ll_procs > 0;
-		state[43] = ll_procs > 1;
-		state[44] = (LL_CD - ll_timer.time) / (float)LL_CD;
-		state[45] = manafont_cd.ready;
-		state[46] = manafont_cd.time / (float)MANAFONT_CD;
-		state[47] = astral_stacks / 6.0f;
-		state[48] = gcd_timer.ready;
-		state[49] = gcd_timer.time / (BASE_GCD * 1000.0f);
-		state[50] = transpose_cd.ready;
-		state[51] = transpose_cd.time / (float)TRANSPOSE_CD;
-		state[52] = pot.count > 0;
-		state[53] = pot.time / (float)POT_DURATION;
-		state[54] = pot_cd.ready;
-		state[55] = pot_cd.time / (float)POT_CD;
-		state[56] = amplifier_cd.ready;
-		state[57] = amplifier_cd.time / (float)AMPLIFIER_CD;
-		state[58] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
-		state[59] = raid_buff.count > 0;
-		state[60] = raid_buff.time / (float)RAID_BUFF_DURATION;
-		state[61] = (dot.count & 8) != 0;
-		state[62] = downtime_timer.time / (float)DOWNTIME_TIMER;
+		state[9] = gauge == 1;
+		state[10] = gauge == 2;
+		state[11] = gauge == 3;
+		state[12] = xeno_procs > 0;
+		state[13] = xeno_procs > 1;
+		state[14] = xeno_procs > 2;
+		state[15] = (XENO_TIMER - xeno_timer.time) / (float)XENO_TIMER;
+		state[16] = swift.count > 0;
+		state[17] = swift.time / (float)SWIFT_DURATION;
+		state[18] = lucid.count > 0;
+		state[19] = lucid.time / (float)LUCID_DURATION;
+		state[20] = triple.count / 3.0f;
+		state[21] = triple.time / (float)TRIPLE_DURATION;
+		state[22] = leylines.count > 0;
+		state[23] = leylines.time / (float)LL_DURATION;
+		state[24] = f3p;
+		state[25] = t3p;
+		state[26] = dot.count > 0;
+		state[27] = dot.time / (float)DOT_DURATION;
+		state[28] = (dot.count & 2) != 0;
+		state[29] = (dot.count & 4) != 0;
+		state[30] = lucid_cd.ready;
+		state[31] = lucid_cd.time / (float)LUCID_CD;
+		state[32] = swift_cd.ready;
+		state[33] = swift_cd.time / (float)SWIFT_CD;
+		state[34] = triple_procs > 0;
+		state[35] = triple_procs > 1;
+		state[36] = (TRIPLE_CD - triple_timer.time) / (float)TRIPLE_CD;
+		state[37] = mp_timer.time / (float)TICK_TIMER;
+		state[38] = lucid_timer.time / (float)TICK_TIMER;
+		state[39] = ll_procs > 0;
+		state[40] = ll_procs > 1;
+		state[41] = (LL_CD - ll_timer.time) / (float)LL_CD;
+		state[42] = manafont_cd.ready;
+		state[43] = manafont_cd.time / (float)MANAFONT_CD;
+		state[44] = astral_stacks / 6.0f;
+		state[45] = gcd_timer.ready;
+		state[46] = gcd_timer.time / (BASE_GCD * 1000.0f);
+		state[47] = transpose_cd.ready;
+		state[48] = transpose_cd.time / (float)TRANSPOSE_CD;
+		state[49] = pot.count > 0;
+		state[50] = pot.time / (float)POT_DURATION;
+		state[51] = pot_cd.ready;
+		state[52] = pot_cd.time / (float)POT_CD;
+		state[53] = amplifier_cd.ready;
+		state[54] = amplifier_cd.time / (float)AMPLIFIER_CD;
+		//state[55] = raid_buff_timer.time / (float)RAID_BUFF_TIMER;
+		//state[56] = raid_buff.count > 0;
+		//state[57] = raid_buff.time / (float)RAID_BUFF_DURATION;
+		//state[58] = (dot.count & 8) != 0;
+		//state[59] = downtime_timer.time / (float)DOWNTIME_TIMER;
 	}
 
 	std::string BlackMage::get_info()

@@ -323,9 +323,9 @@ __global__ void _potato(float* A, float* B, unsigned char* C, float* D, int* E)
 			if (B[n + a] > q)
 				q = B[n + a];
 		float x = B[m + E[i]];
-		//float y = max(min(D[i * 2] + D[i * 2 + 1] * q, 1.0f), -1.0f);
-		//A[m + E[i]] = (x - y) * x * (1.0f - x);
-		A[m + E[i]] = (x - (D[i * 2] + D[i * 2 + 1] * q)) * x * (1.0f - x);
+		float y = max(min(D[i * 2] + D[i * 2 + 1] * q, 1.0f), 0.0f);
+		A[m + E[i]] = (x - y) * x * (1.0f - x);
+		//A[m + E[i]] = (x - (D[i * 2] + D[i * 2 + 1] * q)) * x * (1.0f - x);
 	}
 }
 

@@ -44,7 +44,7 @@ namespace StrikingDummy
 		static constexpr int ACTION_TAX = 117;
 		static constexpr int CAST_LOCK = 500;
 		static constexpr int ANIMATION_LOCK = 600;
-		static constexpr int POTION_LOCK = 1100;
+		static constexpr int POTION_LOCK = 500;
 		static constexpr int LATENCY = 100;
 
 		// Assume only in UI3 and AF3
@@ -57,25 +57,19 @@ namespace StrikingDummy
 		static constexpr int UI_MP[4] = { 0, UI1_MP, UI2_MP, UI3_MP };
 
 		static constexpr float BASE_GCD = 2.50f;
-		static constexpr float II_GCD = 3.00f;
+		static constexpr float I_GCD = 2.00f;
 		static constexpr float III_GCD = 3.50f;
-		static constexpr float IV_GCD = 2.80f;
-		static constexpr float DESPAIR_GCD = 3.00f;
 		static constexpr float FLARE_GCD = 3.00f;
 
-		static constexpr float TC_PROC_RATE = 0.10f;
 		static constexpr float FS_PROC_RATE = 0.40f;
 
 		static constexpr int DOWNTIME_TIMER = 510000;
 
 		static constexpr int TICK_TIMER = 3000;
 		static constexpr int XENO_TIMER = 30000;
-		static constexpr int GAUGE_DURATION = 15000;
 		static constexpr int SWIFT_DURATION = 10000;
 		static constexpr int TRIPLE_DURATION = 15000;
-		static constexpr int FS_DURATION = 30000;
-		static constexpr int TC_DURATION = 30000;
-		static constexpr int LL_DURATION = 30000;
+		static constexpr int LL_DURATION = 20000;
 		static constexpr int DOT_DURATION = 30000;
 		static constexpr int LUCID_DURATION = 21000;
 		static constexpr int POT_DURATION = 30000;
@@ -91,17 +85,17 @@ namespace StrikingDummy
 
 		// Assume not using Flare
 		static constexpr float F1_POTENCY = 180.0f;
-		static constexpr float F3_POTENCY = 280.0f;
-		static constexpr float F4_POTENCY = 320.0f;
+		static constexpr float F3_POTENCY = 290.0f;
+		static constexpr float F4_POTENCY = 300.0f;
 		static constexpr float B1_POTENCY = 180.0f;
-		static constexpr float B3_POTENCY = 280.0f;
-		static constexpr float B4_POTENCY = 320.0f;
+		static constexpr float B3_POTENCY = 290.0f;
+		static constexpr float B4_POTENCY = 300.0f;
 		static constexpr float T5_POTENCY = 150.0f;
 		static constexpr float T5_DOT_POTENCY = 60.0f;
-		static constexpr float XENO_POTENCY = 880.0f;
+		static constexpr float XENO_POTENCY = 890.0f;
 		static constexpr float DESPAIR_POTENCY = 350.0f;
-		static constexpr float PARADOX_POTENCY = 520.0f;
-		static constexpr float FLARE_STAR_POTENCY = 400.0f;
+		static constexpr float PARADOX_POTENCY = 550.0f;
+		static constexpr float FLARE_STAR_POTENCY = 500.0f;
 		static constexpr float FLARE_POTENCY = 240.0f;
 
 		static constexpr float ENO_MULTIPLIER = 1.32f;
@@ -130,22 +124,18 @@ namespace StrikingDummy
 		static constexpr int FLARE_MP_COST = 800;
 
 		const int base_gcd;
-		const int ii_gcd;
+		const int i_gcd;
 		const int iii_gcd;
-		const int iv_gcd;
-		const int despair_gcd;
 		const int flare_gcd;
 		const int fast_base_gcd;
-		const int fast_ii_gcd;
+		const int fast_i_gcd;
 		const int fast_iii_gcd;
 		const int ll_base_gcd;
-		const int ll_ii_gcd;
+		const int ll_i_gcd;
 		const int ll_iii_gcd;
-		const int ll_iv_gcd;
-		const int ll_despair_gcd;
 		const int ll_flare_gcd;
 		const int ll_fast_base_gcd;
-		const int ll_fast_ii_gcd;
+		const int ll_fast_i_gcd;
 		const int ll_fast_iii_gcd;
 
 		Opener opener;
@@ -154,9 +144,11 @@ namespace StrikingDummy
 		int mp = MAX_MP;
 
 		Element element = Element::NE;
+		int gauge = 0;
 		int umbral_hearts = 0;
 		bool enochian = false;
 		bool paradox = false;
+		bool f3p = false;
 		bool t3p = false;
 
 		// ticks
@@ -169,7 +161,6 @@ namespace StrikingDummy
 		bool skip_transpose_tick = false;
 
 		// misc timers
-		Buff gauge;
 		Timer xeno_timer;
 		Timer triple_timer;
 		Timer ll_timer;
@@ -185,8 +176,6 @@ namespace StrikingDummy
 		Buff swift;
 		Buff triple;
 		Buff leylines;
-		Buff fs_proc;
-		Buff tc_proc;
 		Buff dot; // (value & 2) <=> enochian; (value & 4) <=> pot; (value & 8) <=> raid buff
 		Buff lucid;
 		Buff pot;
@@ -276,7 +265,7 @@ namespace StrikingDummy
 		float get_dot_damage();
 
 		void get_state(float* state);
-		int get_state_size() { return 63; }
+		int get_state_size() { return 55; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();
