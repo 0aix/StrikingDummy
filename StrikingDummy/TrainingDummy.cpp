@@ -26,8 +26,8 @@ namespace StrikingDummy
 	const float NU_DECAY = 0.9999f;
 	const float NU_START = 0.00001f; //0.0001f;
 	const float NU_MIN = 0.000001f;
-	const float OUTPUT_LOWER = 29.05f; //29.350f; //27.750f
-	const float OUTPUT_UPPER = 30.45f; //30.750f; //28.950f
+	const float OUTPUT_LOWER = 28.600f; //29.350f; //27.750f
+	const float OUTPUT_UPPER = 30.000f; //30.750f; //28.950f
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
 	const double BEST_THRESHOLD_TO_SAVE = 28.000;
 

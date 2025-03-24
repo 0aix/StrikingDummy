@@ -94,7 +94,7 @@ namespace StrikingDummy
 		static constexpr float T5_DOT_POTENCY = 60.0f;
 		static constexpr float XENO_POTENCY = 890.0f;
 		static constexpr float DESPAIR_POTENCY = 350.0f;
-		static constexpr float PARADOX_POTENCY = 550.0f;
+		static constexpr float PARADOX_POTENCY = 540.0f;
 		static constexpr float FLARE_STAR_POTENCY = 500.0f;
 		static constexpr float FLARE_POTENCY = 240.0f;
 

@@ -641,9 +641,10 @@ namespace StrikingDummy
 		case XENO:
 		case PARADOX:
 		case DESPAIR:
-			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
 		case FLARE:
-			return get_ll_cast_time(ll_flare_gcd, flare_gcd) - CAST_LOCK;
+			return get_ll_cast_time(ll_base_gcd, base_gcd) - CAST_LOCK;
+		//case FLARE:
+		//	return get_ll_cast_time(ll_flare_gcd, flare_gcd) - CAST_LOCK;
 		}
 		return 99999;
 	}
