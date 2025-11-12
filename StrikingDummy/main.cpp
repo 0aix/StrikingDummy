@@ -6,15 +6,12 @@
 
 #define BLACKMAGE
 
-// Stats(float wd, float stat, float pot, float crit, float dh, float det, float sks)
-StrikingDummy::Stats new_bis(146, 5126, 392, 3321, 1882, 1572, 1047);
-StrikingDummy::Stats mid_bis(146, 5126, 392, 3321, 1558, 1356, 1587);
-StrikingDummy::Stats fast_bis(146, 5126, 392, 1129, 2055, 2050, 2588);
-StrikingDummy::Stats speed_bis(146, 5126, 392, 1129, 1623, 2050, 3020);
+// Stats(float flat_atk, float refined_atk, float str, float crit, float haste, float luck, float mastery, float vers, float base_atk_spd, float base_crit_multi)
+StrikingDummy::Stats stats(146, 5126, 392, 3321, 1882, 1572, 1047);
 
 int main()
 {
-	StrikingDummy::BlackMage blm(new_bis, StrikingDummy::BlackMage::Opener::PRE_F3, StrikingDummy::BlackMage::ActionSet::FULL);
+	StrikingDummy::BlackMage blm(stats, StrikingDummy::BlackMage::Opener::GAUGE);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
 	dummy.train();

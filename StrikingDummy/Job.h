@@ -7,35 +7,21 @@ namespace StrikingDummy
 {
 	struct Stats
 	{
-		float weapon_damage;
-		float main_stat;
-		float pot_stat;
-		float critical_hit;
-		float direct_hit;
-		float determination;
-		float skill_speed;
-		float auto_attack;
-		float auto_delay;
-
-		float wep_multiplier;
-		float attk_multiplier;
-		float pot_multiplier;
-		float crit_rate;
-		float crit_multiplier;
-		float dhit_rate;
-		float det_multiplier;
-		float ss_multiplier;
-		float dot_multiplier;
-		float aa_multiplier;
-		
-		float potency_multiplier;
-		float expected_multiplier;
+		float flat_atk;
+		float refined_atk;
+		float str;
+		float crit;
+		float haste;
+		float luck;
+		float mastery;
+		float vers;
+		float base_atk_spd;
+		float base_crit_multi;
 
 		Stats() {}
-		Stats(float wd, float stat, float pot, float crit, float dh, float det, float sks) : 
-			weapon_damage(wd), main_stat(stat), pot_stat(stat + pot), critical_hit(crit), direct_hit(dh), determination(det), skill_speed(sks) {}
+		Stats(float flat_atk, float refined_atk, float str, float crit, float haste, float luck, float mastery, float vers, float base_atk_spd, float base_crit_multi) :
+			flat_atk(flat_atk), refined_atk(refined_atk), str(str), crit(crit), haste(haste), luck(luck), mastery(mastery), vers(vers), base_atk_spd(base_atk_spd), base_crit_multi(base_crit_multi) {}
 
-		void calculate_stats(float job_attr);
 	};
 
 	struct Timeline
@@ -91,7 +77,7 @@ namespace StrikingDummy
 		double total_damage = 0.0f;
 		double pre_damage = 0.0f;
 
-		Job(Stats& job_stats, float job_attr);
+		Job(Stats& job_stats);
 		void step();
 		float* get_state() { return history.back().t0; }
 

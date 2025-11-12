@@ -8,261 +8,219 @@ namespace StrikingDummy
 	{
 		enum Action
 		{
-			NONE,
-			B1, B3, B4, F1, F3, F4, T5, XENO, DESPAIR, PARADOX, FLARE_STAR,
-			SWIFT, TRIPLE, LEYLINES, MANAFONT, TRANSPOSE, AMPLIFIER, POT, LUCID,
-			FLARE, F3P_OFF, WAIT_FOR_MP
-		};
-
-		enum Element
-		{
-			NE, UI, AF
+			BASIC_ATTACK, SKYFALL, BATTLE_CRY, TYPHOON_CLEAVE,
+			INSTANT_EDGE, FALCON_TOSS, AZURE_SEVERER, SHARP_IMPACT,
+			GALEFORM, FALL, WAIT_FOR_GAUGE,
+			SPEAR_THRUST,
+			TORNADO_HIT_1, TORNADO_HIT_2, TORNADO_HIT_3
 		};
 
 		enum Opener
 		{
-			NO_OPENER, PRE_F3, PRE_B3, PRE_T3, PRE_LL_F3, PRE_LL_B3
+			GAUGE, NO_GAUGE
 		};
 
-		enum ActionSet
+
+		const std::string blm_actions[11] =
 		{
-			FULL, NO_B4, STANDARD
+			"BASIC_ATTACK", "SKYFALL", "BATTLE_CRY", "TYPHOON_CLEAVE",
+			"INSTANT_EDGE", "FALCON_TOSS", "AZURE_SEVERER", "SHARP_IMPACT",
+			"GALEFORM", "FALL", "WAIT_FOR_GAUGE"
 		};
 
-		const std::string blm_actions[24] =
-		{
-			"NONE",
-			"B1", "B3", "B4", "F1", "F3", "F4", "T5", "XENO", "DESPAIR", "PARADOX", "FLARE STAR",
-			"SWIFT", "TRIPLE", "LEYLINES", "MANAFONT", "TRANSPOSE", "AMPLIFIER", "POTION", "LUCID",
-			"FLARE", "F3P OFF", "WAIT_FOR_MP"
-		};
+		static constexpr int NUM_ACTIONS = 11;
 
-		static constexpr int NUM_ACTIONS = 21;
+		static constexpr int ACTION_TAX = 100;
+		
+		static constexpr float STAT_MOD = 4457.0f;
+		
+		static constexpr float MAX_GAUGE = 130.0f;
+		static constexpr float BASE_GAUGE_PER_TICK = 3.0f;
+		static constexpr float GALEFORM_GAUGE_PER_TICK = 7.0f;
+		static constexpr float ENHANCED_GALEFORM_GAUGE_PER_TICK = 10.5f;
+		static constexpr float INSPIRE_GAUGE_PER_TICK = 10.0f;
+		static constexpr float GAUGE_PER_SHARP = 3.0f;
+		static constexpr float TYPHOON_CLEAVE_GAUGE = 100.0f;
+		static constexpr float SPEAR_THRUST_GAUGE = 8.0f;
 
-		static constexpr float BLM_ATTR = 115.0f;
+		static constexpr int MAX_IMPACT = 20;
 
-		static constexpr int ACTION_TAX = 117;
-		static constexpr int CAST_LOCK = 500;
-		static constexpr int ANIMATION_LOCK = 600;
-		static constexpr int POTION_LOCK = 500;
-		static constexpr int LATENCY = 100;
+		static constexpr int TICK_TIMER = 1000;
+		static constexpr int SHARP_DURATION = 10000;
+		static constexpr int CHASE_DURATION = 10000;
+		static constexpr int INSPIRE_DURATION = 10000;
+		static constexpr int TYPHOON_CLEAVE_DURATION = 15000;
+		static constexpr int WINDFURY_DURATION = 15000;
+		static constexpr int GALEFORM_DURATION = 15000;
+		static constexpr int TEMPESTRIKE_BASE_DURATION = 8000;
+		static constexpr int TORNADO_DURATION = 2800;
+		static constexpr int HASTE_DURATION = 5000;
+		static constexpr int CHASING_STR_DURATION = 10000;
+		static constexpr int SET_BONUS_DMG_DURATION = 5000;
 
-		// Assume only in UI3 and AF3
-		static constexpr int MAX_MP = 10000;
-		static constexpr int MP_PER_TICK = 200;			// 2% per tick
-		static constexpr int UI1_MP = 2500;
-		static constexpr int UI2_MP = 5000;
-		static constexpr int UI3_MP = 10000;
-		static constexpr int LUCID_MP = 550;			// 5.5%
-		static constexpr int UI_MP[4] = { 0, UI1_MP, UI2_MP, UI3_MP };
+		static constexpr int TYPHOON_CLEAVE_CD = 60000;
+		static constexpr int FALCON_TOSS_CD = 23000;
+		static constexpr int GALEFORM_CD = 30000;
+		static constexpr int SPEAR_THRUST_CD = 2000;
 
-		static constexpr float BASE_GCD = 2.50f;
-		static constexpr float I_GCD = 2.00f;
-		static constexpr float III_GCD = 3.50f;
-		static constexpr float FLARE_GCD = 3.00f;
+		static constexpr int BASIC_ATTACK_ANIM = 1000;
+		static constexpr int SKYFALL_JUMP_ANIM = 1000;
+		static constexpr int SKYFALL_ANIM = 1000;
+		static constexpr int SKYFALL_ANIM_LOCK = 1000;
+		static constexpr int BATTLE_CRY_ANIM = 1000;
+		static constexpr int TYPHOON_CLEAVE_ANIM = 1000;
+		static constexpr int TYPHOON_CLEAVE_ANIM_LOCK = 1000;
+		static constexpr int INSTANT_EDGE_ANIM_JUMP = 1000;
+		static constexpr int INSTANT_EDGE_ANIM_1 = 1000;
+		static constexpr int INSTANT_EDGE_ANIM_2 = 1000;
+		static constexpr int INSTANT_EDGE_ANIM_LOCK = 1000;
+		static constexpr int FALCON_TOSS_ANIM_1 = 1000;
+		static constexpr int FALCON_TOSS_ANIM_2 = 1000;
+		static constexpr int SHARP_IMPACT_GROUND_FIXED_JUMP_ANIM = 1000;
+		static constexpr int SHARP_IMPACT_GROUND_ANIM = 1000;
+		static constexpr int SHARP_IMPACT_AIR_ANIM = 1000;
+		static constexpr int SHARP_IMPACT_ANIM_LOCK = 1000;
+		static constexpr int GALEFORM_ANIM = 600;
+		static constexpr int FALL_ANIM = 1000;
+		static constexpr int FAST_FALL_ANIM = 1000;
+		static constexpr int SHORT_FALL_ANIM = 1000;
 
-		static constexpr float FS_PROC_RATE = 0.40f;
+		// Potencies
+		static constexpr float BASIC_ATTACK_POTENCY = 0.42f;
+		static constexpr float BASIC_ATTACK_ATK = 120.0f;
+		static constexpr float SKYFALL_POTENCY = 2.45f;
+		static constexpr float SKYFALL_ATK = 600.0f;
+		static constexpr float TYPHOON_CLEAVE_POTENCY = 9.10f;
+		static constexpr float TYPHOON_CLEAVE_ATK = 2600.0f;
+		static constexpr float GALEFORM_POTENCY = 0.70f;
+		static constexpr float GALEFORM_ATK = 200.0f;
+		static constexpr float FALCON_TOSS_POTENCY_1 = 1.05f;
+		static constexpr float FALCON_TOSS_POTENCY_2 = 7.00f;
+		static constexpr float FALCON_TOSS_ATK_1 = 300.0f;
+		static constexpr float FALCON_TOSS_ATK_2 = 2000.0f;
+		static constexpr float INSTANT_EDGE_POTENCY_1 = 0.64f;
+		static constexpr float INSTANT_EDGE_POTENCY_2 = 4.40f;
+		static constexpr float INSTANT_EDGE_ATK_1 = 187.0f;
+		static constexpr float INSTANT_EDGE_ATK_2 = 1250.0f;
+		static constexpr float SHARP_IMPACT_POTENCY = 8.40f;
+		static constexpr float SHARP_IMPACT_ATK = 2400.0f;
+		static constexpr float SPEAR_THRUST_POTENCY = 1.50f;
+		static constexpr float TORNADO_POTENCY_1 = 3.50f;
+		static constexpr float TORNADO_POTENCY_2 = 2.80f;
+		static constexpr float TORNADO_POTENCY_3 = 2.10f;
 
-		static constexpr int DOWNTIME_TIMER = 510000;
+		// Damage bonuses
+		static constexpr float EXP_SKILL_DMG = 0.07f;
+		static constexpr float VULN_DMG = 0.10f;
+		static constexpr float INSTANT_EDGE_BREAK_DMG = 0.90f;
+		static constexpr float WINDFURY_BONUS_DMG = 0.15f * 1.50f; // 0.225f
+		static constexpr float GALEFORM_BONUS_DMG = 0.25f;
+		static constexpr float TORNADO_BONUS_DMG = 0.30f;
+		static constexpr float SPEAR_THRUST_BONUS_DMG = 0.30f;
+		static constexpr float SET_ELE_DMG = 0.10f;
+		static constexpr float SET_BONUS_DMG = 0.01f;
 
-		static constexpr int TICK_TIMER = 3000;
-		static constexpr int XENO_TIMER = 30000;
-		static constexpr int SWIFT_DURATION = 10000;
-		static constexpr int TRIPLE_DURATION = 15000;
-		static constexpr int LL_DURATION = 20000;
-		static constexpr int DOT_DURATION = 30000;
-		static constexpr int LUCID_DURATION = 21000;
-		static constexpr int POT_DURATION = 30000;
+		// Buffs
+		static constexpr float SHARP_ATK = 0.36f;
+		static constexpr float GALEFORM_FLAT_STR = 175.0f; // added before str %
+		static constexpr float GALEFORM_STR = 0.38f;
+		static constexpr float TEMPESTRIKE_STR = 0.12f;
+		static constexpr float CHASING_STR = 0.10f;
+		static constexpr float DIVINE_HASTE = 0.01f;
+		static constexpr float INSPIRE_HASTE = 0.10f;
+		static constexpr float LUCKY_STRIKE_MULTIPLIER = 1.50f;
+		static constexpr float ENHANCED_MULTIPLIER = 1.50f;
 
-		static constexpr int SWIFT_CD = 40000;
-		static constexpr int TRIPLE_CD = 60000;
-		static constexpr int LL_CD = 120000;
-		static constexpr int MANAFONT_CD = 100000;
-		static constexpr int TRANSPOSE_CD = 5000;
-		static constexpr int LUCID_CD = 60000;
-		static constexpr int POT_CD = 270000;
-		static constexpr int AMPLIFIER_CD = 120000;
+		// Skill costs
+		static constexpr float SKYFALL_GAUGE_COST = 35.0f;
+		static constexpr float FALCON_TOSS_GAUGE_COST = 40.0f;
+		static constexpr int INSTANT_EDGE_STACK_COST = 3;
+		static constexpr int SHARP_IMPACT_STACK_COST = 20;
 
-		// Assume not using Flare
-		static constexpr float F1_POTENCY = 180.0f;
-		static constexpr float F3_POTENCY = 290.0f;
-		static constexpr float F4_POTENCY = 300.0f;
-		static constexpr float B1_POTENCY = 180.0f;
-		static constexpr float B3_POTENCY = 290.0f;
-		static constexpr float B4_POTENCY = 300.0f;
-		static constexpr float T5_POTENCY = 150.0f;
-		static constexpr float T5_DOT_POTENCY = 60.0f;
-		static constexpr float XENO_POTENCY = 890.0f;
-		static constexpr float DESPAIR_POTENCY = 350.0f;
-		static constexpr float PARADOX_POTENCY = 540.0f;
-		static constexpr float FLARE_STAR_POTENCY = 500.0f;
-		static constexpr float FLARE_POTENCY = 240.0f;
-
-		static constexpr float ENO_MULTIPLIER = 1.32f;
-		static constexpr float MAGICK_AND_MEND_MULTIPLIER = 1.30f;
-		static constexpr float AF1_MULTIPLIER = 1.40f;
-		static constexpr float AF2_MULTIPLIER = 1.60f;
-		static constexpr float AF3_MULTIPLIER = 1.80f;
-		static constexpr float AF1UI1_MULTIPLIER = 0.90f;
-		static constexpr float AF2UI2_MULTIPLIER = 0.80f;
-		static constexpr float AF3UI3_MULTIPLIER = 0.70f;
-
-		static constexpr float RAID_BUFF_MULTIPLIER = 1.20f;
-		static constexpr int RAID_BUFF_OFFSET = 5000;
-		static constexpr int RAID_BUFF_TIMER = 120000;
-		static constexpr int RAID_BUFF_DURATION = 20000;
-
-		// MP costs and multipliers
-		static constexpr int F1_MP_COST = 800;
-		static constexpr int F3_MP_COST = 2000;
-		static constexpr int F4_MP_COST = 800;
-		static constexpr int B1_MP_COST = 400;
-		static constexpr int B3_MP_COST = 800;
-		static constexpr int B4_MP_COST = 800;
-		static constexpr int DESPAIR_MP_COST = 800;
-		static constexpr int PARADOX_MP_COST = 1600;
-		static constexpr int FLARE_MP_COST = 800;
-
-		const int base_gcd;
-		const int i_gcd;
-		const int iii_gcd;
-		const int flare_gcd;
-		const int fast_base_gcd;
-		const int fast_i_gcd;
-		const int fast_iii_gcd;
-		const int ll_base_gcd;
-		const int ll_i_gcd;
-		const int ll_iii_gcd;
-		const int ll_flare_gcd;
-		const int ll_fast_base_gcd;
-		const int ll_fast_i_gcd;
-		const int ll_fast_iii_gcd;
+		float crit_rate;
+		float luck_rate;
 
 		Opener opener;
-		ActionSet action_set;
 
-		int mp = MAX_MP;
+		float gauge = MAX_GAUGE;
+		int sharp = 0;
+		int impact = 0;
 
-		Element element = Element::NE;
-		int gauge = 0;
-		int umbral_hearts = 0;
-		bool enochian = false;
-		bool paradox = false;
-		bool f3p = false;
-		bool t3p = false;
+		bool galeform_active = false;
+		float tempestrike_gauge = 0.0f;
+		float falcon_gauge = 0.0f;
+
+		bool in_air = false;
+		bool azure = false;
+		bool prev_falcon_toss = false;
+		bool enhanced_galeform_next = false;
 
 		// ticks
-		Timer mp_timer;
-		Timer dot_timer;
-		Timer lucid_timer;
-		int mp_wait = 0;
-
-		bool skip_lucid_tick = false;
-		bool skip_transpose_tick = false;
+		Timer gauge_timer;
+		Timer galeform_gauge_timer;
+		Timer inspire_gauge_timer;
+		Timer inspire_sharp_timer;
 
 		// misc timers
-		Timer xeno_timer;
-		Timer triple_timer;
-		Timer ll_timer;
-		Timer raid_buff_timer;
-		Timer downtime_timer;
+		Timer galeform_timer;
+		Timer sharp_timer;
+		Timer tornado_timer_1;
+		Timer tornado_timer_2;
+		Timer tornado_timer_3;
 
-		int xeno_procs = 0;
-		int triple_procs = 0;
-		int ll_procs = 0;
-		int astral_stacks = 0;
+		int galeform_procs = 0;
 
 		// buffs
-		Buff swift;
-		Buff triple;
-		Buff leylines;
-		Buff dot; // (value & 2) <=> enochian; (value & 4) <=> pot; (value & 8) <=> raid buff
-		Buff lucid;
-		Buff pot;
-		Buff raid_buff;
+		Buff chasing_step;
+		Buff inspire;
+		Buff typhoon_cleave;
+		Buff windfury;
+		Buff galeform;
+		Buff tempestrike;
+		Buff divine_haste;
+		Buff chasing_str;
+		Buff set_bonus_dmg;
+		Buff tornado_1;
+		Buff tornado_2;
+		Buff tornado_3;
 
 		// cooldowns
-		Timer swift_cd;
-		Timer manafont_cd;
-		Timer transpose_cd;
-		Timer lucid_cd;
-		Timer pot_cd;
-		Timer amplifier_cd;
+		Timer typhoon_cleave_cd;
+		Timer falcon_toss_cd;
+		Timer spear_thrust_cd;
 
 		// actions
-		Timer gcd_timer;
 		Timer cast_timer;
 		Timer action_timer;
-		int casting = Action::NONE;
+		int casting = -1;
+		int cast_frame = -1;
+		float cast_speed = 1.0f;
 
 		// count metrics
-		int xeno_count = 0;
-		int f1_count = 0;
-		int f4_count = 0;
-		int b1_count = 0;
-		int b3_count = 0;
-		int b4_count = 0;
-		int t3_count = 0;
-		int despair_count = 0;
-		int flare_star_count = 0;
-		int flare_count = 0;
-		int transpose_count = 0;
-		int lucid_count = 0;
-		int pot_count = 0;
-		int total_dot_time = 0;
-		int total_cast_time = 0;
+		int tornado_count = 0;
 
-		double total_f4_damage = 0.0f;
-		double total_desp_damage = 0.0f;
-		double total_xeno_damage = 0.0f;
-		double total_flare_star_damage = 0.0f;
-		double total_t3_damage = 0.0f;
-		double total_dot_damage = 0.0f;
+		double total_tornado_damage = 0.0f;
 
-		// distribution metrics tracking how long buffs fall off for before being reapplied
-		bool dist_metrics_enabled = false;
-
-		std::vector<int> t3_dist;
-		std::vector<int> t3p_dist;
-		std::vector<int> swift_dist;
-		std::vector<int> triple_dist;
-		std::vector<int> ll_dist;
-		std::vector<int> mf_dist;
-		int t3_last = 0;
-		int swift_last = 0;
-		int triple_last = 0;
-		int ll_last = 0;
-		int mf_last = 0;
-
-		BlackMage(Stats& stats, Opener opener, ActionSet action_set);
+		BlackMage(Stats& stats, Opener opener);
 
 		void reset();
-		void reset(int mp_tick, int lucid_tick, int dot_tick);
+		void reset(int gauge_tick);
 		void reset(BlackMage& blm);
 
 		void update(int elapsed);
 		void update_history();
 
-		void update_mp();
-		void update_dot();
-		void update_lucid();
+		void update_gauge();
 
-		void update_metric(int action, float damage = 0.0f);
-
-		bool is_instant_cast(int action) const;
-		int get_ll_cast_time(int ll_cast_time, int cast_time) const;
-
-		int get_cast_time(int action) const;
-		int get_action_time(int action) const;
-		int get_gcd_time(int action) const;
+		float get_cast_speed() const;
 
 		bool can_use_action(int action) const;
 		void use_action(int action);
+		void start_action(int action, int frame, int cast_time, bool start, int offset = 0);
 		void end_action();
+		void create_tornado();
 
-		int get_mp_cost(int action, bool is_end_action = false) const;
-		float get_damage(int action);
-		float get_dot_damage();
+		float get_damage(int action, int hit = 0);
 
 		void get_state(float* state);
 		int get_state_size() { return 55; }
