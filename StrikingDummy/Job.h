@@ -8,8 +8,10 @@ namespace StrikingDummy
 	struct Stats
 	{
 		float flat_atk;
+		float base_atk_per;
 		float refined_atk;
 		float str;
+		float base_str_per;
 		float crit;
 		float haste;
 		float luck;
@@ -17,10 +19,15 @@ namespace StrikingDummy
 		float vers;
 		float base_atk_spd;
 		float base_crit_multi;
+		float base_luck_multi;
+		float base_armor_pen;
+		float base_ele_stat;
+		float base_serum_stat;
+		float base_dmg;
 
 		Stats() {}
-		Stats(float flat_atk, float refined_atk, float str, float crit, float haste, float luck, float mastery, float vers, float base_atk_spd, float base_crit_multi) :
-			flat_atk(flat_atk), refined_atk(refined_atk), str(str), crit(crit), haste(haste), luck(luck), mastery(mastery), vers(vers), base_atk_spd(base_atk_spd), base_crit_multi(base_crit_multi) {}
+		Stats(float flat_atk, float base_atk_per, float refined_atk, float str, float base_str_per, float crit, float haste, float luck, float mastery, float vers, float base_atk_spd, float base_crit_multi, float base_luck_multi, float base_armor_pen, float base_ele_stat, float base_serum_stat, float base_dmg) :
+			flat_atk(flat_atk), base_atk_per(base_atk_per), refined_atk(refined_atk), str(str), base_str_per(base_str_per), crit(crit), haste(haste), luck(luck), mastery(mastery), vers(vers), base_atk_spd(base_atk_spd), base_crit_multi(base_crit_multi), base_luck_multi(base_luck_multi), base_armor_pen(base_armor_pen), base_ele_stat(base_ele_stat), base_serum_stat(base_serum_stat), base_dmg(base_dmg) {}
 
 	};
 

@@ -1,0 +1,13 @@
+atk: 165
+atk %: 0.03
+r.atk: 330
+str: 2800
+str %: 0.03
+crit: 2994
+haste: 200
+luck: 1184
+mastery: 650
+vers: 0
+atk spd %: 0.03
+crit multi: 0.171
+luck multi: 0.20
