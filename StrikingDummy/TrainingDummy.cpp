@@ -25,10 +25,10 @@ namespace StrikingDummy
 	const float NU_DECAY = 0.9999f;
 	const float NU_START = 0.00001f; //0.00001f
 	const float NU_MIN = 0.000001f;
-	const float OUTPUT_LOWER = 112.000f;
-	const float OUTPUT_UPPER = 123.000f;
+	const float OUTPUT_LOWER = 000.000f;
+	const float OUTPUT_UPPER = 1200.000f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 100.000;
+	const double BEST_THRESHOLD_TO_SAVE = 700.000;
 
 	void TrainingDummy::train()
 	{
@@ -171,7 +171,7 @@ namespace StrikingDummy
 				double dps = job.total_damage / job.timeline.time;
 
 				std::stringstream ss;
-				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", test steps: " << s << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", end_guess: " << r << ", tornados: " << blm.tornado_count << std::endl;
+				ss << "epoch: " << epoch << ", eps: " << eps << ", window: " << WINDOW << ", steps: " << steps_per_episode << ", test steps: " << s << ", " << "dps: " << dps << ", guess: " << q << ", error: " << dps - q << ", end_guess: " << r << ", tornados: " << blm.tornado_count << ", phantom arrows: " << blm.phantom_arrow_count << ", fantasia impacts: " << blm.fantasia_impact_count  << std::endl;
 				ss << "20000 rotation steps ms: " << generate_time / 1000000.0 / total_count << ", epoch ms: " << copy_time / 1000000.0 / copy_count << std::endl;
 
 				generate_time = 0;
@@ -294,12 +294,14 @@ namespace StrikingDummy
 		ss.setf(std::ios::fixed, std::ios::floatfield);
 		ss.precision(2);
 		ss << "DPS: " << 1000.0 / blm.timeline.time * blm.total_damage << "\n";
-		ss << "Tornado % damage: " << 100.0 / blm.total_damage * blm.total_tornado_damage << "%\n=============" << std::endl;
+		ss << "Tornado % damage: " << 100.0 / blm.total_damage * blm.total_tornado_damage << "%\n";
+		ss << "Fantasia impact % damage: " << 100.0 / blm.total_damage * blm.total_fantasia_damage << "%\n";
+		ss << "Phantom arrow % damage: " << 100.0 / blm.total_damage * blm.total_phantom_arrow_damage << "%\n=============" << std::endl;
 		Logger::log(ss.str().c_str());
 
 		int length = blm.history.size() - 1;
-		if (length > 10000)
-			length = 10000;
+		if (length > 2000)
+			length = 2000;
 		int time = 0;
 		float damage = blm.pre_damage;
 		for (int i = 0; i < length; i++)
@@ -312,6 +314,7 @@ namespace StrikingDummy
 			std::stringstream ss;
 			ss.setf(std::ios::fixed, std::ios::floatfield);
 			ss.precision(1);
+			//damage += t.reward + t.fake_reward;
 			damage += t.reward;
 			if (t.action != 0)
 			{
@@ -330,7 +333,7 @@ namespace StrikingDummy
 				ss << centiseconds << "] ";
 				int gauge = lroundf(t.t0[0] * 130.0f);
 				int sharp = lroundf(t.t0[1] + t.t0[2] + t.t0[3] + t.t0[4] + t.t0[5] + t.t0[6]);
-				int chasing = lroundf(t.t0[19] + t.t0[20]);
+				int chasing = lroundf(t.t0[16] + t.t0[17]);
 				ss << gauge << "|" << sharp << "|" << chasing << " ";
 				/*
 				if (t.action == BlackMage::F1 && t.t0[24] == 1.0f)

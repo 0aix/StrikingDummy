@@ -17,8 +17,11 @@ int main(int argc, char *argv[])
 	StrikingDummy::BlackMage blm(stats, StrikingDummy::BlackMage::Opener::GAUGE);
 	StrikingDummy::TrainingDummy dummy(blm);
 	StrikingDummy::StrikingDummy practice(blm);
+#ifdef VERSION_TRAIN
 	dummy.train();
-	//dummy.trace();
+#elif defined(VERSION_TRACE)
+	dummy.trace();
+#endif
 	//practice.start();
 }
 

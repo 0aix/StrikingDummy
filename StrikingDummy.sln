@@ -9,6 +9,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release_Trace|x64 = Release_Trace|x64
+		Release_Trace|x86 = Release_Trace|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -17,6 +19,10 @@ Global
 		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Debug|x64.Build.0 = Debug|x64
 		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Debug|x86.ActiveCfg = Debug|Win32
 		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Debug|x86.Build.0 = Debug|Win32
+		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Release_Trace|x64.ActiveCfg = Release_Trace|x64
+		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Release_Trace|x64.Build.0 = Release_Trace|x64
+		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Release_Trace|x86.ActiveCfg = Release_Trace|Win32
+		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Release_Trace|x86.Build.0 = Release_Trace|Win32
 		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Release|x64.ActiveCfg = Release|x64
 		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Release|x64.Build.0 = Release|x64
 		{662E8779-EC53-456E-8CEF-D74F0BC0C2FE}.Release|x86.ActiveCfg = Release|Win32

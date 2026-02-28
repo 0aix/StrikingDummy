@@ -64,6 +64,7 @@ namespace StrikingDummy
 		float t1[64];
 		int action = 0;
 		float reward = 0.0f;
+		float fake_reward = 0.0f;
 		int dt = 0;
 		int time = 0;
 		std::vector<int> actions;

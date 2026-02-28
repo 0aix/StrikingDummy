@@ -19,9 +19,6 @@ namespace StrikingDummy
 	{
 		actions.reserve(NUM_ACTIONS);
 		reset();
-
-		luck_rate = 0.05f + stats.luck / (stats.luck + STAT_MOD);
-		luck_multi = (0.40f + stats.base_luck_multi + 0.25f * luck_rate) * LUCKY_STRIKE_MULTIPLIER;
 	}
 
 	void BlackMage::reset()
@@ -40,11 +37,17 @@ namespace StrikingDummy
 		galeform_active = false;
 		tempestrike_gauge = 0.0f;
 		falcon_gauge = 0.0f;
+		fantasia_stacks = 0;
+		rorola_hits = 0;
+		rorola_stacks = 0;
 
 		in_air = false;
 		azure = false;
 		prev_falcon_toss = false;
 		enhanced_galeform_next = false;
+		enhanced_skyfall_next = false;
+		enhanced_instant_edge_next = false;
+		iec_next = false;
 
 		// gauge
 		gauge_timer.reset(gauge_tick <= 0 ? tick(rng) : gauge_tick, false);
@@ -60,12 +63,17 @@ namespace StrikingDummy
 		tornado_timer_1.reset(0, false);
 		tornado_timer_2.reset(0, false);
 		tornado_timer_3.reset(0, false);
+		tornado_timer_4.reset(0, false);
+		tornado_timer_5.reset(0, false);
+		tornado_timer_6.reset(0, false);
 		falcon_toss_timer.reset(0, false);
 		muku_chief_timer.reset(0, false);
+		rorola_timer.reset(0, false);
 
 		galeform_procs = 2;
 		falcon_toss_procs = MAX_FALCON_TOSS_PROCS;
 		muku_chief_procs = 2;
+		rorola_procs = 2;
 
 		// buffs
 		chasing_step.reset(0, 0);
@@ -79,13 +87,27 @@ namespace StrikingDummy
 		tornado_1.reset(0, 0);
 		tornado_2.reset(0, 0);
 		tornado_3.reset(0, 0);
+		tornado_4.reset(0, 0);
+		tornado_5.reset(0, 0);
+		tornado_6.reset(0, 0);
 		muku_chief.reset(0, 0);
 		celestial_flier.reset(0, 0);
+		goblin_king_armor_pen.reset(0, 0);
+		goblin_king_luck.reset(0, 0);
+		goblin_king_str.reset(0, 0);
+		goblin_king_wind.reset(0, 0);
+		goblin_king_boss_luck.reset(0, 0);
+		rorola_dmg.reset(0, 0);
+		rorola_extra_dmg.reset(0, 0);
 
 		// cooldowns
 		typhoon_cleave_cd.reset(0, true);
 		spear_thrust_cd.reset(0, true);
 		celestial_flier_cd.reset(0, true);
+		goblin_king_cd.reset(0, true);
+		phantom_arrow_cd.reset(0, true);
+		fantasia_impact_cd.reset(0, true);
+
 
 		// actions
 		cast_timer.reset(0, false);
@@ -96,7 +118,7 @@ namespace StrikingDummy
 
 		if (opener == Opener::GAUGE)
 		{
-			sharp = 6;
+			sharp = MAX_SHARP_STACKS;
 			sharp_timer.reset(SHARP_DURATION, false);
 			push_event(SHARP_DURATION);
 			impact = MAX_IMPACT;
@@ -104,8 +126,13 @@ namespace StrikingDummy
 
 		// metrics
 		tornado_count = 0;
+		skyfall_count = 0;
+		phantom_arrow_count = 0;
+		fantasia_impact_count = 0;
 
 		total_tornado_damage = 0.0f;
+		total_phantom_arrow_damage = 0.0f;
+		total_fantasia_damage = 0.0f;
 		total_damage = 0.0f;
 
 		history.clear();
@@ -124,11 +151,17 @@ namespace StrikingDummy
 		galeform_active = blm.galeform_active;
 		tempestrike_gauge = blm.tempestrike_gauge;
 		falcon_gauge = blm.falcon_gauge;
+		fantasia_stacks = blm.fantasia_stacks;
+		rorola_hits = blm.rorola_hits;
+		rorola_stacks = blm.rorola_stacks;
 
 		in_air = blm.in_air;
 		azure = blm.azure;
 		prev_falcon_toss = blm.prev_falcon_toss;
 		enhanced_galeform_next = blm.enhanced_galeform_next;
+		enhanced_skyfall_next = blm.enhanced_skyfall_next;
+		enhanced_instant_edge_next = blm.enhanced_instant_edge_next;
+		iec_next = blm.iec_next;
 
 		// gauge
 		gauge_timer = blm.gauge_timer;
@@ -142,12 +175,17 @@ namespace StrikingDummy
 		tornado_timer_1 = blm.tornado_timer_1;
 		tornado_timer_2 = blm.tornado_timer_2;
 		tornado_timer_3 = blm.tornado_timer_3;
+		tornado_timer_4 = blm.tornado_timer_4;
+		tornado_timer_5 = blm.tornado_timer_5;
+		tornado_timer_6 = blm.tornado_timer_6;
 		falcon_toss_timer = blm.falcon_toss_timer;
 		muku_chief_timer = blm.muku_chief_timer;
+		rorola_timer = blm.rorola_timer;
 
 		galeform_procs = blm.galeform_procs;
 		falcon_toss_procs = blm.falcon_toss_procs;
 		muku_chief_procs = blm.muku_chief_procs;
+		rorola_procs = blm.rorola_procs;
 
 		// buffs
 		chasing_step = blm.chasing_step;
@@ -161,13 +199,26 @@ namespace StrikingDummy
 		tornado_1 = blm.tornado_1;
 		tornado_2 = blm.tornado_2;
 		tornado_3 = blm.tornado_3;
+		tornado_4 = blm.tornado_4;
+		tornado_5 = blm.tornado_5;
+		tornado_6 = blm.tornado_6;
 		muku_chief = blm.muku_chief;
 		celestial_flier = blm.celestial_flier;
+		goblin_king_armor_pen = blm.goblin_king_armor_pen;
+		goblin_king_luck = blm.goblin_king_luck;
+		goblin_king_str = blm.goblin_king_str;
+		goblin_king_wind = blm.goblin_king_wind;
+		goblin_king_boss_luck = blm.goblin_king_boss_luck;
+		rorola_dmg = blm.rorola_dmg;
+		rorola_extra_dmg = blm.rorola_extra_dmg;
 
 		// cooldowns
 		typhoon_cleave_cd = blm.typhoon_cleave_cd;
 		spear_thrust_cd = blm.spear_thrust_cd;
 		celestial_flier_cd = blm.celestial_flier_cd;
+		goblin_king_cd = blm.goblin_king_cd;
+		phantom_arrow_cd = blm.phantom_arrow_cd;
+		fantasia_impact_cd = blm.fantasia_impact_cd;
 
 		// actions
 		cast_timer = blm.cast_timer;
@@ -178,8 +229,13 @@ namespace StrikingDummy
 
 		// metrics
 		tornado_count = 0;
+		skyfall_count = 0;
+		phantom_arrow_count = 0;
+		fantasia_impact_count = 0;
 
 		total_tornado_damage = 0.0f;
+		total_phantom_arrow_damage = 0.0f;
+		total_fantasia_damage = 0.0f;
 		total_damage = 0.0f;
 
 		history.clear();
@@ -203,8 +259,12 @@ namespace StrikingDummy
 		tornado_timer_1.update(elapsed);
 		tornado_timer_2.update(elapsed);
 		tornado_timer_3.update(elapsed);
+		tornado_timer_4.update(elapsed);
+		tornado_timer_5.update(elapsed);
+		tornado_timer_6.update(elapsed);
 		falcon_toss_timer.update(elapsed);
 		muku_chief_timer.update(elapsed);
+		rorola_timer.update(elapsed);
 
 		// buffs
 		chasing_step.update(elapsed);
@@ -218,14 +278,26 @@ namespace StrikingDummy
 		tornado_1.update(elapsed);
 		tornado_2.update(elapsed);
 		tornado_3.update(elapsed);
+		tornado_4.update(elapsed);
+		tornado_5.update(elapsed);
+		tornado_6.update(elapsed);
 		muku_chief.update(elapsed);
 		celestial_flier.update(elapsed);
+		goblin_king_armor_pen.update(elapsed);
+		goblin_king_luck.update(elapsed);
+		goblin_king_str.update(elapsed);
+		goblin_king_wind.update(elapsed);
+		goblin_king_boss_luck.update(elapsed);
+		rorola_dmg.update(elapsed);
+		rorola_extra_dmg.update(elapsed);
 
 		// cooldowns
 		typhoon_cleave_cd.update(elapsed);
-
 		spear_thrust_cd.update(elapsed);
 		celestial_flier_cd.update(elapsed);
+		goblin_king_cd.update(elapsed);
+		phantom_arrow_cd.update(elapsed);
+		fantasia_impact_cd.update(elapsed);
 
 		// actions
 		cast_timer.update(elapsed);
@@ -292,6 +364,18 @@ namespace StrikingDummy
 				push_event(MUKU_CHIEF_CD);
 			}
 		}
+		if (rorola_timer.ready)
+		{
+			rorola_procs++;
+			assert(rorola_timer.time == 0);
+			assert(rorola_procs <= 2);
+			rorola_timer.ready = false;
+			if (rorola_procs < 2)
+			{
+				rorola_timer.time = ROROLA_CD;
+				push_event(ROROLA_CD);
+			}
+		}
 		if (cast_timer.ready)
 			end_action();
 
@@ -323,6 +407,7 @@ namespace StrikingDummy
 			Transition& t = history.back();
 			get_state(t.t0);
 			t.reward = 0.0f;
+			t.fake_reward = 0.0f;
 			t.time = timeline.time;
 		}
 	}
@@ -363,7 +448,7 @@ namespace StrikingDummy
 		}
 		if (inspire_sharp_timer.ready)
 		{
-			sharp++;
+			sharp = std::min(sharp + 1, MAX_SHARP_STACKS);
 			sharp_timer.reset(SHARP_DURATION, false);
 			push_event(sharp_timer.time);
 			if (inspire.time > 2 * TICK_TIMER)
@@ -374,45 +459,105 @@ namespace StrikingDummy
 		}
 		if (tornado_timer_1.ready)
 		{
-			float damage = get_damage(TORNADO_HIT);
-			total_damage += damage;
-			history.back().reward += damage;
-			total_tornado_damage += damage;
-			if (tornado_1.time > TICK_TIMER)
+			if (prob(rng) < TORNADO_CHANCE_TO_HIT)
 			{
-				tornado_timer_1.reset(TICK_TIMER, false);
-				push_tick = true;
+				float damage = get_damage(TORNADO_HIT);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_tornado_damage += damage;
+			}
+			if (tornado_1.time >= TORNADO_TICK_TIMER)
+			{
+				tornado_timer_1.reset(TORNADO_TICK_TIMER, false);
+				push_event(TORNADO_TICK_TIMER);
 			}
 			else
 				tornado_timer_1.reset(0, false);
 		}
 		if (tornado_timer_2.ready)
 		{
-			float damage = get_damage(TORNADO_HIT);
-			total_damage += damage;
-			history.back().reward += damage;
-			total_tornado_damage += damage;
-			if (tornado_2.time > TICK_TIMER)
+			if (prob(rng) < TORNADO_CHANCE_TO_HIT)
 			{
-				tornado_timer_2.reset(TICK_TIMER, false);
-				push_tick = true;
+				float damage = get_damage(TORNADO_HIT);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_tornado_damage += damage;
+			}
+			if (tornado_2.time >= TORNADO_TICK_TIMER)
+			{
+				tornado_timer_2.reset(TORNADO_TICK_TIMER, false);
+				push_event(TORNADO_TICK_TIMER);
 			}
 			else
 				tornado_timer_2.reset(0, false);
 		}
 		if (tornado_timer_3.ready)
 		{
-			float damage = get_damage(TORNADO_HIT);
-			total_damage += damage;
-			history.back().reward += damage;
-			total_tornado_damage += damage;
-			if (tornado_3.time > TICK_TIMER)
+			if (prob(rng) < TORNADO_CHANCE_TO_HIT)
 			{
-				tornado_timer_3.reset(TICK_TIMER, false);
-				push_tick = true;
+				float damage = get_damage(TORNADO_HIT);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_tornado_damage += damage;
+			}
+			if (tornado_3.time >= TORNADO_TICK_TIMER)
+			{
+				tornado_timer_3.reset(TORNADO_TICK_TIMER, false);
+				push_event(TORNADO_TICK_TIMER);
 			}
 			else
 				tornado_timer_3.reset(0, false);
+		}
+		if (tornado_timer_4.ready)
+		{
+			if (prob(rng) < TORNADO_CHANCE_TO_HIT)
+			{
+				float damage = get_damage(TORNADO_HIT);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_tornado_damage += damage;
+			}
+			if (tornado_4.time >= TORNADO_TICK_TIMER)
+			{
+				tornado_timer_4.reset(TORNADO_TICK_TIMER, false);
+				push_event(TORNADO_TICK_TIMER);
+			}
+			else
+				tornado_timer_4.reset(0, false);
+		}
+		if (tornado_timer_5.ready)
+		{
+			if (prob(rng) < TORNADO_CHANCE_TO_HIT)
+			{
+				float damage = get_damage(TORNADO_HIT);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_tornado_damage += damage;
+			}
+			if (tornado_5.time >= TORNADO_TICK_TIMER)
+			{
+				tornado_timer_5.reset(TORNADO_TICK_TIMER, false);
+				push_event(TORNADO_TICK_TIMER);
+			}
+			else
+				tornado_timer_5.reset(0, false);
+		}
+		if (tornado_timer_6.ready)
+		{
+			if (prob(rng) < TORNADO_CHANCE_TO_HIT)
+			{
+				float damage = get_damage(TORNADO_HIT);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_tornado_damage += damage;
+			}
+			if (tornado_6.time >= TORNADO_TICK_TIMER)
+			{
+				tornado_timer_6.reset(TORNADO_TICK_TIMER, false);
+				push_event(TORNADO_TICK_TIMER);
+			}
+			else
+				tornado_timer_6.reset(0, false);
 		}
 		if (push_tick)
 			push_event(TICK_TIMER);
@@ -420,7 +565,7 @@ namespace StrikingDummy
 
 	float BlackMage::get_cast_speed() const
 	{
-		float haste = (stats.haste / (stats.haste + STAT_MOD)) + divine_haste.count * DIVINE_HASTE + inspire.count * INSPIRE_HASTE + celestial_flier.count * CELESTIAL_FLIER_HASTE_PERCENT;
+		float haste = (stats.haste / (stats.haste + STAT_MOD)) + divine_haste.count * DIVINE_HASTE + inspire.count * INSPIRE_HASTE + celestial_flier.count * CELESTIAL_FLIER_HASTE_PERCENT + OCEAN_HASTE;
 		return 1.0f + stats.base_atk_spd + haste * 1.6f;
 	}
 
@@ -456,9 +601,13 @@ namespace StrikingDummy
 		case WAIT_FOR_GAUGE:
 			return !in_air && gauge < MAX_GAUGE;
 		case MUKU_CHIEF:
-			return !in_air && muku_chief_procs > 0;
+			return ENABLE_MUKU_CHIEF && !in_air && muku_chief_procs > 0;
 		case CELESTIAL_FLIER:
-			return !in_air && celestial_flier_cd.ready;
+			return ENABLE_CELESTIAL_FLIER && !in_air && celestial_flier_cd.ready;
+		case GOBLIN_KING:
+			return ENABLE_GOBLIN_KING && !in_air && goblin_king_cd.ready;
+		case ROROLA:
+			return ENABLE_ROROLA && !in_air && rorola_procs > 0;
 		}
 		return false;
 	}
@@ -508,7 +657,19 @@ namespace StrikingDummy
 				divine_haste.reset(DIVINE_HASTE_DURATION, std::min(divine_haste.count + 1, 5));
 				push_event(divine_haste.time);
 			}
+			if (!phantom_arrow_cd.ready)
+			{
+				int reduction = prob(rng) < PHANTOM_ARROW_DOUBLE_CD_REDUCTION_CHANCE ? PHANTOM_ARROW_DOUBLE_CD_REDUCTION : PHANTOM_ARROW_CD_REDUCTION;
+				if (phantom_arrow_cd.time <= reduction)
+					phantom_arrow_cd.reset(0, true);
+				else
+				{
+					phantom_arrow_cd.reset(phantom_arrow_cd.time - reduction, false);
+					push_event(phantom_arrow_cd.time);
+				}
+			}
 			in_air = true;
+			skyfall_count++;
 			break;
 		case BATTLE_CRY:
 			// unaffected by cast speed
@@ -520,7 +681,7 @@ namespace StrikingDummy
 			push_event(typhoon_cleave.time);
 			break;
 		case TYPHOON_CLEAVE:
-			start_action(action, 0, TYPHOON_CLEAVE_ANIM, true, in_air ? FALL_ANIM : 0);
+			start_action(action, 0, TYPHOON_CLEAVE_ANIM, true, (ENABLE_BATTLE_CRY_TALENT ? 0 : BATTLE_CRY_ANIM) + (in_air ? FALL_ANIM : 0));
 			typhoon_cleave.reset(0, 0);
 			gauge = std::min(gauge + TYPHOON_CLEAVE_GAUGE, MAX_GAUGE);
 			if (!ENABLE_BATTLE_CRY_TALENT)
@@ -539,6 +700,16 @@ namespace StrikingDummy
 			gauge = std::min(gauge + GAUGE_PER_SHARP * INSTANT_EDGE_STACK_COST, MAX_GAUGE);
 			impact = std::min(impact + INSTANT_EDGE_STACK_COST, MAX_IMPACT);
 			in_air = false;
+			if (ENABLE_PHANTOM_ARROW && phantom_arrow_cd.ready)
+			{
+				float damage = get_damage(PHANTOM_ARROW);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_phantom_arrow_damage += damage;
+				phantom_arrow_count++;
+				phantom_arrow_cd.reset(PHANTOM_ARROW_CD, false);
+				push_event(phantom_arrow_cd.time);
+			}
 			break;
 		case FALCON_TOSS:
 			if (!in_air)
@@ -575,31 +746,51 @@ namespace StrikingDummy
 			push_event(falcon_toss_timer.time);
 			divine_haste.reset(DIVINE_HASTE_DURATION, std::min(divine_haste.count + 1, 5));
 			push_event(divine_haste.time);
-			sharp = std::min(sharp + 1, 6);
+			sharp = std::min(sharp + 1, MAX_SHARP_STACKS);
 			sharp_timer.reset(SHARP_DURATION, false);
 			push_event(sharp_timer.time);
 			in_air = true;
 			prev_falcon_toss = true;
 			falcon_crit = false;
+			if (ENABLE_PHANTOM_ARROW && phantom_arrow_cd.ready)
+			{
+				float damage = get_damage(PHANTOM_ARROW);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_phantom_arrow_damage += damage;
+				phantom_arrow_count++;
+				phantom_arrow_cd.reset(PHANTOM_ARROW_CD, false);
+				push_event(phantom_arrow_cd.time);
+			}
 			return;
 		case AZURE_SEVER:
 			if (!in_air)
 				start_action(action, 0, FALCON_TOSS_ANIM_1, true);
 			else
 				start_action(action, 1, FALCON_TOSS_ANIM_2, true);
-			sharp = std::min(sharp + 3, 6);
+			sharp = std::min(sharp + 3, MAX_SHARP_STACKS);
 			sharp_timer.reset(SHARP_DURATION, false);
 			push_event(sharp_timer.time);
 			azure = false;
 			in_air = true;
 			prev_falcon_toss = true;
+			if (ENABLE_PHANTOM_ARROW && phantom_arrow_cd.ready)
+			{
+				float damage = get_damage(PHANTOM_ARROW);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_phantom_arrow_damage += damage;
+				phantom_arrow_count++;
+				phantom_arrow_cd.reset(PHANTOM_ARROW_CD, false);
+				push_event(phantom_arrow_cd.time);
+			}
 			return;
 		case SHARP_IMPACT:
 			if (!in_air)
 				start_action(action, 0, SHARP_IMPACT_GROUND_ANIM, true, SHARP_IMPACT_GROUND_FIXED_JUMP_ANIM);
 			else
 				start_action(action, 0, SHARP_IMPACT_AIR_ANIM, true);
-			sharp = std::min(sharp + SHARP_IMPACT_SHARP, 6);
+			sharp = std::min(sharp + SHARP_IMPACT_SHARP, MAX_SHARP_STACKS);
 			sharp_timer.reset(SHARP_DURATION, false);
 			windfury.reset(WINDFURY_DURATION, 1);
 			azure = true;
@@ -608,6 +799,16 @@ namespace StrikingDummy
 			in_air = false;
 			push_event(sharp_timer.time);
 			push_event(windfury.time);
+			if (ENABLE_PHANTOM_ARROW && phantom_arrow_cd.ready)
+			{
+				float damage = get_damage(PHANTOM_ARROW);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_phantom_arrow_damage += damage;
+				phantom_arrow_count++;
+				phantom_arrow_cd.reset(PHANTOM_ARROW_CD, false);
+				push_event(phantom_arrow_cd.time);
+			}
 			break;
 		case GALEFORM:
 			start_action(action, 0, GALEFORM_ANIM, true);
@@ -617,6 +818,16 @@ namespace StrikingDummy
 				assert(!galeform_timer.ready);
 				galeform_timer.reset(GALEFORM_CD, false);
 				push_event(galeform_timer.time);
+			}
+			if (ENABLE_PHANTOM_ARROW && phantom_arrow_cd.ready)
+			{
+				float damage = get_damage(PHANTOM_ARROW);
+				total_damage += damage;
+				history.back().reward += damage;
+				total_phantom_arrow_damage += damage;
+				phantom_arrow_count++;
+				phantom_arrow_cd.reset(PHANTOM_ARROW_CD, false);
+				push_event(phantom_arrow_cd.time);
 			}
 			break;
 		case FALL:
@@ -654,6 +865,25 @@ namespace StrikingDummy
 			start_action(action, 0, IMAGINE_FIXED_ANIM, false);
 			celestial_flier_cd.reset(CELESTIAL_FLIER_CD, false);
 			push_event(celestial_flier_cd.time);
+			break;
+		case GOBLIN_KING:
+			// unaffected by cast speed
+			cast_speed = 1.0f;
+			start_action(action, 0, IMAGINE_FIXED_ANIM, false);
+			goblin_king_cd.reset(GOBLIN_KING_CD, false);
+			push_event(goblin_king_cd.time);
+			break;
+		case ROROLA:
+			// unaffected by cast speed
+			cast_speed = 1.0f;
+			start_action(action, 0, IMAGINE_FIXED_ANIM, false);
+			rorola_procs--;
+			if (rorola_timer.time == 0)
+			{
+				assert(!rorola_timer.ready);
+				rorola_timer.reset(ROROLA_CD, false);
+				push_event(rorola_timer.time);
+			}
 			break;
 		}
 		prev_falcon_toss = false;
@@ -723,17 +953,22 @@ namespace StrikingDummy
 			else
 			{
 				damage = get_damage(casting);
-				sharp = std::min(sharp + 1, 6);
+				if (ENABLE_SKYFALL_TALENT && prob(rng) < SKYFALL_TALENT_CHANCE)
+					sharp = std::min(sharp + 2, MAX_SHARP_STACKS);
+				else
+					sharp = std::min(sharp + 1, MAX_SHARP_STACKS);
 				sharp_timer.reset(SHARP_DURATION, false);
 				push_event(sharp_timer.time);
-				float crit = stats.crit + MUKU_CHIEF_CRIT * muku_chief.count;
-				float crit_rate = 0.05f + crit / (crit + STAT_MOD);
+				float crit = (stats.crit + MUKU_CHIEF_CRIT * muku_chief.count) * (ENABLE_CRIT_MASTERY_FACTOR ? CRIT_FACTOR_RATE : 1.0f);
+				float crit_rate = std::min(0.05f + crit / (crit + STAT_MOD) + OCEAN_CRIT, 1.0f);
 				if (prob(rng) < crit_rate)
 				{
 					chasing_step.reset(CHASE_DURATION, std::min(chasing_step.count + 1, 2));
 					push_event(chasing_step.time);
 				}
-				if (spear_thrust_cd.ready && prob(rng) < luck_rate)
+				float luck = stats.luck + GOBLIN_KING_LUCK_BONUS * goblin_king_luck.count + GOBLIN_KING_BOSS_LUCK_BONUS * goblin_king_boss_luck.count;
+				float luck_rate = 0.05f + luck / (luck + STAT_MOD) + (ENABLE_FANTASIA_IMPACT ? FANTASIA_BASE_LUCK : 0.0f) + OCEAN_LUCK;
+				if (ENABLE_SPEAR_THRUST_TALENT && spear_thrust_cd.ready && prob(rng) < luck_rate)
 				{
 					damage += get_damage(SPEAR_THRUST);
 					gauge = std::min(gauge + SPEAR_THRUST_GAUGE, MAX_GAUGE);
@@ -754,7 +989,7 @@ namespace StrikingDummy
 			}
 			break;
 		case BATTLE_CRY:
-			sharp = std::min(sharp + 1, 6);
+			sharp = std::min(sharp + 1, MAX_SHARP_STACKS);
 			sharp_timer.reset(SHARP_DURATION, false);
 			gauge = std::min(gauge + INSPIRE_GAUGE_PER_TICK, MAX_GAUGE);
 			inspire_gauge_timer.reset(TICK_TIMER, false);
@@ -782,6 +1017,7 @@ namespace StrikingDummy
 				history.back().reward += damage;
 				if (windfury.count > 0)
 					create_tornado();
+				iec_next = true;
 				return;
 			case 1:
 				start_action(casting, 2, INSTANT_EDGE_ANIM_2, false);
@@ -792,7 +1028,7 @@ namespace StrikingDummy
 					create_tornado();
 				if (chasing_step.count > 0)
 				{
-					sharp = std::min(sharp + 1, 6);
+					sharp = std::min(sharp + 1, MAX_SHARP_STACKS);
 					sharp_timer.reset(SHARP_DURATION, false);
 					push_event(sharp_timer.time);
 					impact = std::min(impact + INSTANT_EDGE_STACK_COST, MAX_IMPACT);
@@ -816,8 +1052,8 @@ namespace StrikingDummy
 			damage = get_damage(casting, cast_frame);
 			if (!falcon_crit)
 			{
-				float crit = stats.crit + MUKU_CHIEF_CRIT * muku_chief.count;
-				float crit_rate = 0.05f + crit / (crit + STAT_MOD);
+				float crit = (stats.crit + MUKU_CHIEF_CRIT * muku_chief.count) * (ENABLE_CRIT_MASTERY_FACTOR ? CRIT_FACTOR_RATE : 1.0f);
+				float crit_rate = std::min(0.05f + crit / (crit + STAT_MOD) + OCEAN_CRIT, 1.0f);
 				if (prob(rng) < crit_rate)
 				{
 					chasing_step.reset(CHASE_DURATION, std::min(chasing_step.count + 1, 2));
@@ -846,7 +1082,7 @@ namespace StrikingDummy
 				return;
 			}
 			else if (windfury.count > 0)
-					create_tornado();
+				create_tornado();
 			action_timer.reset(ACTION_TAX, false);
 			push_event(action_timer.time);
 			break;
@@ -858,28 +1094,79 @@ namespace StrikingDummy
 		case GALEFORM:
 			if (!in_air)
 				damage = get_damage(casting);
+			if (galeform_active)
+			{
+				int extra_secs = tempestrike_gauge / 50.0f;
+				tempestrike_gauge = 0.0f;
+				tempestrike.reset(TEMPESTRIKE_BASE_DURATION + 1000 * extra_secs, 1);
+				push_event(tempestrike.time);
+				gauge = std::min(gauge + (galeform.time - 1) / 1000 * (galeform.count > 1 ? ENHANCED_GALEFORM_GAUGE_PER_TICK : GALEFORM_GAUGE_PER_TICK), MAX_GAUGE);
+			}
 			galeform_active = true;
 			galeform.reset(GALEFORM_DURATION, enhanced_galeform_next ? 2 : 1);
 			push_event(galeform.time);
-			enhanced_galeform_next = false;
 			if (enhanced_galeform_next)
 				gauge = std::min(gauge + ENHANCED_GALEFORM_GAUGE_PER_TICK, MAX_GAUGE);
 			else
 				gauge = std::min(gauge + GALEFORM_GAUGE_PER_TICK, MAX_GAUGE);
+			enhanced_galeform_next = false;
+			if (ENABLE_SET_BONUS)
+			{
+				enhanced_skyfall_next = true;
+				enhanced_instant_edge_next = true;
+			}
 			galeform_gauge_timer.reset(TICK_TIMER, false);
 			push_event(galeform_gauge_timer.time);
 			action_timer.reset(ACTION_TAX, false);
 			push_event(action_timer.time);
 			break;
 		case MUKU_CHIEF:
+			damage = get_damage(casting);
 			muku_chief.reset(IMAGINE_DURATION, 1);
 			push_event(muku_chief.time);
 			action_timer.reset(IMAGINE_ANIM_LOCK + ACTION_TAX, false);
 			push_event(action_timer.time);
 			break;
 		case CELESTIAL_FLIER:
+			damage = get_damage(casting);
 			celestial_flier.reset(IMAGINE_DURATION, 1);
 			push_event(celestial_flier.time);
+			action_timer.reset(IMAGINE_ANIM_LOCK + ACTION_TAX, false);
+			push_event(action_timer.time);
+			break;
+		case GOBLIN_KING:
+			if (prob(rng) < 0.5f)
+			{
+				goblin_king_armor_pen.reset(GOBLIN_KING_ARMOR_PEN_DURATION, 1);
+				push_event(goblin_king_armor_pen.time);
+			}
+			else
+				goblin_king_luck.reset(IMAGINE_DURATION, 1);
+			goblin_king_str.reset(IMAGINE_DURATION, 1);
+			if (prob(rng) < GOBLIN_KING_BOSS_CHANCE)
+				goblin_king_boss_luck.reset(IMAGINE_DURATION, 1);
+			else
+				goblin_king_wind.reset(IMAGINE_DURATION, 1);
+			if (goblin_king_armor_pen.count)
+				damage += get_damage(casting, 0);
+			else
+				damage += get_damage(casting, 1);
+			damage += get_damage(casting, 2);
+			if (goblin_king_wind.count)
+				damage += get_damage(casting, 3);
+			else
+				damage += get_damage(casting, 4);
+			push_event(goblin_king_str.time);
+			action_timer.reset(IMAGINE_ANIM_LOCK + ACTION_TAX, false);
+			push_event(action_timer.time);
+			break;
+		case ROROLA:
+			damage = get_damage(casting);
+			rorola_dmg.reset(IMAGINE_DURATION, 1);
+			rorola_extra_dmg.reset(IMAGINE_DURATION, 1);
+			rorola_hits = 0;
+			rorola_stacks = 0;
+			push_event(rorola_dmg.time);
 			action_timer.reset(IMAGINE_ANIM_LOCK + ACTION_TAX, false);
 			push_event(action_timer.time);
 			break;
@@ -897,30 +1184,48 @@ namespace StrikingDummy
 
 	void BlackMage::create_tornado()
 	{
-		if (tornado_1.count && tornado_2.count && tornado_3.count)
-			return;
+		if (tornado_1.count && tornado_2.count && tornado_3.count && tornado_4.count && tornado_5.count && tornado_6.count)
+			throw 67;
 		if (!tornado_1.count)
 		{
 			tornado_1.reset(TORNADO_DURATION, 1);
-			tornado_timer_1.reset(TICK_TIMER, false);
+			tornado_timer_1.reset(TORNADO_TICK_TIMER, false);
 		}
 		else if (!tornado_2.count)
 		{
 			tornado_2.reset(TORNADO_DURATION, 1);
-			tornado_timer_2.reset(TICK_TIMER, false);
+			tornado_timer_2.reset(TORNADO_TICK_TIMER, false);
+		}
+		else if (!tornado_3.count)
+		{
+			tornado_3.reset(TORNADO_DURATION, 1);
+			tornado_timer_3.reset(TORNADO_TICK_TIMER, false);
+		}
+		else if (!tornado_4.count)
+		{
+			tornado_4.reset(TORNADO_DURATION, 1);
+			tornado_timer_4.reset(TORNADO_TICK_TIMER, false);
+		}
+		else if (!tornado_5.count)
+		{
+			tornado_5.reset(TORNADO_DURATION, 1);
+			tornado_timer_5.reset(TORNADO_TICK_TIMER, false);
 		}
 		else
 		{
-			tornado_3.reset(TORNADO_DURATION, 1);
-			tornado_timer_3.reset(TICK_TIMER, false);
+			tornado_6.reset(TORNADO_DURATION, 1);
+			tornado_timer_6.reset(TORNADO_TICK_TIMER, false);
 		}
-		float damage = get_damage(TORNADO_HIT);
-		total_damage += damage;
-		history.back().reward += damage;
+		if (prob(rng) < TORNADO_CHANCE_TO_HIT)
+		{
+			float damage = get_damage(TORNADO_HIT);
+			total_damage += damage;
+			history.back().reward += damage;
+			total_tornado_damage += damage;
+		}
 		push_event(TORNADO_DURATION);
-		push_event(TICK_TIMER);
+		push_event(TORNADO_TICK_TIMER);
 		tornado_count++;
-		total_tornado_damage += damage;
 	}
 
 	float BlackMage::get_damage(int action, int hit)
@@ -928,29 +1233,47 @@ namespace StrikingDummy
 		float potency = 0.0f;
 		float skill_atk = 0.0f;
 		float dmg = 1.0f;
+		float gen_dmg = stats.base_dmg + VULN_DMG;
 		float ele_dmg = 1.0f;
+		float dream_dmg = 1.0f;
+		float mastery = stats.mastery * (ENABLE_CRIT_MASTERY_FACTOR ? MASTERY_FACTOR_RATE : 1.0f);
+		float mastery_per = (0.06f + (mastery / (mastery + STAT_MOD)));
+		float luck = stats.luck + GOBLIN_KING_LUCK_BONUS * goblin_king_luck.count + GOBLIN_KING_BOSS_LUCK_BONUS * goblin_king_boss_luck.count;
+		float luck_rate = 0.05f + luck / (luck + STAT_MOD) + (ENABLE_FANTASIA_IMPACT ? FANTASIA_BASE_LUCK : 0.0f) + OCEAN_LUCK;
+		float luck_multi = (0.40f + stats.base_luck_multi + 0.25f * luck_rate + GOBLIN_KING_LUCK_MULTI * goblin_king_luck.count + FANTASIA_LUCK_MULTI) * LUCKY_STRIKE_MULTIPLIER;
+		float gen_luck_dmg = luck_rate + (goblin_king_boss_luck.count > 0 ? GOBLIN_KING_BOSS_LUCK_DMG : 0.0f);
 		bool expertise = false;
-		bool roll_luck = false;
+		int roll_luck = 0;
 		bool double_skill_crit = false;
+		bool luck_effect = false;
 		switch (action)
 		{
 		case BASIC_ATTACK:
 			potency = BASIC_ATTACK_POTENCY;
 			skill_atk = BASIC_ATTACK_ATK;
-			roll_luck = true;
+			roll_luck = 1;
 			break;
 		case SKYFALL:
 			potency = SKYFALL_POTENCY;
 			skill_atk = SKYFALL_ATK;
 			dmg += galeform.count > 0 ? GALEFORM_BONUS_DMG : 0.0f;
-			roll_luck = true;
+			if (enhanced_skyfall_next)
+			{
+				ele_dmg += SET_BONUS_WIND_DMG;
+				enhanced_skyfall_next = false;
+			}
+			if (ENABLE_SHARP_ECHO_TALENT)
+				dmg += OTHER_SKYFALL_TALENT_DMG;
+			roll_luck = 1;
 			break;
 		case TYPHOON_CLEAVE:
 			potency = TYPHOON_CLEAVE_POTENCY;
 			skill_atk = TYPHOON_CLEAVE_ATK;
-			roll_luck = true;
+			roll_luck = 1;
 			break;
 		case INSTANT_EDGE:
+			if (enhanced_instant_edge_next)
+				ele_dmg += SET_BONUS_WIND_DMG;
 			if (hit == 0)
 			{
 				potency = INSTANT_EDGE_POTENCY_1;
@@ -960,13 +1283,16 @@ namespace StrikingDummy
 			{
 				potency = INSTANT_EDGE_POTENCY_2;
 				skill_atk = INSTANT_EDGE_ATK_2;
-				roll_luck = true;
+				enhanced_instant_edge_next = false;
 			}
 			dmg += INSTANT_EDGE_BREAK_DMG;
 			expertise = true;
 			dmg += galeform.count > 0 ? GALEFORM_BONUS_DMG : 0.0f;
-			if (chasing_step.count > 0)
+			if (ENABLE_INSTANT_CRIT_TALENT && chasing_step.count > 0)
 				double_skill_crit = true;
+			if (chasing_step.count > 0)
+				dmg += CHASING_STEP_DMG;
+			roll_luck = 1;
 			break;
 		case FALCON_TOSS:
 			if (hit == 0)
@@ -978,7 +1304,7 @@ namespace StrikingDummy
 			{
 				potency = FALCON_TOSS_POTENCY_2;
 				skill_atk = FALCON_TOSS_ATK_2;
-				roll_luck = true;
+				roll_luck = 1;
 			}
 			expertise = true;
 			break;
@@ -992,7 +1318,7 @@ namespace StrikingDummy
 			{
 				potency = FALCON_TOSS_POTENCY_2 * ENHANCED_MULTIPLIER;
 				skill_atk = FALCON_TOSS_ATK_2 * ENHANCED_MULTIPLIER;
-				roll_luck = true;
+				roll_luck = 1;
 			}
 			expertise = true;
 			break;
@@ -1000,26 +1326,74 @@ namespace StrikingDummy
 			potency = SHARP_IMPACT_POTENCY;
 			skill_atk = SHARP_IMPACT_ATK;
 			expertise = true;
-			roll_luck = true;
-			if (chasing_step.count > 0)
+			roll_luck = 1;
+			if (ENABLE_INSTANT_CRIT_TALENT && chasing_step.count > 0)
 				double_skill_crit = true;
 			break;
 		case GALEFORM:
 			potency = GALEFORM_POTENCY;
 			skill_atk = GALEFORM_ATK;
 			expertise = true;
-			roll_luck = true;
+			roll_luck = 1;
 			break;
 		case SPEAR_THRUST:
 			potency = SPEAR_THRUST_POTENCY;
 			dmg += SPEAR_THRUST_BONUS_DMG;
-			dmg += luck_rate;
-			roll_luck = true;
+			luck_effect = true;
+			roll_luck = 1;
 			break;
 		case TORNADO_HIT:
 			potency = TORNADO_POTENCY;
 			dmg += TORNADO_BONUS_DMG;
 			roll_luck = ENABLE_LUCK_TORNADO_FACTOR;
+			if (ENABLE_LUCK_TORNADO_FACTOR)
+				dream_dmg += LUCK_TORNADO_FACTOR_DREAM_DMG;
+			break;
+		case PHANTOM_ARROW:
+			potency = PHANTOM_ARROW_POTENCY;
+			dream_dmg += PHANTOM_ARROW_DREAM_DMG;
+			dmg += mastery_per * PHANTOM_ARROW_MASTERY_DMG_CONVERSION;
+			break;
+		case FANTASIA_IMPACT:
+			potency = FANTASIA_IMPACT_POTENCY;
+			luck_effect = true;
+			roll_luck = 1;
+			break;
+		case CELESTIAL_FLIER:
+			potency = CELESTIAL_FLIER_POTENCY;
+			skill_atk = CELESTIAL_FLIER_ATK;
+			break;
+		case MUKU_CHIEF:
+			potency = MUKU_CHIEF_POTENCY;
+			skill_atk = MUKU_CHIEF_ATK;
+			break;
+		case GOBLIN_KING:
+			switch (hit)
+			{
+			case 0:
+				potency = GOBLIN_KING_ARMOR_POTENCY;
+				skill_atk = GOBLIN_KING_ARMOR_ATK;
+				break;
+			case 1:
+				potency = GOBLIN_KING_LUCK_POTENCY;
+				skill_atk = GOBLIN_KING_LUCK_ATK;
+				break;
+			case 2:
+				potency = GOBLIN_KING_STR_POTENCY;
+				skill_atk = GOBLIN_KING_STR_ATK;
+				break;
+			case 3:
+				potency = GOBLIN_KING_WIND_POTENCY;
+				skill_atk = GOBLIN_KING_WIND_ATK;
+				break;
+			default:
+				potency = GOBLIN_KING_BOSS_POTENCY;
+				skill_atk = GOBLIN_KING_BOSS_ATK;
+			}
+			break;
+		case ROROLA:
+			potency = ROROLA_POTENCY;
+			skill_atk = ROROLA_ATK;
 			break;
 		case BATTLE_CRY:
 		case FALL:
@@ -1027,53 +1401,152 @@ namespace StrikingDummy
 			throw 123;
 		}
 		if (windfury.count)
-			dmg += WINDFURY_BONUS_DMG;
+			gen_dmg += WINDFURY_BONUS_DMG;
 		if (expertise)
+		{
 			dmg += EXP_SKILL_DMG;
+			dream_dmg += EXPERTISE_DREAM_DMG;
+		}
+		if (ENABLE_ROROLA)
+			gen_dmg += rorola_dmg.count * ROROLA_DMG + (rorola_extra_dmg.count > 0 ? std::min(rorola_stacks, 5) * ROROLA_EXTRA_DMG : 0.0f);
 
-		float str = stats.str + (galeform.count > 0 ? GALEFORM_FLAT_STR : 0.0f);
-		float str_percent = 1.0f + tempestrike.count * TEMPESTRIKE_STR + chasing_str.count * CHASING_STR + (galeform.count > 0 ? GALEFORM_STR : 0.0f) + stats.base_str_per;
+		float str = stats.str + (galeform.count > 0 ? GALEFORM_FLAT_STR : 0.0f) + (ENABLE_FANTASIA_IMPACT ? FANTASIA_STAT_PER : 0.0f);
+		float str_percent = 1.0f + tempestrike.count * TEMPESTRIKE_STR + chasing_str.count * CHASING_STR + (galeform.count > 0 ? GALEFORM_STR : 0.0f) + stats.base_str_per + (goblin_king_str.count > 0 ? GOBLIN_KING_STR_BONUS : 0.0f);
 		str *= str_percent;
 
 		float atk_percent = 1.0f + (sharp > 0 ? SHARP_ATK : 0.0f) + stats.base_atk_per;
 		float total_atk = (stats.flat_atk + str * 0.725f) * atk_percent;
 		float armor_pen = stats.base_armor_pen;
-		float base_armor = 2786.0f * (1.0f - armor_pen);
+		float flat_armor_pen = goblin_king_armor_pen.count > 0 ? GOBLIN_KING_ARMOR_PEN : 0;
+		float base_armor = (2786.0f - flat_armor_pen) * (1.0f - armor_pen);
 		float armor = base_armor / (base_armor + 6500.0f);
+		if (action == PHANTOM_ARROW)
+			armor = 0.0f;
 		float atk = (1.0f - armor) * total_atk + stats.refined_atk;
 
-		dmg += VULN_DMG + stats.base_dmg;
-		ele_dmg += (0.06f + (stats.mastery / (stats.mastery + STAT_MOD))) * 0.65f + (stats.base_ele_stat / (stats.base_ele_stat + ELE_MOD)) + (stats.base_serum_stat / (stats.base_serum_stat + ELE_MOD));
+		if (luck_effect)
+			dmg += gen_luck_dmg;
+
+		dmg += gen_dmg;
+
+		float ele_stat = stats.base_ele_stat + (ENABLE_ALL_ELEMENT_FACTOR ? ALL_ELEMENT_FACTOR_BONUS : 0.0f);
+		float base_ele_dmg = mastery_per * 0.65f + (ele_stat / (ele_stat + ELE_MOD)) + (stats.base_serum_stat / (stats.base_serum_stat + ELE_MOD)) + (goblin_king_wind.count > 0 ? GOBLIN_KING_WIND_BONUS : 0.0f);
+		ele_dmg += base_ele_dmg;
+
 		float vers_dmg = 1.0f + (stats.vers / (stats.vers + VERS_MOD)) * 0.35f;
 
-		float crit = stats.crit + MUKU_CHIEF_CRIT * muku_chief.count;
-		float crit_rate = 0.05f + crit / (crit + STAT_MOD);
+		float crit = (stats.crit + MUKU_CHIEF_CRIT * muku_chief.count) * (ENABLE_CRIT_MASTERY_FACTOR ? CRIT_FACTOR_RATE : 1.0f);
+		float crit_rate = std::min(0.05f + crit / (crit + STAT_MOD) + OCEAN_CRIT, 1.0f);
 		float eff_crit_rate = std::min((double_skill_crit ? 2.0f : 1.0f) * crit_rate, 1.0f);
+		if (action == PHANTOM_ARROW)
+			eff_crit_rate = 0.0f;
 		float crit_multi = 0.50f + stats.base_crit_multi + MUKU_CHIEF_CRIT_MULTI * muku_chief.count;
 
-		// * dmg * ele_dmg * vers_dmg
-		float skill_dmg = (atk * potency + skill_atk) * dmg * ele_dmg * vers_dmg;
+		// * dmg * ele_dmg * vers_dmg * dream_dmg
+		float skill_dmg = (atk * potency + skill_atk) * dmg * ele_dmg * vers_dmg * dream_dmg * (galeform.count > 0 ? OCEAN_GALEFORM_BOOST : 1.0f);
+		if (luck_effect)
+			skill_dmg *= luck_multi;
+		float bonus_dmg = 0.0f;
+		if (ENABLE_INSTANT_EDGE_COMBO_TALENT && action == INSTANT_EDGE && hit == 1)
+		{
+			float iec_luck_rate = iec_next ? (1.0f - (1.0f - luck_rate) * (1.0f - luck_rate)) : luck_rate;
+			if (prob(rng) < iec_luck_rate)
+				roll_luck++;
+			bonus_dmg = skill_dmg * (1.0f + eff_crit_rate * crit_multi) * luck_rate * luck_multi * INSTANT_EDGE_COMBO_DREAM_DMG;
+			iec_next = false;
+		}
 		
-		if (expertise)
+		if (ENABLE_EXP_CRIT_PEN_TALENT && expertise)
 		{
 			skill_dmg *= 1.0f - eff_crit_rate;
 			armor_pen += 0.50f;
-			base_armor = 2786.0f * (1.0f - armor_pen);
+			base_armor = (2786.0f - flat_armor_pen) * (1.0f - armor_pen);
 			armor = base_armor / (base_armor + 6500.0f);
 			atk = (1.0f - armor) * total_atk + stats.refined_atk;
-			skill_dmg += (atk * potency + skill_atk) * dmg * ele_dmg * vers_dmg * eff_crit_rate * (1.0f + crit_multi);
+			skill_dmg += (atk * potency + skill_atk) * dmg * ele_dmg * vers_dmg * dream_dmg * eff_crit_rate * (1.0f + crit_multi) * (galeform.count > 0 ? OCEAN_GALEFORM_BOOST : 1.0f);
 		}
 		else
 			// skill crit dmg
 			skill_dmg *= 1.0f + eff_crit_rate * crit_multi;
+		
+		skill_dmg += bonus_dmg;
 
-		// instant edge combo based on skill_dmg
-		if (ENABLE_INSTANT_EDGE_COMBO_TALENT && action == INSTANT_EDGE && hit == 1)
-			skill_dmg *= 1.0f + luck_rate * luck_multi;
+		if (ENABLE_ROROLA && rorola_extra_dmg.count > 0 && rorola_stacks < 10)
+		{
+			if (++rorola_hits == 10)
+			{
+				rorola_hits = 0;
+				if (++rorola_stacks > 5)
+				{
+					rorola_extra_dmg.time += ROROLA_EXTRA_DURATION;
+					push_event(rorola_extra_dmg.time);
+				}
+			}
+		}
 
 		// lucky strike dmg
-		if (roll_luck)
-			skill_dmg += luck_rate * (total_atk + stats.refined_atk) * (dmg + luck_rate) * ele_dmg * vers_dmg * luck_multi * (1.0f + crit_rate * crit_multi);
+		for (int i = 0; i < roll_luck; i++)
+		{
+			skill_dmg += luck_rate * (total_atk + stats.refined_atk) * (1.0f + gen_dmg + gen_luck_dmg) * (1.0f + base_ele_dmg) * vers_dmg * luck_multi * (1.0f + crit_rate * crit_multi) * (galeform.count > 0 ? OCEAN_GALEFORM_BOOST : 1.0f);
+			// add side effect
+			if ((ENABLE_SET_BONUS || ENABLE_ROROLA) && prob(rng) < (action == TORNADO_HIT ? luck_rate * 1.55f : luck_rate))
+			{
+				if (ENABLE_SET_BONUS && galeform_procs < 2)
+				{
+					if (galeform_timer.time <= SET_GALEFORM_CD_REDUCTION)
+					{
+						galeform_procs++;
+						if (galeform_procs == 2)
+							galeform_timer.reset(0, false);
+						else
+						{
+							galeform_timer.reset(GALEFORM_CD + galeform_timer.time - SET_GALEFORM_CD_REDUCTION, false);
+							push_event(galeform_timer.time);
+						}
+					}
+					else
+					{
+						galeform_timer.reset(galeform_timer.time - SET_GALEFORM_CD_REDUCTION, false);
+						push_event(galeform_timer.time);
+					}
+				}
+				if (ENABLE_FANTASIA_IMPACT)
+				{
+					if (!fantasia_impact_cd.ready)
+					{
+						if (fantasia_impact_cd.time <= FANTASIA_IMPACT_CD_REDUCTION)
+							fantasia_impact_cd.reset(0, true);
+						else
+						{
+							fantasia_impact_cd.reset(fantasia_impact_cd.time - FANTASIA_IMPACT_CD_REDUCTION, false);
+							push_event(fantasia_impact_cd.time);
+						}
+					}
+					else if (++fantasia_stacks == FANTASIA_IMPACT_MAX_STACKS)
+					{
+						fantasia_stacks = 0;
+						fantasia_impact_cd.reset(FANTASIA_IMPACT_CD, false);
+						push_event(fantasia_impact_cd.time);
+						float fantasia_dmg = get_damage(FANTASIA_IMPACT);
+						skill_dmg += fantasia_dmg;
+						fantasia_impact_count++;
+						total_fantasia_damage += fantasia_dmg;
+					}
+				}
+				if (ENABLE_ROROLA && rorola_extra_dmg.count > 0 && rorola_stacks < 10)
+				{
+					if (++rorola_hits == 10)
+					{
+						rorola_hits = 0;
+						if (++rorola_stacks > 5)
+						{
+							rorola_extra_dmg.time += ROROLA_EXTRA_DURATION;
+							push_event(rorola_extra_dmg.time);
+						}
+					}
+				}
+			}
+		}
 
 		return skill_dmg;
 	}
@@ -1095,49 +1568,84 @@ namespace StrikingDummy
 		state[12] = galeform_procs > 0;
 		state[13] = galeform_procs > 1;
 		state[14] = galeform_timer.time / (float)GALEFORM_CD;
-		state[15] = muku_chief_procs > 0;
-		state[16] = muku_chief_procs > 1;
-		state[17] = muku_chief_timer.time / (float)MUKU_CHIEF_CD;
-		state[18] = (SHARP_DURATION - sharp_timer.time) / (float)SHARP_DURATION;
-		state[19] = chasing_step.count > 0;
-		state[20] = chasing_step.count > 1;
-		state[21] = chasing_step.time / (float)CHASE_DURATION;
-		state[22] = inspire.count > 0;
-		state[23] = inspire.time / (float)INSPIRE_DURATION;
-		state[24] = windfury.count > 0;
-		state[25] = windfury.time / (float)WINDFURY_DURATION;
-		state[26] = galeform.count > 0;
-		state[27] = galeform.count > 1;
-		state[28] = galeform.time / (float)GALEFORM_DURATION;
-		state[29] = tornado_1.count > 0;
-		state[30] = tornado_1.time / (float)TORNADO_DURATION;
-		state[31] = tornado_2.count > 0;
-		state[32] = tornado_2.time / (float)TORNADO_DURATION;
-		state[33] = tornado_3.count > 0;
-		state[34] = tornado_3.time / (float)TORNADO_DURATION;
-		state[35] = typhoon_cleave_cd.ready;
-		state[36] = typhoon_cleave_cd.time / (float)TYPHOON_CLEAVE_CD;
-		state[37] = gauge_timer.time / (float)TICK_TIMER;
-		state[38] = galeform_gauge_timer.time / (float)TICK_TIMER;
-		state[39] = inspire_gauge_timer.time / (float)TICK_TIMER;
-		state[40] = inspire_sharp_timer.time / (float)(2.0f * TICK_TIMER);
-		state[41] = divine_haste.count / 5.0f;
-		state[42] = divine_haste.time / (float)DIVINE_HASTE_DURATION;
-		state[43] = celestial_flier_cd.ready;
-		state[44] = celestial_flier_cd.time / (float)CELESTIAL_FLIER_CD;
-		state[45] = falcon_toss_procs > 0;
-		state[46] = falcon_toss_procs > 1;
-		state[47] = falcon_toss_timer.time / (float)FALCON_TOSS_CD;
-		state[48] = muku_chief.count > 0;
-		state[49] = muku_chief.time / (float)IMAGINE_DURATION;
-		state[50] = celestial_flier.count > 0;
-		state[51] = celestial_flier.time / (float)IMAGINE_DURATION;
-		state[52] = chasing_str.count / 2.0f;
-		state[53] = chasing_str.time / (float)CHASING_STR_DURATION;
-		state[54] = tempestrike.count > 0;
-		state[55] = tempestrike.time / (float)(3.0f * TEMPESTRIKE_BASE_DURATION);
-		state[56] = typhoon_cleave.count > 0;
-		state[57] = typhoon_cleave.time / (float)TYPHOON_CLEAVE_DURATION;
+		state[15] = (SHARP_DURATION - sharp_timer.time) / (float)SHARP_DURATION;
+		state[16] = chasing_step.count > 0;
+		state[17] = chasing_step.count > 1;
+		state[18] = chasing_step.time / (float)CHASE_DURATION;
+		state[19] = inspire.count > 0;
+		state[20] = inspire.time / (float)INSPIRE_DURATION;
+		state[21] = windfury.count > 0;
+		state[22] = windfury.time / (float)WINDFURY_DURATION;
+		state[23] = galeform.count > 0;
+		state[24] = galeform.count > 1;
+		state[25] = galeform.time / (float)GALEFORM_DURATION;
+		state[26] = (tornado_1.time + tornado_2.time + tornado_3.time + tornado_4.time + tornado_5.time + tornado_6.time) / (5.0f * TORNADO_DURATION);
+		state[27] = typhoon_cleave_cd.ready;
+		state[28] = typhoon_cleave_cd.time / (float)TYPHOON_CLEAVE_CD;
+		state[29] = gauge_timer.time / (float)TICK_TIMER;
+		state[30] = galeform_gauge_timer.time / (float)TICK_TIMER;
+		state[31] = inspire_gauge_timer.time / (float)TICK_TIMER;
+		state[32] = inspire_sharp_timer.time / (float)(2.0f * TICK_TIMER);
+		state[33] = divine_haste.count / 5.0f;
+		state[34] = divine_haste.time / (float)DIVINE_HASTE_DURATION;
+		state[35] = falcon_toss_procs > 0;
+		state[36] = falcon_toss_procs > 1;
+		state[37] = falcon_toss_timer.time / (float)FALCON_TOSS_CD;
+		state[38] = chasing_str.count / 2.0f;
+		state[39] = chasing_str.time / (float)CHASING_STR_DURATION;
+		state[40] = tempestrike.count > 0;
+		state[41] = tempestrike.time / (float)(3.0f * TEMPESTRIKE_BASE_DURATION);
+		state[42] = typhoon_cleave.count > 0;
+		state[43] = typhoon_cleave.time / (float)TYPHOON_CLEAVE_DURATION;
+		state[44] = enhanced_skyfall_next;
+		state[45] = enhanced_instant_edge_next;
+		int idx = 46;
+		if (ENABLE_PHANTOM_ARROW)
+		{
+			state[idx++] = phantom_arrow_cd.ready;
+			state[idx++] = phantom_arrow_cd.time / (float)PHANTOM_ARROW_CD;
+		}
+		if (ENABLE_FANTASIA_IMPACT)
+		{
+			state[idx++] = fantasia_stacks / (float)FANTASIA_IMPACT_MAX_STACKS;
+			state[idx++] = fantasia_impact_cd.ready;
+			state[idx++] = fantasia_impact_cd.time / (float)FANTASIA_IMPACT_CD;
+		}
+		if (ENABLE_MUKU_CHIEF)
+		{
+			state[idx++] = muku_chief_procs > 0;
+			state[idx++] = muku_chief_procs > 1;
+			state[idx++] = muku_chief_timer.time / (float)MUKU_CHIEF_CD;
+			state[idx++] = muku_chief.count > 0;
+			state[idx++] = muku_chief.time / (float)IMAGINE_DURATION;
+		}
+		if (ENABLE_GOBLIN_KING)
+		{
+			state[idx++] = goblin_king_cd.ready;
+			state[idx++] = goblin_king_cd.time / (float)GOBLIN_KING_CD;
+			state[idx++] = goblin_king_str.count > 0;
+			state[idx++] = goblin_king_str.time / (float)IMAGINE_DURATION;
+		}
+		if (ENABLE_CELESTIAL_FLIER)
+		{
+			state[idx++] = celestial_flier.count > 0;
+			state[idx++] = celestial_flier.time / (float)IMAGINE_DURATION;
+			state[idx++] = celestial_flier_cd.ready;
+			state[idx++] = celestial_flier_cd.time / (float)CELESTIAL_FLIER_CD;
+		}
+		if (ENABLE_ROROLA)
+		{
+			state[idx++] = rorola_procs > 0;
+			state[idx++] = rorola_procs > 1;
+			state[idx++] = rorola_timer.time / (float)ROROLA_CD;
+			state[idx++] = rorola_dmg.count > 0;
+			state[idx++] = rorola_dmg.time / (float)IMAGINE_DURATION;
+			state[idx++] = rorola_extra_dmg.count > 0;
+			state[idx++] = rorola_extra_dmg.time / (float)(IMAGINE_DURATION + ROROLA_MAX_EXTRA_DURATION);
+			state[idx++] = (rorola_extra_dmg.count > 0 ? rorola_hits / 10.0f : 0.0f);
+			state[idx++] = (rorola_extra_dmg.count > 0 ? std::min(rorola_stacks, 5) / 5.0f : 0.0f);
+			state[idx++] = (rorola_extra_dmg.count > 0 ? std::max(rorola_stacks - 5, 0) / 5.0f : 0.0f);
+		}
 	}
 
 	std::string BlackMage::get_info()
