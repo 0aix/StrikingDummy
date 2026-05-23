@@ -11,36 +11,38 @@ namespace StrikingDummy
 			BASIC_ATTACK, SKYFALL, BATTLE_CRY, TYPHOON_CLEAVE,
 			INSTANT_EDGE, FALCON_TOSS, AZURE_SEVER, SHARP_IMPACT,
 			GALEFORM, FALL, WAIT_FOR_GAUGE,
-			MUKU_CHIEF, CELESTIAL_FLIER, GOBLIN_KING, ROROLA,
+			MUKU_CHIEF, CELESTIAL_FLIER, GOBLIN_KING, GOBLIN_CHIEF, IGOREUS,
 			SPEAR_THRUST,
 			TORNADO_HIT,
 			PHANTOM_ARROW, FANTASIA_IMPACT
 		};
-		
+
 		enum Opener
 		{
 			GAUGE, NO_GAUGE
 		};
-		
+
 		static constexpr bool ENABLE_FALCON_TOSS_TALENT = false;
-		static constexpr bool ENABLE_SKYFALL_TALENT = true;
+		static constexpr bool ENABLE_SKYFALL_TALENT = false;
 		static constexpr bool ENABLE_KAMIKAZE_LUCK_TALENT = true;
-		static constexpr bool ENABLE_INSTANT_EDGE_BREAK_TALENT = false;
+		static constexpr bool ENABLE_INSTANT_EDGE_BREAK_TALENT = true;
 		static constexpr bool ENABLE_SHARP_ECHO_TALENT = false;
-		static constexpr bool ENABLE_BATTLE_CRY_TALENT = false;
-		static constexpr bool ENABLE_SPEAR_THRUST_TALENT = true;
-		static constexpr bool ENABLE_TORNADO_TALENT = true;
+		static constexpr bool ENABLE_BATTLE_CRY_TALENT = true;
+		static constexpr bool ENABLE_SPEAR_THRUST_TALENT = false;
+		static constexpr bool ENABLE_TORNADO_TALENT = false;
 		static constexpr bool ENABLE_MOMENTUM_SURGE_TALENT = true;
 		static constexpr bool ENABLE_INSTANT_CRIT_TALENT = true;
 		static constexpr bool ENABLE_SHARP_IMPACT_TALENT = false;
 		static constexpr bool ENABLE_INSTANT_EDGE_COMBO_TALENT = true;
-		static constexpr bool ENABLE_EXP_CRIT_PEN_TALENT = false;
+		static constexpr bool ENABLE_EXP_CRIT_PEN_TALENT = true;
 		static constexpr bool ENABLE_LUCK_TORNADO_FACTOR = true;
 		static constexpr bool ENABLE_SET_BONUS = true;
 		static constexpr bool ENABLE_SET_BONUS_2 = true;
 
 		static constexpr bool ENABLE_PHANTOM_ARROW = true;
 		static constexpr bool ENABLE_FANTASIA_IMPACT = false;
+
+		static constexpr bool ENABLE_PHANTOM_ARROW_CAN_CRIT = true;
 
 		static constexpr bool ENABLE_FANTASIA_EXTRA_BASE_LUCK = false;
 		static constexpr bool ENABLE_FANTASIA_EXTRA_STACKS = false;
@@ -51,15 +53,15 @@ namespace StrikingDummy
 
 		static constexpr bool ENABLE_OCEAN_WEAPON = true;
 		static constexpr float OCEAN_GALEFORM_BOOST = ENABLE_OCEAN_WEAPON ? 1.06f : 1.0f;
-		static constexpr float OCEAN_CRIT = ENABLE_OCEAN_WEAPON ? 0.09f : 0.03f;
+		static constexpr float OCEAN_CRIT = ENABLE_OCEAN_WEAPON ? 0.19f : 0.03f;
 		static constexpr float OCEAN_LUCK = ENABLE_OCEAN_WEAPON ? 0.09f : 0.03f;
 		static constexpr float OCEAN_HASTE = 0.03f;
 		static constexpr float OCEAN_MASTERY = 0.03f;
 
 		static constexpr int GALEFORM_DURATION_FACTOR = 4000;
 		static constexpr int MAX_SHARP_STACKS = 6;
-		
-		static constexpr bool ENABLE_EXPERTISE_DREAM_FACTOR = true;
+
+		static constexpr bool ENABLE_EXPERTISE_DREAM_FACTOR = false;
 		static constexpr bool ENABLE_CRIT_MASTERY_FACTOR = false;
 		static constexpr bool ENABLE_ALL_ELEMENT_FACTOR = true;
 		static constexpr float INSTANT_EDGE_COMBO_DREAM_DMG = 1.0f;
@@ -69,7 +71,7 @@ namespace StrikingDummy
 		static constexpr float ALL_ELEMENT_FACTOR_BONUS = 212.0f;
 
 		static constexpr float TORNADO_CHANCE_TO_HIT = 0.92f;
-		
+
 		static constexpr int SET_GALEFORM_CD_REDUCTION = 200;
 		static constexpr float SET_BONUS_WIND_DMG = ENABLE_SET_BONUS_2 ? 0.70f : 0.0f;
 
@@ -77,7 +79,7 @@ namespace StrikingDummy
 		static constexpr float LUCK_TORNADO_FACTOR_DREAM_DMG = 0.0879f;
 
 		static constexpr float PHANTOM_ARROW_POTENCY = 1.65f * 10.0f;
-		static constexpr float PHANTOM_ARROW_DREAM_DMG = 0.65f;
+		static constexpr float PHANTOM_ARROW_DREAM_DMG = ENABLE_PHANTOM_ARROW_CAN_CRIT ? 0.15f : 0.65f;
 		static constexpr int PHANTOM_ARROW_CD = 7000;
 		static constexpr int PHANTOM_ARROW_CD_REDUCTION = 600;
 		static constexpr int PHANTOM_ARROW_DOUBLE_CD_REDUCTION = 1200;
@@ -90,26 +92,39 @@ namespace StrikingDummy
 		static constexpr int FANTASIA_IMPACT_MAX_STACKS = ENABLE_FANTASIA_EXTRA_STACKS ? 30 : 20;
 
 		static constexpr bool ENABLE_MUKU_CHIEF = false;
-		static constexpr bool ENABLE_GOBLIN_KING = true;
+		static constexpr bool ENABLE_GOBLIN_KING = false;
 		static constexpr bool ENABLE_CELESTIAL_FLIER = true;
-		static constexpr bool ENABLE_ROROLA = false;
+		static constexpr bool ENABLE_GOBLIN_CHIEF = false;
+		static constexpr bool ENABLE_IGOREUS = true;
 
-		const std::string blm_actions[15] =
+		static constexpr float GOBLIN_CHIEF_EXP_SKILL_DMG_PASSIVE = 0.225f;
+		static constexpr float GOBLIN_CHIEF_EXP_SKILL_DMG_ACTIVE = 0.44f;
+		static constexpr int GOBLIN_CHIEF_CD = 75000;
+
+		static constexpr int IGOREUS_CD = 60000;
+		static constexpr int IGOREUS_DURATION = 20000;
+		static constexpr float IGOREUS_CRIT = 5600.0f;
+		static constexpr float IGOREUS_CRIT_BONUS = 0.12f;
+		static constexpr float IGOREUS_EXCESS_CRIT_CONV = 0.40f;
+		static constexpr float IGOREUS_CRIT_DMG_LIMIT = 0.24f;
+		static constexpr float IGOREUS_PASSIVE_CRIT_DMG = 0.35f;
+
+		const std::string blm_actions[16] =
 		{
 			"BASIC_ATTACK", "SKYFALL", "BATTLE_CRY", "TYPHOON_CLEAVE",
 			"INSTANT_EDGE", "FALCON_TOSS", "AZURE_SEVER", "SHARP_IMPACT",
 			"GALEFORM", "FALL", "WAIT_FOR_GAUGE",
-			"MUKU_CHIEF", "CELESTIAL_FLIER", "GOBLIN_KING", "ROROLA"
+			"MUKU_CHIEF", "CELESTIAL_FLIER", "GOBLIN_KING", "GOBLIN_CHIEF", "IGOREUS"
 		};
 
-		static constexpr int NUM_ACTIONS = 15;
+		static constexpr int NUM_ACTIONS = 16;
 
 		static constexpr int ACTION_TAX = 50;
-		
+
 		static constexpr float STAT_MOD = 19976.0f;
 		static constexpr float VERS_MOD = 11200.0f;
 		static constexpr float ELE_MOD = 6500.0f;
-		
+
 		static constexpr float MAX_GAUGE = 130.0f;
 		static constexpr float BASE_GAUGE_PER_TICK = 3.0f;
 		static constexpr float GALEFORM_GAUGE_PER_TICK = 7.0f;
@@ -144,7 +159,6 @@ namespace StrikingDummy
 		static constexpr int MUKU_CHIEF_CD = 60000;
 		static constexpr int CELESTIAL_FLIER_CD = 80000;
 		static constexpr int GOBLIN_KING_CD = 100000;
-		static constexpr int ROROLA_CD = 80000;
 
 		static constexpr int BASIC_ATTACK_ANIM = 250;
 		static constexpr int SKYFALL_JUMP_ANIM = 535;
@@ -205,8 +219,6 @@ namespace StrikingDummy
 		static constexpr float GOBLIN_KING_WIND_ATK = 70.0f;
 		static constexpr float GOBLIN_KING_BOSS_POTENCY = 18.375f;
 		static constexpr float GOBLIN_KING_BOSS_ATK = 105.0f;
-		static constexpr float ROROLA_POTENCY = 26.249f;
-		static constexpr float ROROLA_ATK = 149.0f;
 
 		// Damage bonuses
 		static constexpr float EXP_SKILL_DMG = 0.07f;
@@ -223,11 +235,13 @@ namespace StrikingDummy
 		static constexpr float GALEFORM_FLAT_STR = 175.0f; // added before str %
 		static constexpr float GALEFORM_STR = 0.38f;
 		static constexpr float TEMPESTRIKE_STR = 0.12f;
-		static constexpr float CHASING_STR = 0.10f;
+		static constexpr float CHASING_STR = 0.15f;
 		static constexpr float DIVINE_HASTE = 0.01f;
 		static constexpr float INSPIRE_HASTE = 0.10f;
+		static constexpr float WINDFURY_ASPD = 0.10f;
 		static constexpr float LUCKY_STRIKE_MULTIPLIER = ENABLE_KAMIKAZE_LUCK_TALENT ? 1.50f : 1.00f;
 		static constexpr float ENHANCED_MULTIPLIER = 1.50f;
+		static constexpr float BATTLE_CRY_CRIT_DMG_BONUS = 0.50f;
 
 		static constexpr float MUKU_CHIEF_CRIT = 4480.0f;
 		static constexpr float MUKU_CHIEF_CRIT_MULTI = 0.40f;
@@ -242,11 +256,6 @@ namespace StrikingDummy
 		static constexpr float GOBLIN_KING_BOSS_LUCK_BONUS = 4480.0f;
 		static constexpr float GOBLIN_KING_BOSS_LUCK_DMG = 0.32f;
 		static constexpr float GOBLIN_KING_BOSS_CHANCE = 0.30f;
-
-		static constexpr float ROROLA_DMG = 0.20f;
-		static constexpr float ROROLA_EXTRA_DMG = 0.024f;
-		static constexpr int ROROLA_EXTRA_DURATION = 3000;
-		static constexpr int ROROLA_MAX_EXTRA_DURATION = 3000;
 
 		// Skill costs
 		static constexpr float SKYFALL_GAUGE_COST = 35.0f;
@@ -264,15 +273,15 @@ namespace StrikingDummy
 
 		bool galeform_active = false;
 		float tempestrike_gauge = 0.0f;
+		int tempestrike_sharp_consumed = 0;
 		float falcon_gauge = 0.0f;
 		int fantasia_stacks = 0;
-		int rorola_hits = 0;
-		int rorola_stacks = 0;
 
 		bool in_air = false;
 		bool azure = false;
 		bool prev_falcon_toss = false;
 		bool falcon_crit = false;
+		bool falcon_luck = false;
 		bool enhanced_galeform_next = false;
 		bool enhanced_skyfall_next = false;
 		bool enhanced_instant_edge_next = false;
@@ -295,12 +304,12 @@ namespace StrikingDummy
 		Timer tornado_timer_6;
 		Timer falcon_toss_timer;
 		Timer muku_chief_timer;
-		Timer rorola_timer;
+		Timer igoreus_timer;
 
 		int galeform_procs = 0;
 		int falcon_toss_procs = 0;
 		int muku_chief_procs = 0;
-		int rorola_procs = 0;
+		int igoreus_procs = 2;
 
 		// buffs
 		Buff chasing_step;
@@ -319,18 +328,19 @@ namespace StrikingDummy
 		Buff tornado_6;
 		Buff muku_chief;
 		Buff celestial_flier;
+		Buff goblin_chief;
 		Buff goblin_king_armor_pen;
 		Buff goblin_king_luck;
 		Buff goblin_king_str;
 		Buff goblin_king_wind;
 		Buff goblin_king_boss_luck;
-		Buff rorola_dmg;
-		Buff rorola_extra_dmg;
+		Buff igoreus;
 
 		// cooldowns
 		Timer typhoon_cleave_cd;
 		Timer spear_thrust_cd;
 		Timer celestial_flier_cd;
+		Timer goblin_chief_cd;
 		Timer goblin_king_cd;
 		Timer phantom_arrow_cd;
 		Timer fantasia_impact_cd;
@@ -374,7 +384,7 @@ namespace StrikingDummy
 		float get_damage(int action, int hit = 0);
 
 		void get_state(float* state);
-		int get_state_size() { return 46 + ENABLE_PHANTOM_ARROW * 2 + ENABLE_FANTASIA_IMPACT * 3 +  ENABLE_MUKU_CHIEF * 5 + ENABLE_GOBLIN_KING * 4 + ENABLE_CELESTIAL_FLIER * 4 + ENABLE_ROROLA * 10; }
+		int get_state_size() { return 46 + ENABLE_PHANTOM_ARROW * 2 + ENABLE_FANTASIA_IMPACT * 3 + ENABLE_MUKU_CHIEF * 5 + ENABLE_GOBLIN_KING * 4 + ENABLE_CELESTIAL_FLIER * 4 + ENABLE_GOBLIN_CHIEF * 4 + ENABLE_IGOREUS * 5; }
 		int get_num_actions() { return NUM_ACTIONS; }
 		std::string get_action_name(int action) { return blm_actions[action]; }
 		std::string get_info();

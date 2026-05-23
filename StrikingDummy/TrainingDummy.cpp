@@ -26,9 +26,9 @@ namespace StrikingDummy
 	const float NU_START = 0.00001f; //0.00001f
 	const float NU_MIN = 0.000001f;
 	const float OUTPUT_LOWER = 000.000f;
-	const float OUTPUT_UPPER = 1200.000f;
+	const float OUTPUT_UPPER = 1700.000f;
 	const float OUTPUT_RANGE = OUTPUT_UPPER - OUTPUT_LOWER;
-	const double BEST_THRESHOLD_TO_SAVE = 700.000;
+	const double BEST_THRESHOLD_TO_SAVE = 1000.000;
 
 	void TrainingDummy::train()
 	{
